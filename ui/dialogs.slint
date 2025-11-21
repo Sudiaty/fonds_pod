@@ -1,0 +1,574 @@
+import { Button, VerticalBox, HorizontalBox } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+
+// ============================================================================
+// Custom Button Component with Theme Colors
+// ============================================================================
+
+export component ThemedButton inherits Rectangle {
+    in property <string> text: "";
+    in property <bool> is_primary: false;
+    
+    callback clicked <=> touch.clicked;
+    
+    width: 80px;
+    height: 32px;
+    border-radius: 4px;
+    background: is_primary ? 
+        (touch.has-hover ? Theme.brand_secondary : Theme.brand_primary) : 
+        (touch.has-hover ? Theme.bg_elevated : Theme.bg_alt);
+    
+    Text {
+        text: root.text;
+        color: is_primary ? Theme.text_on_brand : Theme.brand_primary;
+        font-size: 13px;
+        font-family: "Microsoft YaHei";
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+    
+    touch := TouchArea {}
+}
+
+// ============================================================================
+// Schema Input Dialog Component
+// ============================================================================
+
+export component SchemaInputDialog inherits Window {
+    // Language property (0: Chinese, 1: English)
+    in property <int> current_language: 0;
+    
+    title: current_language == 0 ? "添加分类方案" : "Add Schema";
+    width: 400px;
+    height: 220px;
+    default-font-family: "Microsoft YaHei";
+    default-font-size: 14px;
+    
+    in-out property <string> schema_code_input: "";
+    in-out property <string> schema_name_input: "";
+    
+    callback confirm_input(string, string);
+    callback cancel_input();
+    
+    forward-focus: code-input;
+    
+    FocusScope {
+        key-pressed(event) => {
+            if event.text == Key.Escape {
+                root.cancel_input();
+                return accept;
+            }
+            return reject;
+        }
+        
+        VerticalBox {
+            padding-left: 10px;
+            padding-right: 10px;
+            padding-top: 15px;
+            padding-bottom: 30px;
+            spacing: 8px;
+            
+            VerticalBox {
+                spacing: 8px;
+        
+                // Code input (horizontal layout)
+                HorizontalBox {
+                    spacing: 8px;
+                    
+                    Text {
+                        text: root.current_language == 0 ? "代码:" : "Code:";
+                        font-size: 13px;
+                        font-family: "Microsoft YaHei";
+                        width: 45px;
+                        vertical-alignment: center;
+                    }
+                    
+                    Rectangle {
+                        border-color: Theme.nav_border;
+                        border-width: 1px;
+                        border-radius: 3px;
+                        background: white;
+                        height: 32px;
+                        
+                        code-input := TextInput {
+                            text <=> root.schema_code_input;
+                            font-family: "Microsoft YaHei";
+                            font-size: 13px;
+                            vertical-alignment: center;
+                            width: 100%;
+                            height: 100%;
+                        }
+                    }
+                }
+                
+                // Name input (horizontal layout)
+                HorizontalBox {
+                    spacing: 8px;
+                    
+                    Text {
+                        text: root.current_language == 0 ? "名称:" : "Name:";
+                        font-size: 13px;
+                        font-family: "Microsoft YaHei";
+                        width: 45px;
+                        vertical-alignment: center;
+                    }
+                    
+                    Rectangle {
+                        border-color: Theme.nav_border;
+                        border-width: 1px;
+                        border-radius: 3px;
+                        background: white;
+                        height: 32px;
+                        
+                        TextInput {
+                            text <=> root.schema_name_input;
+                            font-family: "Microsoft YaHei";
+                            font-size: 13px;
+                            vertical-alignment: center;
+                            width: 100%;
+                            height: 100%;
+                        }
+                    }
+                }
+            }
+        
+            // Buttons
+            HorizontalBox {
+                spacing: 10px;
+                alignment: end;            ThemedButton {
+                text: root.current_language == 0 ? "取消" : "Cancel";
+                is_primary: false;
+                clicked => {
+                    root.cancel_input();
+                }
+            }
+            
+            ThemedButton {
+                text: root.current_language == 0 ? "确定" : "OK";
+                is_primary: true;
+                clicked => {
+                    root.confirm_input(root.schema_code_input, root.schema_name_input);
+                }
+            }
+        }
+        }
+    }
+}
+
+// ============================================================================
+// Rename Archive Library Dialog Component
+// ============================================================================
+
+export component RenameArchiveDialog inherits Window {
+    // Language property (0: Chinese, 1: English)
+    in property <int> current_language: 0;
+    
+    title: current_language == 0 ? "重命名档案库" : "Rename Archive Library";
+    width: 400px;
+    height: 180px;
+    default-font-family: "Microsoft YaHei";
+    default-font-size: 14px;
+    
+    in-out property <string> library_name_input: "";
+    
+    callback confirm_input(string);
+    callback cancel_input();
+    
+    forward-focus: name-input;
+    
+    FocusScope {
+        key-pressed(event) => {
+            if event.text == Key.Escape {
+                root.cancel_input();
+                return accept;
+            }
+            return reject;
+        }
+        
+        VerticalBox {
+            padding-left: 10px;
+            padding-right: 10px;
+            padding-top: 15px;
+            padding-bottom: 30px;
+            spacing: 8px;
+            
+            VerticalBox {
+                spacing: 8px;
+        
+                // Name input (horizontal layout)
+                HorizontalBox {
+                    spacing: 8px;
+                    
+                    Text {
+                        text: root.current_language == 0 ? "名称:" : "Name:";
+                        font-size: 13px;
+                        font-family: "Microsoft YaHei";
+                        width: 45px;
+                        vertical-alignment: center;
+                    }
+                    
+                    Rectangle {
+                        border-color: Theme.nav_border;
+                        border-width: 1px;
+                        border-radius: 3px;
+                        background: white;
+                        height: 32px;
+                        
+                        name-input := TextInput {
+                            text <=> root.library_name_input;
+                            font-family: "Microsoft YaHei";
+                            font-size: 13px;
+                            vertical-alignment: center;
+                            width: 100%;
+                            height: 100%;
+                        }
+                    }
+                }
+            }
+        
+            // Buttons
+            HorizontalBox {
+                spacing: 10px;
+                alignment: end;
+            
+            ThemedButton {
+                text: root.current_language == 0 ? "取消" : "Cancel";
+                is_primary: false;
+                clicked => {
+                    root.cancel_input();
+                }
+            }
+            
+            ThemedButton {
+                text: root.current_language == 0 ? "确定" : "OK";
+                is_primary: true;
+                clicked => {
+                    root.confirm_input(root.library_name_input);
+                }
+            }
+        }
+        }
+    }
+}
+
+// ============================================================================
+// Schema Item Input Dialog Component
+// ============================================================================
+
+export component SchemaItemInputDialog inherits Window {
+    // Language property (0: Chinese, 1: English)
+    in property <int> current_language: 0;
+    
+    title: current_language == 0 ? "添加分类项" : "Add Schema Item";
+    width: 400px;
+    height: 220px;
+    default-font-family: "Microsoft YaHei";
+    default-font-size: 14px;
+    
+    in-out property <string> item_code_input: "";
+    in-out property <string> item_name_input: "";
+    
+    callback confirm_input(string, string);
+    callback cancel_input();
+    
+    forward-focus: item-code-input;
+    
+    FocusScope {
+        key-pressed(event) => {
+            if event.text == Key.Escape {
+                root.cancel_input();
+                return accept;
+            }
+            return reject;
+        }
+        
+        VerticalBox {
+            padding-left: 10px;
+            padding-right: 10px;
+            padding-top: 15px;
+            padding-bottom: 30px;
+            spacing: 8px;
+            
+            VerticalBox {
+                spacing: 8px;
+        
+                // Code input (horizontal layout)
+                HorizontalBox {
+                    spacing: 8px;
+                    
+                    Text {
+                        text: root.current_language == 0 ? "代码:" : "Code:";
+                        font-size: 13px;
+                        font-family: "Microsoft YaHei";
+                        width: 45px;
+                        vertical-alignment: center;
+                    }
+                    
+                    Rectangle {
+                        border-color: Theme.nav_border;
+                        border-width: 1px;
+                        border-radius: 3px;
+                        background: white;
+                        height: 32px;
+                        
+                        item-code-input := TextInput {
+                            text <=> root.item_code_input;
+                            font-family: "Microsoft YaHei";
+                            font-size: 13px;
+                            vertical-alignment: center;
+                            width: 100%;
+                            height: 100%;
+                        }
+                    }
+                }
+        
+                // Name input (horizontal layout)
+                HorizontalBox {
+                    spacing: 8px;
+                    
+                    Text {
+                        text: root.current_language == 0 ? "名称:" : "Name:";
+                        font-size: 13px;
+                        font-family: "Microsoft YaHei";
+                        width: 45px;
+                        vertical-alignment: center;
+                    }
+                    
+                    Rectangle {
+                        border-color: Theme.nav_border;
+                        border-width: 1px;
+                        border-radius: 3px;
+                        background: white;
+                        height: 32px;
+                        
+                        TextInput {
+                            text <=> root.item_name_input;
+                            font-family: "Microsoft YaHei";
+                            font-size: 13px;
+                            vertical-alignment: center;
+                            width: 100%;
+                            height: 100%;
+                        }
+                    }
+                }
+            }
+        
+        // Buttons
+        HorizontalBox {
+            spacing: 10px;
+            alignment: end;
+            
+            ThemedButton {
+                text: root.current_language == 0 ? "取消" : "Cancel";
+                is_primary: false;
+                clicked => {
+                    root.cancel_input();
+                }
+            }
+            
+            ThemedButton {
+                text: root.current_language == 0 ? "确定" : "OK";
+                is_primary: true;
+                clicked => {
+                    root.confirm_input(root.item_code_input, root.item_name_input);
+                }
+            }
+        }
+        }
+    }
+}
+
+// ============================================================================
+// Confirmation Dialog Component
+// ============================================================================
+
+export component ConfirmDialog inherits Window {
+    // Language property (0: Chinese, 1: English)
+    in property <int> current_language: 0;
+    in property <string> message: "";
+    
+    title: current_language == 0 ? "确认" : "Confirm";
+    width: 400px;
+    height: 180px;
+    default-font-family: "Microsoft YaHei";
+    default-font-size: 14px;
+    
+    callback confirm();
+    callback cancel();
+    
+    FocusScope {
+        key-pressed(event) => {
+            if event.text == Key.Escape {
+                root.cancel();
+                return accept;
+            }
+            return reject;
+        }
+        
+        VerticalBox {
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-top: 20px;
+            padding-bottom: 30px;
+            spacing: 15px;
+        
+            VerticalBox {
+                // Message text
+                Text {
+                    text: root.message;
+                    font-size: 14px;
+                    font-family: "Microsoft YaHei";
+                    color: Theme.text_primary;
+                    wrap: word-wrap;
+                    horizontal-alignment: center;
+                }
+            }
+        
+            // Buttons
+            HorizontalBox {
+                spacing: 10px;
+                alignment: center;
+            
+            ThemedButton {
+                text: root.current_language == 0 ? "取消" : "Cancel";
+                is_primary: false;
+                clicked => {
+                    root.cancel();
+                }
+            }
+            
+            ThemedButton {
+                text: root.current_language == 0 ? "确定" : "OK";
+                is_primary: true;
+                clicked => {
+                    root.confirm();
+                }
+            }
+            }
+        }
+    }
+}
+
+// ============================================================================
+// Classification Input Dialog (Top Level)
+// ============================================================================
+
+export component ClassificationInputDialog inherits Window {
+    in property <int> current_language: 0;
+    title: current_language == 0 ? "添加一级分类" : "Add Top Classification";
+    width: 400px;
+    height: 220px;
+    default-font-family: "Microsoft YaHei";
+    default-font-size: 14px;
+
+    in-out property <string> classification_code_input: "";
+    in-out property <string> classification_name_input: "";
+
+    callback confirm_input(string, string);
+    callback cancel_input();
+
+    forward-focus: classification-code-input;
+
+    FocusScope {
+        key-pressed(event) => {
+            if event.text == Key.Escape {
+                root.cancel_input();
+                return accept;
+            }
+            return reject;
+        }
+
+        VerticalBox {
+            padding-left: 10px;
+            padding-right: 10px;
+            padding-top: 15px;
+            padding-bottom: 30px;
+            spacing: 8px;
+
+            VerticalBox { spacing: 8px;
+                HorizontalBox { spacing: 8px;
+                    Text { text: root.current_language == 0 ? "代码:" : "Code:"; font-size: 13px; font-family: "Microsoft YaHei"; width: 45px; vertical-alignment: center; }
+                    Rectangle { border-color: Theme.nav_border; border-width: 1px; border-radius: 3px; background: white; height: 32px;
+                        classification-code-input := TextInput { text <=> root.classification_code_input; font-family: "Microsoft YaHei"; font-size: 13px; vertical-alignment: center; width: 100%; height: 100%; }
+                    }
+                }
+                HorizontalBox { spacing: 8px;
+                    Text { text: root.current_language == 0 ? "名称:" : "Name:"; font-size: 13px; font-family: "Microsoft YaHei"; width: 45px; vertical-alignment: center; }
+                    Rectangle { border-color: Theme.nav_border; border-width: 1px; border-radius: 3px; background: white; height: 32px;
+                        TextInput { text <=> root.classification_name_input; font-family: "Microsoft YaHei"; font-size: 13px; vertical-alignment: center; width: 100%; height: 100%; }
+                    }
+                }
+            }
+
+            HorizontalBox { spacing: 10px; alignment: end;
+                ThemedButton { text: root.current_language == 0 ? "取消" : "Cancel"; is_primary: false; clicked => { root.cancel_input(); } }
+                ThemedButton { text: root.current_language == 0 ? "确定" : "OK"; is_primary: true; clicked => { root.confirm_input(root.classification_code_input, root.classification_name_input); } }
+            }
+        }
+    }
+}
+
+// ============================================================================
+// Child Classification Input Dialog (Second Level)
+// ============================================================================
+
+export component ClassificationChildInputDialog inherits Window {
+    in property <int> current_language: 0;
+    in property <string> parent_display: ""; // e.g., parent code-name for context
+    title: current_language == 0 ? "添加二级分类" : "Add Child Classification";
+    width: 400px;
+    height: 250px;
+    default-font-family: "Microsoft YaHei";
+    default-font-size: 14px;
+
+    in-out property <string> child_code_input: "";
+    in-out property <string> child_name_input: "";
+
+    callback confirm_input(string, string);
+    callback cancel_input();
+
+    forward-focus: child-code-input;
+
+    FocusScope {
+        key-pressed(event) => {
+            if event.text == Key.Escape {
+                root.cancel_input();
+                return accept;
+            }
+            return reject;
+        }
+
+        VerticalBox {
+            padding-left: 10px;
+            padding-right: 10px;
+            padding-top: 15px;
+            padding-bottom: 30px;
+            spacing: 8px;
+
+            // Parent context display
+            Rectangle { height: 34px; background: Theme.bg_alt; border-radius: 4px; border-width: 1px; border-color: Theme.nav_border;
+                Text { text: (root.current_language == 0 ? "父级:" : "Parent:") + " " + root.parent_display; font-size: 12px; horizontal-alignment: center; vertical-alignment: center; color: Theme.text_primary; }
+            }
+
+            VerticalBox { spacing: 8px;
+                HorizontalBox { spacing: 8px;
+                    Text { text: root.current_language == 0 ? "代码:" : "Code:"; font-size: 13px; font-family: "Microsoft YaHei"; width: 45px; vertical-alignment: center; }
+                    Rectangle { border-color: Theme.nav_border; border-width: 1px; border-radius: 3px; background: white; height: 32px;
+                        child-code-input := TextInput { text <=> root.child_code_input; font-family: "Microsoft YaHei"; font-size: 13px; vertical-alignment: center; width: 100%; height: 100%; }
+                    }
+                }
+                HorizontalBox { spacing: 8px;
+                    Text { text: root.current_language == 0 ? "名称:" : "Name:"; font-size: 13px; font-family: "Microsoft YaHei"; width: 45px; vertical-alignment: center; }
+                    Rectangle { border-color: Theme.nav_border; border-width: 1px; border-radius: 3px; background: white; height: 32px;
+                        TextInput { text <=> root.child_name_input; font-family: "Microsoft YaHei"; font-size: 13px; vertical-alignment: center; width: 100%; height: 100%; }
+                    }
+                }
+            }
+
+            HorizontalBox { spacing: 10px; alignment: end;
+                ThemedButton { text: root.current_language == 0 ? "取消" : "Cancel"; is_primary: false; clicked => { root.cancel_input(); } }
+                ThemedButton { text: root.current_language == 0 ? "确定" : "OK"; is_primary: true; clicked => { root.confirm_input(root.child_code_input, root.child_name_input); } }
+            }
+        }
+    }
+}

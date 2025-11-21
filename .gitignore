@@ -1,0 +1,36 @@
+# Rust
+/target/
+Cargo.lock
+**/*.rs.bk
+*.pdb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-workspace
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Database
+*.db
+*.sqlite
+.fondspod.db
+
+# OS
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+# Build artifacts
+/build/
+/dist/
+
+# Logs
+*.log

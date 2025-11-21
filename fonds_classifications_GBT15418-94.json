@@ -1,0 +1,622 @@
+[
+  {
+    "code": "A",
+    "name": "中国共产党党务",
+    "is_active": false,
+    "children": []
+  },
+  {
+    "code": "B",
+    "name": "国家政务总类",
+    "is_active": false,
+    "children": [
+      {
+        "code": "BA",
+        "name": "人民代表大会工作",
+        "is_active": false,
+        "children": []
+      },
+      {
+        "code": "BB",
+        "name": "政府行政工作",
+        "is_active": false,
+        "children": []
+      },
+      {
+        "code": "BC",
+        "name": "机构编制、人事劳动",
+        "is_active": false,
+        "children": []
+      },
+      {
+        "code": "BD",
+        "name": "监察",
+        "is_active": false,
+        "children": []
+      },
+      {
+        "code": "BE",
+        "name": "民族事务",
+        "is_active": false,
+        "children": []
+      },
+      {
+        "code": "BF",
+        "name": "宗教",
+        "is_active": false,
+        "children": []
+      },
+      {
+        "code": "BG",
+        "name": "华侨事务",
+        "is_active": false,
+        "children": []
+      },
+      {
+        "code": "BH",
+        "name": "人口、计划生育",
+        "is_active": false,
+        "children": []
+      }
+    ]
+  },
+  {
+    "code": "C",
+    "name": "政法",
+    "is_active": false,
+    "children": [
+      {
+        "code": "CA",
+        "name": "民法",
+        "is_active": false,
+        "children": []
+      },
+      {
+        "code": "CB",
+        "name": "司法",
+        "is_active": false,
+        "children": []
+      },
+      {
+        "code": "CD",
+        "name": "检察",
+        "is_active": false,
+        "children": []
+      },
+      {
+        "code": "CE",
+        "name": "法院工作",
+        "is_active": false,
+        "children": []
+      },
+      {
+        "code": "CF",
+        "name": "国家安全",
+        "is_active": false,
+        "children": []
+      }
+    ]
+  },
+  {
+    "code": "D",
+    "name": "军事",
+    "is_active": false,
+    "children": []
+  },
+  {
+    "code": "E",
+    "name": "外交",
+    "is_active": false,
+    "children": []
+  },
+  {
+    "code": "F",
+    "name": "政协、民主党派、群众团体",
+    "is_active": false,
+    "children": [
+      {
+        "code": "FA",
+        "name": "政协",
+        "is_active": false,
+        "children": []
+      },
+      {
+        "code": "FB",
+        "name": "民主党派",
+        "is_active": false,
+        "children": []
+      },
+      {
+        "code": "FC",
+        "name": "群众团体",
+        "is_active": false,
+        "children": []
+      }
+    ]
+  },
+  {
+    "code": "G",
+    "name": "文化、教育、卫生、体育",
+    "is_active": true,
+    "children": [
+      {
+        "code": "GA",
+        "name": "文化",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "GB",
+        "name": "新闻通讯",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "GC",
+        "name": "出版",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "GD",
+        "name": "广播影视",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "GE",
+        "name": "教育",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "GF",
+        "name": "卫生",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "GG",
+        "name": "体育",
+        "is_active": true,
+        "children": []
+      }
+    ]
+  },
+  {
+    "code": "H",
+    "name": "科学研究",
+    "is_active": true,
+    "children": [
+      {
+        "code": "HA",
+        "name": "科研事业管理",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "HB",
+        "name": "自然科学（基础科学）",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "HE",
+        "name": "工程和技术科学",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "HK",
+        "name": "医学科学",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "HL",
+        "name": "农业科学",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "HP",
+        "name": "人文和社会科学",
+        "is_active": true,
+        "children": []
+      }
+    ]
+  },
+  {
+    "code": "J",
+    "name": "计划、经济管理",
+    "is_active": true,
+    "children": [
+      {
+        "code": "JA",
+        "name": "计划",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "JB",
+        "name": "经济体制改革",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "JC",
+        "name": "经济贸易管理",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "JD",
+        "name": "统计",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "JE",
+        "name": "工商行政管理",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "JF",
+        "name": "物价管理",
+        "is_active": true,
+        "children": []
+      }
+    ]
+  },
+  {
+    "code": "K",
+    "name": "财政、金融",
+    "is_active": true,
+    "children": [
+      {
+        "code": "KA",
+        "name": "财政",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "KB",
+        "name": "金融",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "KC",
+        "name": "税务",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "KD",
+        "name": "审计",
+        "is_active": true,
+        "children": []
+      }
+    ]
+  },
+  {
+    "code": "L",
+    "name": "贸易、旅游",
+    "is_active": true,
+    "children": [
+      {
+        "code": "LA",
+        "name": "国内贸易",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "LB",
+        "name": "对外经济贸易",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "LC",
+        "name": "海关",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "LD",
+        "name": "商检",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "LE",
+        "name": "旅游",
+        "is_active": true,
+        "children": []
+      }
+    ]
+  },
+  {
+    "code": "M",
+    "name": "农业、林业、水利",
+    "is_active": true,
+    "children": [
+      {
+        "code": "MA",
+        "name": "农业",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "MB",
+        "name": "林业",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "MC",
+        "name": "水利",
+        "is_active": true,
+        "children": []
+      }
+    ]
+  },
+  {
+    "code": "N",
+    "name": "工业",
+    "is_active": true,
+    "children": [
+      {
+        "code": "NA",
+        "name": "地质矿产业",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "NB",
+        "name": "石油、天然气工业",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "NC",
+        "name": "煤炭工业",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "NE",
+        "name": "电力工业",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "NF",
+        "name": "核工业",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "NG",
+        "name": "冶金工业",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "NH",
+        "name": "有色金属工业",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "NJ",
+        "name": "机械工业",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "NK",
+        "name": "电子工业",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "NL",
+        "name": "航空工业",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "NM",
+        "name": "航天工业",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "NN",
+        "name": "兵器工业",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "NO",
+        "name": "汽车工业",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "NP",
+        "name": "船舶工业",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "NQ",
+        "name": "化学工业",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "NR",
+        "name": "石化工业",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "NS",
+        "name": "医药工业",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "NT",
+        "name": "轻工业",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "NV",
+        "name": "纺织工业",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "NW",
+        "name": "建筑材料工业",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "NY",
+        "name": "非金属矿工业",
+        "is_active": true,
+        "children": []
+      }
+    ]
+  },
+  {
+    "code": "P",
+    "name": "交通运输",
+    "is_active": true,
+    "children": [
+      {
+        "code": "PA",
+        "name": "铁路",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "PB",
+        "name": "公路",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "PC",
+        "name": "水路",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "PD",
+        "name": "民航",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "PE",
+        "name": "城市快速轨道交通",
+        "is_active": true,
+        "children": []
+      }
+    ]
+  },
+  {
+    "code": "Q",
+    "name": "邮电",
+    "is_active": true,
+    "children": []
+  },
+  {
+    "code": "R",
+    "name": "城乡建设、建筑业",
+    "is_active": true,
+    "children": []
+  },
+  {
+    "code": "S",
+    "name": "环境保护、土地管理",
+    "is_active": true,
+    "children": [
+      {
+        "code": "SA",
+        "name": "环境保护",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "SB",
+        "name": "土地管理",
+        "is_active": true,
+        "children": []
+      }
+    ]
+  },
+  {
+    "code": "T",
+    "name": "海洋、气象、地震、测绘",
+    "is_active": true,
+    "children": [
+      {
+        "code": "TA",
+        "name": "海洋",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "TB",
+        "name": "气象",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "TC",
+        "name": "地震",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "TD",
+        "name": "测绘",
+        "is_active": true,
+        "children": []
+      }
+    ]
+  },
+  {
+    "code": "U",
+    "name": "标准、计量、专利",
+    "is_active": true,
+    "children": [
+      {
+        "code": "UA",
+        "name": "标准",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "UB",
+        "name": "计量",
+        "is_active": true,
+        "children": []
+      },
+      {
+        "code": "UC",
+        "name": "专利",
+        "is_active": true,
+        "children": []
+      }
+    ]
+  }
+]
