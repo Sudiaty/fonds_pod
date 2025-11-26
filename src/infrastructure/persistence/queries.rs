@@ -326,3 +326,141 @@ pub fn delete_file(
     
     Ok(true)
 }
+
+pub fn get_file(
+    conn: &mut SqliteConnection,
+    file_number: &str,
+) -> Result<Option<models::File>, Box<dyn std::error::Error>> {
+    use crate::infrastructure::persistence::schema::files::dsl::*;
+    
+    let result = files
+        .filter(file_no.eq(file_number))
+        .first::<models::File>(conn)
+        .optional()?;
+    
+    Ok(result)
+}
+
+pub fn list_items_by_file(
+    conn: &mut SqliteConnection,
+    file_number: &str,
+) -> Result<Vec<models::Item>, Box<dyn std::error::Error>> {
+    use crate::infrastructure::persistence::schema::items::dsl::*;
+    
+    let results = items
+        .filter(file_no.eq(file_number))
+        .load::<models::Item>(conn)?;
+    
+    Ok(results)
+}
+
+pub fn delete_item(
+    conn: &mut SqliteConnection,
+    item_number: &str,
+) -> Result<bool, Box<dyn std::error::Error>> {
+    use crate::infrastructure::persistence::schema::items::dsl::*;
+    
+    diesel::delete(items.filter(item_no.eq(item_number)))
+        .execute(conn)?;
+    
+    Ok(true)
+}
+
+// ============================================================================
+// Sequence operations for generating unique numbers
+// ============================================================================
+
+/// Get the next sequence value for a given prefix
+/// If the prefix doesn't exist, it will be created with initial value 1
+pub fn get_next_sequence(
+    conn: &mut SqliteConnection,
+    prefix_value: &str,
+) -> Result<i32, Box<dyn std::error::Error>> {
+    use crate::infrastructure::persistence::schema::sequences::dsl::*;
+    
+    // Try to get existing sequence
+    let result = sequences
+        .filter(prefix.eq(prefix_value))
+        .first::<models::Sequence>(conn)
+        .optional()?;
+    
+    let next_value = match result {
+        Some(seq) => seq.current_value + 1,
+        None => 1,
+    };
+    
+    // Upsert the sequence
+    diesel::replace_into(sequences)
+        .values(&models::Sequence {
+            prefix: prefix_value.to_string(),
+            current_value: next_value,
+        })
+        .execute(conn)?;
+    
+    Ok(next_value)
+}
+
+/// Format sequence value with specified digits (default 2)
+pub fn format_sequence(value: i32, digits: usize) -> String {
+    format!("{:0>width$}", value, width = digits)
+}
+
+// ============================================================================
+// FondSchema operations
+// ============================================================================
+
+/// Create a fond-schema association
+pub fn create_fond_schema(
+    conn: &mut SqliteConnection,
+    fond_schema: &models::FondSchema,
+) -> Result<(), Box<dyn std::error::Error>> {
+    use crate::infrastructure::persistence::schema::fond_schemas::dsl::*;
+    
+    diesel::insert_into(fond_schemas)
+        .values(fond_schema)
+        .execute(conn)?;
+    Ok(())
+}
+
+/// List all schemas associated with a fond, ordered by order_no
+pub fn list_fond_schemas(
+    conn: &mut SqliteConnection,
+    fond_number: &str,
+) -> Result<Vec<models::FondSchema>, Box<dyn std::error::Error>> {
+    use crate::infrastructure::persistence::schema::fond_schemas::dsl::*;
+    
+    let results = fond_schemas
+        .filter(fond_no.eq(fond_number))
+        .order(order_no.asc())
+        .load::<models::FondSchema>(conn)?;
+    
+    Ok(results)
+}
+
+/// Delete all fond-schema associations for a fond
+pub fn delete_fond_schemas(
+    conn: &mut SqliteConnection,
+    fond_number: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    use crate::infrastructure::persistence::schema::fond_schemas::dsl::*;
+    
+    diesel::delete(fond_schemas.filter(fond_no.eq(fond_number)))
+        .execute(conn)?;
+    
+    Ok(())
+}
+
+/// Check if a series already exists
+pub fn series_exists(
+    conn: &mut SqliteConnection,
+    series_number: &str,
+) -> Result<bool, Box<dyn std::error::Error>> {
+    use crate::infrastructure::persistence::schema::series::dsl::*;
+    
+    let count = series
+        .filter(series_no.eq(series_number))
+        .count()
+        .get_result::<i64>(conn)?;
+    
+    Ok(count > 0)
+}

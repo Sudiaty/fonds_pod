@@ -1,11 +1,16 @@
 /// UI event handlers - connects UI callbacks to application services
-use crate::services::{SchemaService, ArchiveService, ClassificationService};
+use crate::services::{SchemaService, ArchiveService, ClassificationService, FondsService, FileService, CreateFileInput, CreateFondsInput};
 use crate::domain::ConfigRepository;
+use crate::infrastructure::persistence::queries;
 use std::rc::Rc;
+use std::fs;
+use std::path::Path;
 
 // Import AppWindow and ComponentHandle trait from parent module (main.rs)
 use crate::AppWindow;
-use slint::{ComponentHandle, Model};
+use crate::FileInputDialog;
+use crate::ConfirmDialog;
+use slint::{ComponentHandle, Model, VecModel};
 
 /// Schema handler - manages schema-related UI events
 pub struct SchemaHandler<CR: ConfigRepository + 'static> {
@@ -61,8 +66,7 @@ impl<CR: ConfigRepository + 'static> SchemaHandler<CR> {
                 match crate::SchemaInputDialog::new() {
                     Ok(dialog) => {
                         // Set the dialog language to match the main window
-                        let current_language = ui.invoke_get_language();
-                        dialog.set_current_language(current_language);
+                        dialog.set_current_language(0);
                         
                         let archive_service = archive_service.clone();
                         let ui_weak2 = ui_weak.clone();
@@ -98,9 +102,9 @@ impl<CR: ConfigRepository + 'static> SchemaHandler<CR> {
                                             }
                                             Err(e) => {
                                                 let error_msg = if e.to_string().contains("UNIQUE constraint failed") {
-                                                    format!("分类方案代码 '{}' 已存在", schema_code_str)
+                                                    ui.get_code_exists().replace("{}", &schema_code_str)
                                                 } else {
-                                                    format!("创建失败: {}", e)
+                                                    ui.get_create_failed().replace("{}", &e.to_string())
                                                 };
                                                 ui.invoke_show_toast(error_msg.into());
                                             }
@@ -153,8 +157,8 @@ impl<CR: ConfigRepository + 'static> SchemaHandler<CR> {
                     .to_string();
                 
                 let confirmed = rfd::MessageDialog::new()
-                    .set_title("确认删除")
-                    .set_description(&format!("确定要删除分类方案 '{}' 吗？", schema_no))
+                    .set_title(&ui.get_confirm_delete())
+                    .set_description(&ui.get_confirm_delete_classification().replace("{}", &schema_no))
                     .set_buttons(rfd::MessageButtons::YesNo)
                     .show();
                 
@@ -175,10 +179,10 @@ impl<CR: ConfigRepository + 'static> SchemaHandler<CR> {
                                 Self::reload_schemas(&db_path, &ui);
                             }
                             Ok(false) => {
-                                ui.invoke_show_toast("无法删除该分类方案，可能已被使用或受保护".into());
+                                ui.invoke_show_toast(ui.get_cannot_delete().replace("{}", &schema_no).into());
                             }
                             Err(e) => {
-                                ui.invoke_show_toast(format!("删除失败: {}", e).into());
+                                ui.invoke_show_toast(ui.get_delete_failed().replace("{}", &e.to_string()).into());
                             }
                         }
                     }
@@ -213,8 +217,8 @@ impl<CR: ConfigRepository + 'static> SchemaHandler<CR> {
                 
                 // Show confirmation dialog
                 let confirmed = rfd::MessageDialog::new()
-                    .set_title("确认删除")
-                    .set_description(&format!("确定要删除选中的 {} 个分类方案吗？", count))
+                    .set_title(&ui.get_confirm_delete())
+                    .set_description(&ui.get_confirm_delete_selected_classifications().replace("{}", &count.to_string()))
                     .set_buttons(rfd::MessageButtons::YesNo)
                     .show();
                 
@@ -243,10 +247,10 @@ impl<CR: ConfigRepository + 'static> SchemaHandler<CR> {
                                             deleted_count += 1;
                                         }
                                         Ok(false) => {
-                                            ui.invoke_show_toast(format!("无法删除 '{}'，可能已被使用或受保护", schema_no).into());
+                                            ui.invoke_show_toast(ui.get_cannot_delete().replace("{}", &schema_no).into());
                                         }
                                         Err(e) => {
-                                            ui.invoke_show_toast(format!("删除 '{}' 失败: {}", schema_no, e).into());
+                                            ui.invoke_show_toast(ui.get_delete_failed().replace("{}", &e.to_string()).into());
                                         }
                                     }
                                 }
@@ -390,8 +394,7 @@ impl<CR: ConfigRepository + 'static> SchemaHandler<CR> {
                 match crate::SchemaItemInputDialog::new() {
                     Ok(dialog) => {
                         // Set the dialog language to match the main window
-                        let current_language = ui.invoke_get_language();
-                        dialog.set_current_language(current_language);
+                        dialog.set_current_language(0);
                         
                         let archive_service = archive_service.clone();
                         let ui_weak2 = ui_weak.clone();
@@ -433,9 +436,9 @@ impl<CR: ConfigRepository + 'static> SchemaHandler<CR> {
                                             }
                                             Err(e) => {
                                                 let error_msg = if e.to_string().contains("UNIQUE constraint failed") {
-                                                    format!("分类项代码 '{}' 已存在", item_code_str)
+                                                    ui.get_code_exists().replace("{}", &item_code_str)
                                                 } else {
-                                                    format!("添加失败: {}", e)
+                                                    ui.get_create_failed().replace("{}", &e.to_string())
                                                 };
                                                 ui.invoke_show_toast(error_msg.into());
                                             }
@@ -502,8 +505,8 @@ impl<CR: ConfigRepository + 'static> SchemaHandler<CR> {
                 
                 // Show confirmation dialog
                 let confirmed = rfd::MessageDialog::new()
-                    .set_title("确认删除")
-                    .set_description(&format!("确定要删除分类项 '{}' 吗？", item_no))
+                    .set_title(&ui.get_confirm_delete())
+                    .set_description(&ui.get_confirm_delete_classification().replace("{}", &item_no))
                     .set_buttons(rfd::MessageButtons::YesNo)
                     .show();
                 
@@ -574,8 +577,8 @@ impl<CR: ConfigRepository + 'static> SchemaHandler<CR> {
                         
                         // Show confirmation dialog
                         let confirmed = rfd::MessageDialog::new()
-                            .set_title("确认删除")
-                            .set_description(&format!("确定要删除选中的 {} 个分类项吗？", count))
+                            .set_title(&ui.get_confirm_delete())
+                            .set_description(&ui.get_confirm_delete_selected_classifications().replace("{}", &count.to_string()))
                             .set_buttons(rfd::MessageButtons::YesNo)
                             .show();
                         
@@ -726,6 +729,11 @@ impl<CR: ConfigRepository + 'static> SchemaHandler<CR> {
     pub fn load_initial_schemas(db_path: &std::path::PathBuf, ui: &AppWindow) {
         if db_path.exists() {
             Self::reload_schemas(db_path, ui);
+            // Reset selection states when loading initial data
+            ui.set_selected_schema(0);
+            ui.set_selected_item(0);
+            ui.set_selected_schemas(slint::ModelRc::new(slint::VecModel::from(Vec::<i32>::new())));
+            ui.set_selected_items(slint::ModelRc::new(slint::VecModel::from(Vec::<i32>::new())));
         }
     }
 }
@@ -754,7 +762,7 @@ impl<CR: ConfigRepository + 'static> ArchiveHandler<CR> {
         ui.on_add_archive_library(move || {
             if let Some(ui) = ui_weak.upgrade() {
                 if let Some(path) = rfd::FileDialog::new().pick_folder() {
-                    let path_str = path.to_string_lossy().to_string();
+                    let path_str = path.to_string_lossy().to_string().into();
                     let name = path.file_name()
                         .unwrap_or_default()
                         .to_string_lossy()
@@ -791,8 +799,8 @@ impl<CR: ConfigRepository + 'static> ArchiveHandler<CR> {
                             
                             // Show confirmation dialog
                             let confirmed = rfd::MessageDialog::new()
-                                .set_title("确认删除")
-                                .set_description(&format!("确定要删除档案库 '{}' 吗？", library_name))
+                                .set_title(&ui.get_confirm_delete())
+                                .set_description(&ui.get_confirm_delete_classification().replace("{}", &library_name))
                                 .set_buttons(rfd::MessageButtons::YesNo)
                                 .show();
                             
@@ -826,8 +834,7 @@ impl<CR: ConfigRepository + 'static> ArchiveHandler<CR> {
                 match crate::RenameArchiveDialog::new() {
                     Ok(dialog) => {
                         // Set the dialog language to match the main window
-                        let current_language = ui.invoke_get_language();
-                        dialog.set_current_language(current_language);
+                        dialog.set_current_language(0);
                         dialog.set_library_name_input(current_name.clone());
                         
                         let archive_service = archive_service.clone();
@@ -949,9 +956,7 @@ impl<CR: ConfigRepository + 'static> ArchiveHandler<CR> {
             ui.set_selected_archive(index as i32);
         }
         
-        // Set language
-        let language_index = if settings.language == "en" { 1 } else { 0 };
-        ui.invoke_set_language(language_index);
+        // Language is now fixed to Chinese (0)
         
         Ok(())
     }
@@ -979,11 +984,14 @@ impl<CR: ConfigRepository + 'static> SettingsHandler<CR> {
         
         ui.on_apply_settings(move || {
             if let Some(ui) = ui_weak.upgrade() {
-                let language_index = ui.invoke_get_language();
-                let language = if language_index == 1 { "en" } else { "zh" };
-                
+                let language_index = ui.get_selected_language();
+                let language = if language_index == 0 { "zh_CN" } else { "en_US" };
                 if let Err(e) = archive_service.set_language(language.to_string()) {
                     eprintln!("Failed to save language: {}", e);
+                } else {
+                    // Apply translation immediately
+                    let _ = slint::select_bundled_translation(language);
+                    ui.invoke_show_toast(ui.get_language_applied());
                 }
             }
         });
@@ -995,13 +1003,7 @@ impl<CR: ConfigRepository + 'static> SettingsHandler<CR> {
         
         ui.on_cancel_settings(move || {
             if let Some(ui) = ui_weak.upgrade() {
-                match archive_service.get_settings() {
-                    Ok(settings) => {
-                        let language_index = if settings.language == "en" { 1 } else { 0 };
-                        ui.invoke_set_language(language_index);
-                    }
-                    Err(e) => eprintln!("Failed to load settings: {}", e),
-                }
+                // Language is fixed to Chinese, no need to reset
             }
         });
     }
@@ -1039,7 +1041,7 @@ impl<CR: ConfigRepository + 'static> ClassificationHandler<CR> {
             if let Some(ui) = ui_weak.upgrade() {
                 match crate::ClassificationInputDialog::new() {
                     Ok(dialog) => {
-                        dialog.set_current_language(ui.invoke_get_language());
+                        dialog.set_current_language(0);
                         let archive_service = archive_service.clone(); let ui_weak2 = ui_weak.clone(); let dialog_weak = dialog.as_weak();
                         dialog.on_confirm_input(move |code: slint::SharedString, name: slint::SharedString| {
                             if let Some(ui) = ui_weak2.upgrade() {
@@ -1049,7 +1051,7 @@ impl<CR: ConfigRepository + 'static> ClassificationHandler<CR> {
                                     Ok(Some(db_path)) => {
                                         match ClassificationService::create_top(&db_path, code_s.clone(), name_s) {
                                             Ok(_) => { Self::reload_top(&db_path, &ui); if let Some(d) = dialog_weak.upgrade() { let _ = d.hide(); } }
-                                            Err(e) => { let msg = if e.to_string().contains("UNIQUE constraint failed") { format!("分类代码 '{}' 已存在", code_s) } else { format!("创建失败: {}", e) }; ui.invoke_show_toast(msg.into()); }
+                                            Err(e) => { let msg = if e.to_string().contains("UNIQUE constraint failed") { ui.get_code_exists().replace("{}", &code_s) } else { ui.get_create_failed().replace("{}", &e.to_string()) }; ui.invoke_show_toast(msg.into()); }
                                         }
                                     }
                                     _ => {}
@@ -1074,14 +1076,14 @@ impl<CR: ConfigRepository + 'static> ClassificationHandler<CR> {
                 if current_index < 0 || current_index as usize >= list.row_count() { return; }
                 if let Some(item) = list.row_data(current_index as usize) {
                     let code = item.code.to_string();
-                    let confirmed = rfd::MessageDialog::new().set_title("确认删除").set_description(&format!("确定要删除分类 '{}' 吗？", code)).set_buttons(rfd::MessageButtons::YesNo).show();
+                    let confirmed = rfd::MessageDialog::new().set_title(&ui.get_confirm_delete()).set_description(&ui.get_confirm_delete_classification().replace("{}", &code)).set_buttons(rfd::MessageButtons::YesNo).show();
                     if confirmed != rfd::MessageDialogResult::Yes { return; }
                     match archive_service.get_database_path_by_index(sel_index) {
                         Ok(Some(db_path)) => {
                             match ClassificationService::delete(&db_path, &code) {
                                 Ok(true) => { Self::reload_top(&db_path, &ui); }
-                                Ok(false) => ui.invoke_show_toast(format!("无法删除分类 '{}': 有子项或被引用", code).into()),
-                                Err(e) => ui.invoke_show_toast(format!("删除失败: {}", e).into()),
+                                Ok(false) => ui.invoke_show_toast(ui.get_cannot_delete().replace("{}", &code).into()),
+                                Err(e) => ui.invoke_show_toast(ui.get_delete_failed().replace("{}", &e.to_string()).into()),
                             }
                         }
                         _ => {}
@@ -1099,11 +1101,11 @@ impl<CR: ConfigRepository + 'static> ClassificationHandler<CR> {
                 let selections = ui.get_selected_classifications();
                 let items = ui.get_classification_items(); if selections.row_count() == 0 { return; }
                 let mut count = 0; for i in 0..selections.row_count() { if selections.row_data(i) == Some(1) { count += 1; } }
-                let confirmed = rfd::MessageDialog::new().set_title("确认删除").set_description(&format!("确定删除选中的 {} 个分类?", count)).set_buttons(rfd::MessageButtons::YesNo).show(); if confirmed != rfd::MessageDialogResult::Yes { return; }
+                let confirmed = rfd::MessageDialog::new().set_title(&ui.get_confirm_delete()).set_description(&ui.get_confirm_delete_selected_classifications().replace("{}", &count.to_string())).set_buttons(rfd::MessageButtons::YesNo).show(); if confirmed != rfd::MessageDialogResult::Yes { return; }
                 match archive_service.get_database_path_by_index(sel_index) {
                     Ok(Some(db_path)) => {
                         let mut deleted = 0;
-                        for i in 0..selections.row_count() { if selections.row_data(i) == Some(1) { if let Some(item) = items.row_data(i) { let code = item.code.to_string(); match ClassificationService::delete(&db_path, &code) { Ok(true) => deleted += 1, Ok(false) => ui.invoke_show_toast(format!("无法删除 '{}': 被引用或有子项", code).into()), Err(e) => ui.invoke_show_toast(format!("删除 '{}' 失败: {}", code, e).into()) } } } }
+                        for i in 0..selections.row_count() { if selections.row_data(i) == Some(1) { if let Some(item) = items.row_data(i) { let code = item.code.to_string(); match ClassificationService::delete(&db_path, &code) { Ok(true) => deleted += 1, Ok(false) => ui.invoke_show_toast(ui.get_cannot_delete().replace("{}", &code).into()), Err(e) => ui.invoke_show_toast(ui.get_delete_failed().replace("{}", &e.to_string()).into()) } } } }
                         if deleted > 0 { Self::reload_top(&db_path, &ui); ui.set_selected_classifications(slint::ModelRc::new(slint::VecModel::<i32>::default())); }
                     }
                     _ => {}
@@ -1141,14 +1143,14 @@ impl<CR: ConfigRepository + 'static> ClassificationHandler<CR> {
                     let parent_code = parent.code.to_string(); let parent_display = format!("{} - {}", parent.code, parent.name);
                     match crate::ClassificationChildInputDialog::new() {
                         Ok(dialog) => {
-                            dialog.set_current_language(ui.invoke_get_language()); dialog.set_parent_display(parent_display.into());
+                            dialog.set_current_language(0); dialog.set_parent_display(parent_display.into());
                             let archive_service = archive_service.clone(); let ui_weak2 = ui_weak.clone(); let dialog_weak = dialog.as_weak(); let parent_code_clone = parent_code.clone();
                             dialog.on_confirm_input(move |code: slint::SharedString, name: slint::SharedString| {
                                 if let Some(ui) = ui_weak2.upgrade() { let code_s = code.to_string(); let name_s = name.to_string(); if code_s.is_empty() || name_s.is_empty() { return; }
                                     let sel_index = ui.get_selected_archive(); match archive_service.get_database_path_by_index(sel_index) { Ok(Some(db_path)) => {
                                         match ClassificationService::create_child(&db_path, parent_code_clone.clone(), code_s.clone(), name_s) {
                                             Ok(_) => { Self::reload_children(&db_path, &parent_code_clone, &ui); if let Some(d) = dialog_weak.upgrade() { let _ = d.hide(); } }
-                                            Err(e) => { let msg = if e.to_string().contains("UNIQUE constraint failed") { format!("分类代码 '{}' 已存在", code_s) } else { format!("添加失败: {}", e) }; ui.invoke_show_toast(msg.into()); }
+                                            Err(e) => { let msg = if e.to_string().contains("UNIQUE constraint failed") { ui.get_code_exists().replace("{}", &code_s) } else { ui.get_create_failed().replace("{}", &e.to_string()) }; ui.invoke_show_toast(msg.into()); }
                                         }
                                     } _ => {} }
                                 }
@@ -1170,10 +1172,10 @@ impl<CR: ConfigRepository + 'static> ClassificationHandler<CR> {
                 let children_model = ui.get_classification_children(); let child_idx = ui.get_selected_child(); if child_idx < 0 || child_idx as usize >= children_model.row_count() { return; }
                 if let Some(child) = children_model.row_data(child_idx as usize) {
                     let code = child.code.to_string(); let parent_code = parents.row_data(parent_idx as usize).unwrap().code.to_string();
-                    let confirmed = rfd::MessageDialog::new().set_title("确认删除").set_description(&format!("确定要删除二级分类 '{}' 吗？", code)).set_buttons(rfd::MessageButtons::YesNo).show();
+                    let confirmed = rfd::MessageDialog::new().set_title(&ui.get_confirm_delete()).set_description(&ui.get_confirm_delete_child_classification().replace("{}", &code)).set_buttons(rfd::MessageButtons::YesNo).show();
                     if confirmed != rfd::MessageDialogResult::Yes { return; }
                     let sel_arch = ui.get_selected_archive(); match archive_service.get_database_path_by_index(sel_arch) { Ok(Some(db_path)) => {
-                        match ClassificationService::delete(&db_path, &code) { Ok(true) => { Self::reload_children(&db_path, &parent_code, &ui); } Ok(false) => ui.invoke_show_toast(format!("无法删除分类 '{}': 有子项或被引用", code).into()), Err(e) => ui.invoke_show_toast(format!("删除失败: {}", e).into()) }
+                        match ClassificationService::delete(&db_path, &code) { Ok(true) => { Self::reload_children(&db_path, &parent_code, &ui); } Ok(false) => ui.invoke_show_toast(ui.get_cannot_delete().replace("{}", &code).into()), Err(e) => ui.invoke_show_toast(ui.get_delete_failed().replace("{}", &e.to_string()).into()) }
                     } _ => {} }
                 }
             }
@@ -1187,11 +1189,11 @@ impl<CR: ConfigRepository + 'static> ClassificationHandler<CR> {
                 let parent_idx = ui.get_selected_classification(); let parents = ui.get_classification_items(); if parent_idx <0 || parent_idx as usize >= parents.row_count() { return; }
                 let selections = ui.get_selected_children(); let children = ui.get_classification_children(); if selections.row_count() == 0 { return; }
                 let mut count = 0; for i in 0..selections.row_count() { if selections.row_data(i)==Some(1){count+=1;} }
-                let confirmed = rfd::MessageDialog::new().set_title("确认删除").set_description(&format!("确定删除选中的 {} 个二级分类?", count)).set_buttons(rfd::MessageButtons::YesNo).show(); if confirmed != rfd::MessageDialogResult::Yes { return; }
+                let confirmed = rfd::MessageDialog::new().set_title(&ui.get_confirm_delete()).set_description(&ui.get_confirm_delete_selected_children().replace("{}", &count.to_string())).set_buttons(rfd::MessageButtons::YesNo).show(); if confirmed != rfd::MessageDialogResult::Yes { return; }
                 let sel_arch = ui.get_selected_archive(); let parent_code = parents.row_data(parent_idx as usize).unwrap().code.to_string();
                 match archive_service.get_database_path_by_index(sel_arch) {
                     Ok(Some(db_path)) => {
-                        let mut deleted = 0; for i in 0..selections.row_count() { if selections.row_data(i)==Some(1) { if let Some(child) = children.row_data(i) { let code = child.code.to_string(); match ClassificationService::delete(&db_path, &code) { Ok(true)=>deleted+=1, Ok(false)=>ui.invoke_show_toast(format!("无法删除 '{}': 有子项或被引用", code).into()), Err(e)=>ui.invoke_show_toast(format!("删除 '{}' 失败: {}", code, e).into()) } } } }
+                        let mut deleted = 0; for i in 0..selections.row_count() { if selections.row_data(i)==Some(1) { if let Some(child) = children.row_data(i) { let code = child.code.to_string(); match ClassificationService::delete(&db_path, &code) { Ok(true)=>deleted+=1, Ok(false)=>ui.invoke_show_toast(ui.get_cannot_delete().replace("{}", &code).into()), Err(e)=>ui.invoke_show_toast(ui.get_delete_failed().replace("{}", &format!("'{}': {}", code, e)).into()) } } } }
                         if deleted>0 { Self::reload_children(&db_path, &parent_code, &ui); ui.set_selected_children(slint::ModelRc::new(slint::VecModel::<i32>::default())); }
                     }
                     _ => {}
@@ -1221,11 +1223,11 @@ impl<CR: ConfigRepository + 'static> ClassificationHandler<CR> {
                     Ok(Some(db_path)) => {
                         if ui.get_selected_classifications().row_count() > 0 {
                             let selected = ui.get_selected_classifications(); let items = ui.get_classification_items();
-                            for i in 0..selected.row_count() { if selected.row_data(i) == Some(1) { if let Some(item) = items.row_data(i) { let code = item.code.to_string(); if let Err(e) = ClassificationService::activate(&db_path, &code) { ui.invoke_show_toast(format!("激活 '{}' 失败: {}", code, e).into()); } } } }
+                            for i in 0..selected.row_count() { if selected.row_data(i) == Some(1) { if let Some(item) = items.row_data(i) { let code = item.code.to_string(); if let Err(e) = ClassificationService::activate(&db_path, &code) { ui.invoke_show_toast(ui.get_activate_failed().replace("{}", &code).replace("{}", &e.to_string()).into()); } } } }
                             Self::reload_top(&db_path, &ui); ui.set_selected_classifications(slint::ModelRc::new(slint::VecModel::<i32>::default()));
                         } else {
                             let current_index = ui.get_selected_classification(); let list = ui.get_classification_items();
-                            if current_index >= 0 && (current_index as usize) < list.row_count() { if let Some(item) = list.row_data(current_index as usize) { let code = item.code.to_string(); if let Err(e) = ClassificationService::activate(&db_path, &code) { ui.invoke_show_toast(format!("激活 '{}' 失败: {}", code, e).into()); } else { Self::reload_top(&db_path, &ui); } } }
+                            if current_index >= 0 && (current_index as usize) < list.row_count() { if let Some(item) = list.row_data(current_index as usize) { let code = item.code.to_string(); if let Err(e) = ClassificationService::activate(&db_path, &code) { ui.invoke_show_toast(ui.get_activate_failed().replace("{}", &code).replace("{}", &e.to_string()).into()); } else { Self::reload_top(&db_path, &ui); } } }
                         }
                     }
                     _ => {}
@@ -1243,11 +1245,11 @@ impl<CR: ConfigRepository + 'static> ClassificationHandler<CR> {
                     Ok(Some(db_path)) => {
                         if ui.get_selected_classifications().row_count() > 0 {
                             let selected = ui.get_selected_classifications(); let items = ui.get_classification_items();
-                            for i in 0..selected.row_count() { if selected.row_data(i) == Some(1) { if let Some(item) = items.row_data(i) { let code = item.code.to_string(); if let Err(e) = ClassificationService::deactivate(&db_path, &code) { ui.invoke_show_toast(format!("停用 '{}' 失败: {}", code, e).into()); } } } }
+                            for i in 0..selected.row_count() { if selected.row_data(i) == Some(1) { if let Some(item) = items.row_data(i) { let code = item.code.to_string(); if let Err(e) = ClassificationService::deactivate(&db_path, &code) { ui.invoke_show_toast(ui.get_deactivate_failed().replace("{}", &code).replace("{}", &e.to_string()).into()); } } } }
                             Self::reload_top(&db_path, &ui); ui.set_selected_classifications(slint::ModelRc::new(slint::VecModel::<i32>::default()));
                         } else {
                             let current_index = ui.get_selected_classification(); let list = ui.get_classification_items();
-                            if current_index >= 0 && (current_index as usize) < list.row_count() { if let Some(item) = list.row_data(current_index as usize) { let code = item.code.to_string(); if let Err(e) = ClassificationService::deactivate(&db_path, &code) { ui.invoke_show_toast(format!("停用 '{}' 失败: {}", code, e).into()); } else { Self::reload_top(&db_path, &ui); } } }
+                            if current_index >= 0 && (current_index as usize) < list.row_count() { if let Some(item) = list.row_data(current_index as usize) { let code = item.code.to_string(); if let Err(e) = ClassificationService::deactivate(&db_path, &code) { ui.invoke_show_toast(ui.get_deactivate_failed().replace("{}", &code).replace("{}", &e.to_string()).into()); } else { Self::reload_top(&db_path, &ui); } } }
                         }
                     }
                     _ => {}
@@ -1266,11 +1268,11 @@ impl<CR: ConfigRepository + 'static> ClassificationHandler<CR> {
                     Ok(Some(db_path)) => {
                         if ui.get_selected_children().row_count() > 0 {
                             let selected = ui.get_selected_children(); let items = ui.get_classification_children();
-                            for i in 0..selected.row_count() { if selected.row_data(i) == Some(1) { if let Some(item) = items.row_data(i) { let code = item.code.to_string(); if let Err(e) = ClassificationService::activate(&db_path, &code) { ui.invoke_show_toast(format!("激活 '{}' 失败: {}", code, e).into()); } } } }
+                            for i in 0..selected.row_count() { if selected.row_data(i) == Some(1) { if let Some(item) = items.row_data(i) { let code = item.code.to_string(); if let Err(e) = ClassificationService::activate(&db_path, &code) { ui.invoke_show_toast(ui.get_activate_failed().replace("{}", &code).replace("{}", &e.to_string()).into()); } } } }
                             Self::reload_children(&db_path, &parent_code, &ui); ui.set_selected_children(slint::ModelRc::new(slint::VecModel::<i32>::default()));
                         } else {
                             let current_index = ui.get_selected_child(); let list = ui.get_classification_children();
-                            if current_index >= 0 && (current_index as usize) < list.row_count() { if let Some(item) = list.row_data(current_index as usize) { let code = item.code.to_string(); if let Err(e) = ClassificationService::activate(&db_path, &code) { ui.invoke_show_toast(format!("激活 '{}' 失败: {}", code, e).into()); } else { Self::reload_children(&db_path, &parent_code, &ui); } } }
+                            if current_index >= 0 && (current_index as usize) < list.row_count() { if let Some(item) = list.row_data(current_index as usize) { let code = item.code.to_string(); if let Err(e) = ClassificationService::activate(&db_path, &code) { ui.invoke_show_toast(ui.get_activate_failed().replace("{}", &code).replace("{}", &e.to_string()).into()); } else { Self::reload_children(&db_path, &parent_code, &ui); } } }
                         }
                     }
                     _ => {}
@@ -1289,11 +1291,11 @@ impl<CR: ConfigRepository + 'static> ClassificationHandler<CR> {
                     Ok(Some(db_path)) => {
                         if ui.get_selected_children().row_count() > 0 {
                             let selected = ui.get_selected_children(); let items = ui.get_classification_children();
-                            for i in 0..selected.row_count() { if selected.row_data(i) == Some(1) { if let Some(item) = items.row_data(i) { let code = item.code.to_string(); if let Err(e) = ClassificationService::deactivate(&db_path, &code) { ui.invoke_show_toast(format!("停用 '{}' 失败: {}", code, e).into()); } } } }
+                            for i in 0..selected.row_count() { if selected.row_data(i) == Some(1) { if let Some(item) = items.row_data(i) { let code = item.code.to_string(); if let Err(e) = ClassificationService::deactivate(&db_path, &code) { ui.invoke_show_toast(ui.get_deactivate_failed().replace("{}", &code).replace("{}", &e.to_string()).into()); } } } }
                             Self::reload_children(&db_path, &parent_code, &ui); ui.set_selected_children(slint::ModelRc::new(slint::VecModel::<i32>::default()));
                         } else {
                             let current_index = ui.get_selected_child(); let list = ui.get_classification_children();
-                            if current_index >= 0 && (current_index as usize) < list.row_count() { if let Some(item) = list.row_data(current_index as usize) { let code = item.code.to_string(); if let Err(e) = ClassificationService::deactivate(&db_path, &code) { ui.invoke_show_toast(format!("停用 '{}' 失败: {}", code, e).into()); } else { Self::reload_children(&db_path, &parent_code, &ui); } } }
+                            if current_index >= 0 && (current_index as usize) < list.row_count() { if let Some(item) = list.row_data(current_index as usize) { let code = item.code.to_string(); if let Err(e) = ClassificationService::deactivate(&db_path, &code) { ui.invoke_show_toast(ui.get_deactivate_failed().replace("{}", &code).replace("{}", &e.to_string()).into()); } else { Self::reload_children(&db_path, &parent_code, &ui); } } }
                         }
                     }
                     _ => {}
@@ -1313,16 +1315,16 @@ impl<CR: ConfigRepository + 'static> ClassificationHandler<CR> {
                             Ok(json) => {
                                 if let Some(path) = rfd::FileDialog::new().add_filter("JSON", &["json"]).save_file() {
                                     if let Err(e) = std::fs::write(&path, json) {
-                                        ui.invoke_show_toast(format!("导出失败: {}", e).into());
+                                        ui.invoke_show_toast(ui.get_export_failed().replace("{}", &e.to_string()).into());
                                     } else {
-                                        ui.invoke_show_toast("导出成功".into());
+                                        ui.invoke_show_toast(ui.get_export_success());
                                     }
                                 }
                             }
-                            Err(e) => ui.invoke_show_toast(format!("导出失败: {}", e).into()),
+                            Err(e) => ui.invoke_show_toast(ui.get_export_failed().replace("{}", &e.to_string()).into()),
                         }
                     }
-                    _ => ui.invoke_show_toast("未选择档案库".into()),
+                    _ => ui.invoke_show_toast(ui.get_no_archive_selected()),
                 }
             }
         });
@@ -1341,16 +1343,16 @@ impl<CR: ConfigRepository + 'static> ClassificationHandler<CR> {
                                     match ClassificationService::import_from_json(&db_path, &json) {
                                         Ok(_) => {
                                             Self::reload_top(&db_path, &ui);
-                                            ui.invoke_show_toast("导入成功".into());
+                                            ui.invoke_show_toast(ui.get_import_success());
                                         }
-                                        Err(e) => ui.invoke_show_toast(format!("导入失败: {}", e).into()),
+                                        Err(e) => ui.invoke_show_toast(ui.get_import_failed().replace("{}", &e.to_string()).into()),
                                     }
                                 }
-                                Err(e) => ui.invoke_show_toast(format!("读取文件失败: {}", e).into()),
+                                Err(e) => ui.invoke_show_toast(ui.get_read_file_failed().replace("{}", &e.to_string()).into()),
                             }
                         }
                     }
-                    _ => ui.invoke_show_toast("未选择档案库".into()),
+                    _ => ui.invoke_show_toast(ui.get_no_archive_selected()),
                 }
             }
         });
@@ -1361,7 +1363,14 @@ impl<CR: ConfigRepository + 'static> ClassificationHandler<CR> {
             Ok(list) => {
                 let items: Vec<crate::ClassificationItem> = list.iter().map(|c| crate::ClassificationItem { code: c.code.as_str().into(), name: c.name.as_str().into(), is_active: c.is_active }).collect();
                 let model = slint::ModelRc::new(slint::VecModel::from(items)); ui.set_classification_items(model);
-                if let Some(first) = list.first() { Self::reload_children(db_path, &first.code, ui); }
+                if let Some(first) = list.first() { 
+                    Self::reload_children(db_path, &first.code, ui); 
+                } else {
+                    // If no top classifications, clear children as well
+                    let empty_children: Vec<crate::ClassificationItem> = Vec::new();
+                    let children_model = slint::ModelRc::new(slint::VecModel::from(empty_children));
+                    ui.set_classification_children(children_model);
+                }
             }
             Err(e) => eprintln!("Failed to load classifications: {}", e),
         }
@@ -1377,5 +1386,1011 @@ impl<CR: ConfigRepository + 'static> ClassificationHandler<CR> {
         }
     }
 
-    pub fn load_initial_classifications(db_path: &std::path::PathBuf, ui: &AppWindow) { if db_path.exists() { Self::reload_top(db_path, ui); } }
+    pub fn load_initial_classifications(db_path: &std::path::PathBuf, ui: &AppWindow) {
+        if db_path.exists() {
+            Self::reload_top(db_path, ui);
+            // Reset selection states when loading initial data
+            ui.set_selected_classification(0);
+            ui.set_selected_child(0);
+            ui.set_selected_classifications(slint::ModelRc::new(slint::VecModel::from(Vec::<i32>::new())));
+            ui.set_selected_children(slint::ModelRc::new(slint::VecModel::from(Vec::<i32>::new())));
+        }
+    }
+}
+
+/// Fonds handler - manages fonds-related UI events
+#[derive(Clone)]
+pub struct FondsHandler<CR: ConfigRepository + 'static> {
+    archive_service: Rc<ArchiveService<CR>>,
+    fonds_service: Rc<FondsService>,
+    file_service: Rc<FileService>,
+}
+
+impl<CR: ConfigRepository + 'static> FondsHandler<CR> {
+    pub fn new(archive_service: Rc<ArchiveService<CR>>, fonds_service: Rc<FondsService>, file_service: Rc<FileService>) -> Self {
+        Self { 
+            archive_service, 
+            fonds_service,
+            file_service,
+        }
+    }
+    
+    /// Setup fonds callbacks for the UI
+    pub fn setup_callbacks(&self, ui: &AppWindow) {
+        self.setup_add_fonds_dialog(ui);
+        self.setup_add_file(ui);
+        self.setup_delete_file(ui);
+        self.setup_delete_selected_files(ui);
+        self.setup_file_clicked(ui);
+        self.setup_select_series(ui);
+        self.setup_file_selected(ui);
+        self.setup_fonds_selected(ui);
+        self.setup_archive_selected(ui);
+    }
+    
+    fn setup_add_file(&self, ui: &AppWindow) {
+        let ui_weak = ui.as_weak();
+        let archive_service = self.archive_service.clone();
+        let file_service = self.file_service.clone();
+        
+        ui.on_add_file(move || {
+            if let Some(ui) = ui_weak.upgrade() {
+                // Get the selected series
+                let selected_series_no = ui.get_selected_series_no().to_string();
+                if selected_series_no.is_empty() {
+                    eprintln!("No series selected");
+                    return;
+                }
+                
+                // Create and show the file input dialog as a separate window
+                match FileInputDialog::new() {
+                    Ok(dialog) => {
+                        // Set the dialog language to match the main window
+                        dialog.set_current_language(0);
+                        
+                        let archive_service = archive_service.clone();
+                        let file_service = file_service.clone();
+                        let ui_weak2 = ui_weak.clone();
+                        let dialog_weak = dialog.as_weak();
+                        let selected_series_no = selected_series_no.clone();
+                        
+                        dialog.on_confirm_input(move |file_name: slint::SharedString| {
+                            if let Some(ui) = ui_weak2.upgrade() {
+                                let file_name_str = file_name.to_string();
+                                
+                                if file_name_str.is_empty() {
+                                    eprintln!("File name cannot be empty");
+                                    return;
+                                }
+                                
+                                let selected_index = ui.get_selected_archive();
+                                
+                                match archive_service.get_database_path_by_index(selected_index) {
+                                    Ok(Some(db_path)) => {
+                                        if !db_path.exists() {
+                                            eprintln!("Database not found for selected archive");
+                                            return;
+                                        }
+                                        
+                                        let input = CreateFileInput {
+                                            series_no: selected_series_no.clone(),
+                                            name: file_name_str.clone(),
+                                            created_at: None,
+                                        };
+                                        
+                                        match FileService::create_file(&db_path, input) {
+                                            Ok(result) => {
+                                                println!("File created: {}", result.file_no);
+                                                
+                                                // Create file folder: lib_path/fond_no/file_no
+                                                // Extract fond_no from series_no (format: fond_no-series_no)
+                                                let fond_no = selected_series_no.split('-').next().unwrap_or(&selected_series_no);
+                                                
+                                                if let Some(archive_item) = ui.get_archive_library_items().row_data(selected_index as usize) {
+                                                    let file_path = format!("{}/{}/{}", archive_item.path, fond_no, result.file_no);
+                                                    if let Err(e) = std::fs::create_dir_all(&file_path) {
+                                                        eprintln!("Failed to create file folder {}: {}", file_path, e);
+                                                    } else {
+                                                        println!("File folder created: {}", file_path);
+                                                    }
+                                                }
+                                                
+                                                // Reload files for the series
+                                                Self::reload_files_for_series(&db_path, &selected_series_no, &ui);
+                                                // Hide the dialog
+                                                if let Some(d) = dialog_weak.upgrade() {
+                                                    let _ = d.hide();
+                                                }
+                                            }
+                                            Err(e) => {
+                                                ui.invoke_show_toast(format!("创建文件失败: {}", e).into());
+                                            }
+                                        }
+                                    }
+                                    Ok(None) => eprintln!("No archive selected"),
+                                    Err(e) => eprintln!("Failed to get database path: {}", e),
+                                }
+                            }
+                        });
+                        
+                        let dialog_weak2 = dialog.as_weak();
+                        dialog.on_cancel_input(move || {
+                            println!("File dialog cancelled");
+                            if let Some(d) = dialog_weak2.upgrade() {
+                                let _ = d.hide();
+                            }
+                        });
+                        
+                        // Show the dialog as a separate window (non-blocking)
+                        if let Err(e) = dialog.show() {
+                            eprintln!("Failed to show file dialog: {}", e);
+                        }
+                    }
+                    Err(e) => eprintln!("Failed to create file dialog: {}", e),
+                }
+            }
+        });
+    }
+
+    fn setup_delete_file(&self, ui: &AppWindow) {
+        let ui_weak = ui.as_weak();
+        let archive_service = self.archive_service.clone();
+        
+        ui.on_delete_file(move || {
+            if let Some(ui) = ui_weak.upgrade() {
+                // Get the selected file
+                let selected_file_index = ui.get_selected_file();
+                if selected_file_index < 0 {
+                    eprintln!("No file selected");
+                    return;
+                }
+                
+                // Get file info from the model
+                let files_model = ui.get_files();
+                if let Some(file_item) = files_model.row_data(selected_file_index as usize) {
+                    let file_no_str = file_item.file_no.clone();
+                    let file_name_str = file_item.name.clone();
+                    
+                    // Get the selected series for context
+                    let selected_series_no = ui.get_selected_series_no().to_string();
+                    
+                    // Create and show confirmation dialog
+                    match crate::ConfirmDialog::new() {
+                        Ok(dialog) => {
+                            dialog.set_current_language(0);
+                            dialog.set_message("确定要删除这个文件吗？".into());
+                            
+                            let archive_service = archive_service.clone();
+                            let ui_weak2 = ui_weak.clone();
+                            let file_name_str = file_name_str.clone();
+                            let selected_series_no = selected_series_no.clone();
+                            let dialog_weak = dialog.as_weak();
+                            
+                            dialog.on_confirm(move || {
+                                if let Some(ui) = ui_weak2.upgrade() {
+                                    let selected_index = ui.get_selected_archive();
+                                    
+                                    match archive_service.get_database_path_by_index(selected_index) {
+                                        Ok(Some(db_path)) => {
+                                            if !db_path.exists() {
+                                                eprintln!("Database not found for selected archive");
+                                                return;
+                                            }
+                                            
+                                            // Get lib_path from archive_library_items
+                                            let archive_library_items = ui.get_archive_library_items();
+                                            let lib_path = if let Some(archive_item) = archive_library_items.row_data(selected_index as usize) {
+                                                archive_item.path.to_string()
+                                            } else {
+                                                String::new()
+                                            };
+                                            
+                                            // Extract fond_no from series_no (format: fond_no-year-...)
+                                            let fond_no = selected_series_no.split('-').next().unwrap_or("").to_string();
+                                            
+                                            // First get the file_no by name and series
+                                            match FondsService::list_files_by_series(&db_path, &selected_series_no) {
+                                                Ok(files) => {
+                                                    // Find the file with matching name
+                                                    if let Some(file) = files.into_iter().find(|f| f.name == *file_name_str) {
+                                                        let file_no_for_deletion = file.file_no.clone();
+                                                        match FileService::delete_file(&db_path, &file_no_for_deletion) {
+                                                            Ok(deleted) => {
+                                                                if deleted {
+                                                                    println!("File deleted: {}", file_no_for_deletion);
+                                                                    
+                                                                    // Delete file folder if it exists
+                                                                    let file_folder_path = format!("{}/{}/{}", lib_path, fond_no, file_no_for_deletion);
+                                                                    if Path::new(&file_folder_path).exists() {
+                                                                        match fs::remove_dir(&file_folder_path) {
+                                                                            Ok(_) => println!("File folder deleted: {}", file_folder_path),
+                                                                            Err(e) => {
+                                                                                eprintln!("Failed to delete file folder {}: {}", file_folder_path, e);
+                                                                                ui.invoke_show_toast(format!("删除文件夹失败（文件夹不为空）: {}", e).into());
+                                                                                return;
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                    
+                                                                    // Reload files for the series
+                                                                    Self::reload_files_for_series(&db_path, &selected_series_no, &ui);
+                                                                    // Close the dialog
+                                                                    if let Some(d) = dialog_weak.upgrade() {
+                                                                        let _ = d.hide();
+                                                                    }
+                                                                } else {
+                                                                    ui.invoke_show_toast("文件不存在".into());
+                                                                }
+                                                            }
+                                                            Err(e) => {
+                                                                ui.invoke_show_toast(format!("删除文件失败: {}", e).into());
+                                                            }
+                                                        }
+                                                    } else {
+                                                        ui.invoke_show_toast("文件不存在".into());
+                                                    }
+                                                }
+                                                Err(e) => {
+                                                    ui.invoke_show_toast(format!("获取文件列表失败: {}", e).into());
+                                                }
+                                            }
+                                        }
+                                        Ok(None) => eprintln!("No archive selected"),
+                                        Err(e) => eprintln!("Failed to get database path: {}", e),
+                                    }
+                                }
+                            });
+                            
+                            let dialog_weak = dialog.as_weak();
+                            dialog.on_cancel(move || {
+                                println!("Delete file cancelled");
+                                if let Some(d) = dialog_weak.upgrade() {
+                                    let _ = d.hide();
+                                }
+                            });
+                            
+                            // Show the dialog
+                            if let Err(e) = dialog.show() {
+                                eprintln!("Failed to show delete confirmation dialog: {}", e);
+                            }
+                        }
+                        Err(e) => eprintln!("Failed to create confirmation dialog: {}", e),
+                    }
+                } else {
+                    eprintln!("Invalid file selection");
+                }
+            }
+        });
+    }
+
+    fn setup_delete_selected_files(&self, ui: &AppWindow) {
+        let ui_weak = ui.as_weak();
+        let archive_service = self.archive_service.clone();
+        
+        ui.on_delete_selected_files(move || {
+            if let Some(ui) = ui_weak.upgrade() {
+                let selected_files = ui.get_selected_files();
+                if selected_files.row_count() == 0 {
+                    eprintln!("No files selected for deletion");
+                    return;
+                }
+                
+                // Create and show confirmation dialog
+                match crate::ConfirmDialog::new() {
+                    Ok(dialog) => {
+                        dialog.set_current_language(0);
+                        dialog.set_message(format!("确定要删除选中的 {} 个文件吗？", selected_files.row_count()).into());
+                        
+                        let archive_service = archive_service.clone();
+                        let ui_weak2 = ui_weak.clone();
+                        let selected_files = selected_files.clone();
+                        let dialog_weak = dialog.as_weak();
+                        
+                        dialog.on_confirm(move || {
+                            if let Some(ui) = ui_weak2.upgrade() {
+                                let selected_index = ui.get_selected_archive();
+                                let selected_series_no = ui.get_selected_series_no().to_string();
+                                
+                                match archive_service.get_database_path_by_index(selected_index) {
+                                    Ok(Some(db_path)) => {
+                                        if !db_path.exists() {
+                                            eprintln!("Database not found for selected archive");
+                                            return;
+                                        }
+                                        
+                                        // First get all files for the series
+                                        match FondsService::list_files_by_series(&db_path, &selected_series_no) {
+                                            Ok(all_files) => {
+                                                // Get lib_path from archive_library_items
+                                                let archive_library_items = ui.get_archive_library_items();
+                                                let lib_path = if let Some(archive_item) = archive_library_items.row_data(selected_index as usize) {
+                                                    archive_item.path.to_string()
+                                                } else {
+                                                    String::new()
+                                                };
+                                                
+                                                // Extract fond_no from series_no
+                                                let fond_no = selected_series_no.split('-').next().unwrap_or("").to_string();
+                                                let mut deleted_count = 0;
+                                                let mut folder_delete_errors = Vec::new();
+                                                
+                                                // Delete each selected file
+                                                for i in 0..selected_files.row_count() {
+                                                    if let Some(is_selected) = selected_files.row_data(i) {
+                                                        if is_selected == 1 {
+                                                            // Find the file by index in the UI list
+                                                            let files_model = ui.get_files();
+                                                            if let Some(file_item) = files_model.row_data(i as usize) {
+                                                                let file_no_str = file_item.file_no.clone();
+                                                                
+                                                                // Find the file in all_files by file_no
+                                                                if let Some(file) = all_files.iter().find(|f| f.file_no == *file_no_str) {
+                                                                    match FileService::delete_file(&db_path, &file.file_no) {
+                                                                        Ok(true) => {
+                                                                            println!("File deleted: {}", file.file_no);
+                                                                            
+                                                                            // Delete file folder
+                                                                            let file_folder_path = format!("{}/{}/{}", lib_path, fond_no, file.file_no);
+                                                                            if Path::new(&file_folder_path).exists() {
+                                                                                match fs::remove_dir(&file_folder_path) {
+                                                                                    Ok(_) => println!("File folder deleted: {}", file_folder_path),
+                                                                                    Err(e) => {
+                                                                                        eprintln!("Failed to delete file folder {}: {}", file_folder_path, e);
+                                                                                        folder_delete_errors.push(format!("{}: {}", file_folder_path, e));
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                            
+                                                                            deleted_count += 1;
+                                                                        }
+                                                                        Ok(false) => {
+                                                                            eprintln!("File not found: {}", file_no_str);
+                                                                        }
+                                                                        Err(e) => {
+                                                                            eprintln!("Failed to delete file {}: {}", file_no_str, e);
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                
+                                                if !folder_delete_errors.is_empty() {
+                                                    ui.invoke_show_toast(format!("删除文件夹失败（文件夹不为空）: {}", folder_delete_errors.join(", ")).into());
+                                                }
+                                                
+                                                if deleted_count > 0 {
+                                                    // Reload files for the series
+                                                    Self::reload_files_for_series(&db_path, &selected_series_no, &ui);
+                                                    // Clear selection
+                                                    ui.set_selected_files(slint::ModelRc::new(slint::VecModel::<i32>::default()));
+                                                    ui.set_selected_file(-1);
+                                                    
+                                                    if let Some(d) = dialog_weak.upgrade() {
+                                                        let _ = d.hide();
+                                                    }
+                                                }
+                                            }
+                                            Err(e) => {
+                                                ui.invoke_show_toast(format!("获取文件列表失败: {}", e).into());
+                                            }
+                                        }
+                                    }
+                                    Ok(None) => eprintln!("No archive selected"),
+                                    Err(e) => eprintln!("Failed to get database path: {}", e),
+                                }
+                            }
+                        });
+                        
+                        let dialog_weak = dialog.as_weak();
+                        dialog.on_cancel(move || {
+                            println!("Delete selected files cancelled");
+                            if let Some(d) = dialog_weak.upgrade() {
+                                let _ = d.hide();
+                            }
+                        });
+                        
+                        // Show the dialog
+                        if let Err(e) = dialog.show() {
+                            eprintln!("Failed to show delete confirmation dialog: {}", e);
+                        }
+                    }
+                    Err(e) => eprintln!("Failed to create confirmation dialog: {}", e),
+                }
+            }
+        });
+    }
+
+    fn setup_add_fonds_dialog(&self, ui: &AppWindow) {
+        let ui_weak = ui.as_weak();
+        let archive_service = self.archive_service.clone();
+        
+        ui.on_open_add_fonds_dialog(move || {
+            if let Some(ui) = ui_weak.upgrade() {
+                // Create and show the add fonds dialog as a separate window
+                match crate::AddFondsDialog::new() {
+                    Ok(dialog) => {
+                        // Set the dialog language to match the main window
+                        dialog.set_current_language(0);
+                        
+                        // Load classifications and schemas from database
+                        let selected_index = ui.get_selected_archive();
+                        if let Ok(Some(db_path)) = archive_service.get_database_path_by_index(selected_index) {
+                            // Load top classifications
+                            if let Ok(top_classifications) = ClassificationService::list_top(&db_path) {
+                                let primary_names: Vec<slint::SharedString> = top_classifications.iter()
+                                    .map(|c| format!("{} - {}", c.code, c.name).into())
+                                    .collect();
+                                dialog.set_primary_classifications((&primary_names[..]).into());
+                                
+                                // Load secondary classifications for each primary
+                                let mut secondary_lists: Vec<Vec<slint::SharedString>> = Vec::new();
+                                for top in &top_classifications {
+                                    if let Ok(children) = ClassificationService::list_children(&db_path, &top.code) {
+                                        let child_names: Vec<slint::SharedString> = children.iter()
+                                            .map(|c| format!("{} - {}", c.code, c.name).into())
+                                            .collect();
+                                        secondary_lists.push(child_names);
+                                    } else {
+                                        secondary_lists.push(Vec::new());
+                                    }
+                                }
+                                let secondary_models: Vec<slint::ModelRc<slint::SharedString>> = secondary_lists.into_iter()
+                                    .map(|v| (&v[..]).into())
+                                    .collect();
+                                dialog.set_secondary_classifications((&secondary_models[..]).into());
+                            }
+                            
+                            // Load available schemas
+                            if let Ok(schemas) = SchemaService::list_schemas(&db_path) {
+                                use crate::FondsSchemaOption;
+                                let schema_options: Vec<FondsSchemaOption> = schemas.iter()
+                                    .map(|s| FondsSchemaOption {
+                                        code: s.schema_no.clone().into(),
+                                        name: s.name.clone().into(),
+                                    })
+                                    .collect();
+                                dialog.set_available_schema_items((&schema_options[..]).into());
+                            }
+                        }
+                        
+                        let dialog_weak_move = dialog.as_weak();
+                        dialog.on_move_schema_to_selected(move |index: i32| {
+                            if let Some(dialog) = dialog_weak_move.upgrade() {
+                                let available = dialog.get_available_schema_items();
+                                let chosen = dialog.get_chosen_schema_items();
+                                
+                                let mut available_vec = Vec::new();
+                                for i in 0..available.row_count() {
+                                    if let Some(item) = available.row_data(i) {
+                                        available_vec.push(item);
+                                    }
+                                }
+                                
+                                let mut chosen_vec = Vec::new();
+                                for i in 0..chosen.row_count() {
+                                    if let Some(item) = chosen.row_data(i) {
+                                        chosen_vec.push(item);
+                                    }
+                                }
+                                
+                                if index >= 0 && (index as usize) < available_vec.len() {
+                                    let item = available_vec.remove(index as usize);
+                                    chosen_vec.push(item);
+                                    dialog.set_available_schema_items((&available_vec[..]).into());
+                                    dialog.set_chosen_schema_items((&chosen_vec[..]).into());
+                                }
+                            }
+                        });
+                        
+                        let dialog_weak_move2 = dialog.as_weak();
+                        dialog.on_move_schema_back(move |index: i32| {
+                            if let Some(dialog) = dialog_weak_move2.upgrade() {
+                                let available = dialog.get_available_schema_items();
+                                let chosen = dialog.get_chosen_schema_items();
+                                
+                                let mut available_vec = Vec::new();
+                                for i in 0..available.row_count() {
+                                    if let Some(item) = available.row_data(i) {
+                                        available_vec.push(item);
+                                    }
+                                }
+                                
+                                let mut chosen_vec = Vec::new();
+                                for i in 0..chosen.row_count() {
+                                    if let Some(item) = chosen.row_data(i) {
+                                        chosen_vec.push(item);
+                                    }
+                                }
+                                
+                                if index >= 0 && (index as usize) < chosen_vec.len() {
+                                    let item = chosen_vec.remove(index as usize);
+                                    available_vec.push(item);
+                                    dialog.set_available_schema_items((&available_vec[..]).into());
+                                    dialog.set_chosen_schema_items((&chosen_vec[..]).into());
+                                }
+                            }
+                        });
+                        
+                        let archive_service = archive_service.clone();
+                        let ui_weak2 = ui_weak.clone();
+                        let dialog_weak = dialog.as_weak();
+                        let selected_index = ui.get_selected_archive();
+                        let archive_library_items = ui.get_archive_library_items();
+                        
+                        dialog.on_confirm(move || {
+                            if let Some(dialog) = dialog_weak.upgrade() {
+                                let fonds_name = dialog.get_fonds_name_input().to_string();
+                                
+                                // Get selected classification
+                                let primary_idx = dialog.get_selected_primary_classification() as usize;
+                                let secondary_idx = dialog.get_selected_secondary_classification() as usize;
+                                let secondary_classifications = dialog.get_secondary_classifications();
+                                
+                                // Extract classification code from the secondary classification
+                                // Format: "CODE - Name"
+                                let classification_code = if secondary_classifications.row_count() > primary_idx {
+                                    if let Some(secondary_list) = secondary_classifications.row_data(primary_idx) {
+                                        if secondary_list.row_count() > secondary_idx {
+                                            if let Some(secondary) = secondary_list.row_data(secondary_idx) {
+                                                secondary.to_string()
+                                                    .split(" - ")
+                                                    .next()
+                                                    .unwrap_or("")
+                                                    .to_string()
+                                            } else {
+                                                String::new()
+                                            }
+                                        } else {
+                                            String::new()
+                                        }
+                                    } else {
+                                        String::new()
+                                    }
+                                } else {
+                                    String::new()
+                                };
+                                
+                                if classification_code.is_empty() {
+                                    eprintln!("No classification selected");
+                                    return;
+                                }
+                                
+                                // Get selected schemas
+                                let chosen_schemas = dialog.get_chosen_schema_items();
+                                let mut schema_codes: Vec<String> = Vec::new();
+                                for i in 0..chosen_schemas.row_count() {
+                                    if let Some(schema) = chosen_schemas.row_data(i) {
+                                        schema_codes.push(schema.code.to_string());
+                                    }
+                                }
+                                
+                                if schema_codes.is_empty() {
+                                    eprintln!("No schemas selected");
+                                    return;
+                                }
+                                
+                                // Create fonds input
+                                let input = CreateFondsInput {
+                                    classification_code: classification_code.clone(),
+                                    name: fonds_name.clone(),
+                                    schema_codes,
+                                    created_at: None, // Use current date
+                                };
+                                
+                                // Call service to create fonds
+                                match archive_service.get_database_path_by_index(selected_index) {
+                                    Ok(Some(db_path)) => {
+                                        match FondsService::create_fonds(&db_path, input) {
+                                            Ok(result) => {
+                                                println!("Fonds created: {} with {} series", result.fond_no, result.series_count);
+                                                
+                                                // Create fonds folder: lib_path/fond_no
+                                                if let Some(archive_item) = archive_library_items.row_data(selected_index as usize) {
+                                                    let fonds_path = format!("{}/{}", archive_item.path, result.fond_no);
+                                                    if let Err(e) = std::fs::create_dir_all(&fonds_path) {
+                                                        eprintln!("Failed to create fonds folder {}: {}", fonds_path, e);
+                                                    } else {
+                                                        println!("Fonds folder created: {}", fonds_path);
+                                                    }
+                                                }
+                                                
+                                                // Reload fonds list in UI
+                                                if let Some(ui) = ui_weak2.upgrade() {
+                                                    Self::reload_fonds(&db_path, &ui);
+                                                }
+                                                
+                                                // Hide the dialog
+                                                let _ = dialog.hide();
+                                            }
+                                            Err(e) => {
+                                                eprintln!("Failed to create fonds: {}", e);
+                                                if let Some(ui) = ui_weak2.upgrade() {
+                                                    ui.invoke_show_toast(format!("创建全宗失败: {}", e).into());
+                                                }
+                                            }
+                                        }
+                                    }
+                                    Ok(None) => eprintln!("No archive selected"),
+                                    Err(e) => eprintln!("Failed to get database path: {}", e),
+                                }
+                            }
+                        });
+                        
+                        let dialog_weak2 = dialog.as_weak();
+                        dialog.on_cancel(move || {
+                            println!("Add fonds dialog cancelled");
+                            if let Some(d) = dialog_weak2.upgrade() {
+                                let _ = d.hide();
+                            }
+                        });
+                        
+                        // Show the dialog as a separate window (non-blocking)
+                        if let Err(e) = dialog.show() {
+                            eprintln!("Failed to show add fonds dialog: {}", e);
+                        }
+                    }
+                    Err(e) => eprintln!("Failed to create add fonds dialog: {}", e),
+                }
+            }
+        });
+    }
+    
+    fn setup_select_series(&self, ui: &AppWindow) {
+        let ui_weak = ui.as_weak();
+        let archive_service = self.archive_service.clone();
+        
+        ui.on_select_series(move |index, series_no| {
+            if let Some(ui) = ui_weak.upgrade() {
+                ui.set_selected_series_index(index);
+                ui.set_selected_series_no(series_no.clone());
+                
+                // Load files for the selected series
+                let selected_archive = ui.get_selected_archive();
+                if let Ok(Some(db_path)) = archive_service.get_database_path_by_index(selected_archive) {
+                    Self::reload_files_for_series(&db_path, &series_no, &ui);
+                }
+            }
+        });
+    }
+
+    fn setup_file_clicked(&self, ui: &AppWindow) {
+        let ui_weak = ui.as_weak();
+        
+        ui.on_file_clicked(move |index: i32, ctrl: bool, shift: bool| {
+            if let Some(ui) = ui_weak.upgrade() {
+                let files = ui.get_files();
+                let total_count = files.row_count() as i32;
+                
+                if index < 0 || index >= total_count {
+                    return;
+                }
+                
+                if ctrl {
+                    // Ctrl+Click: Toggle selection
+                    let mut selections = vec![0; total_count as usize];
+                    let current_selections = ui.get_selected_files();
+                    
+                    // Copy current selections
+                    for i in 0..current_selections.row_count() {
+                        if i < selections.len() {
+                            selections[i] = current_selections.row_data(i).unwrap_or(0);
+                        }
+                    }
+                    
+                    // Toggle current item
+                    selections[index as usize] = if selections[index as usize] == 1 { 0 } else { 1 };
+                    
+                    let model = slint::ModelRc::new(slint::VecModel::from(selections));
+                    ui.set_selected_files(model);
+                    ui.set_selected_file(index);
+                } else if shift {
+                    // Shift+Click: Range selection
+                    let last_index = ui.get_selected_file();
+                    let start = last_index.min(index);
+                    let end = last_index.max(index);
+                    
+                    let mut selections = vec![0; total_count as usize];
+                    for i in start..=end {
+                        selections[i as usize] = 1;
+                    }
+                    
+                    let model = slint::ModelRc::new(slint::VecModel::from(selections));
+                    ui.set_selected_files(model);
+                    ui.set_selected_file(index);
+                } else {
+                    // Normal click: Clear multi-selection and select single item
+                    ui.set_selected_file(index);
+                    ui.set_selected_files(slint::ModelRc::new(slint::VecModel::<i32>::default()));
+                }
+                
+                // Trigger file_selected to load items for the selected file
+                ui.invoke_file_selected(index);
+            }
+        });
+    }
+
+    fn setup_file_selected(&self, ui: &AppWindow) {
+        let ui_weak = ui.as_weak();
+        let archive_service = self.archive_service.clone();
+        
+        ui.on_file_selected(move |file_index| {
+            if let Some(ui) = ui_weak.upgrade() {
+                let selected_archive = ui.get_selected_archive();
+                if let Ok(Some(db_path)) = archive_service.get_database_path_by_index(selected_archive) {
+                    let files = ui.get_files();
+                    if file_index >= 0 && (file_index as usize) < files.row_count() {
+                        if let Some(file_item) = files.row_data(file_index as usize) {
+                            let file_no_str = file_item.file_no.clone();
+                            match FondsService::list_items_by_file(&db_path, &file_no_str) {
+                                Ok(items) => {
+                                    let item_names: Vec<slint::SharedString> = items.into_iter()
+                                        .map(|i| i.name.into())
+                                        .collect();
+                                    let items_model = slint::ModelRc::new(slint::VecModel::from(item_names));
+                                    ui.set_item_list(items_model);
+                                    
+                                    // Reset item selection
+                                    ui.set_selected_item(0);
+                                }
+                                Err(e) => {
+                                    eprintln!("Failed to load items for file {}: {}", file_no_str, e);
+                                    let empty_items: Vec<slint::SharedString> = Vec::new();
+                                    let items_model = slint::ModelRc::new(slint::VecModel::from(empty_items));
+                                    ui.set_item_list(items_model);
+                                    ui.set_selected_item(-1);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    fn setup_fonds_selected(&self, ui: &AppWindow) {
+        let ui_weak = ui.as_weak();
+        let archive_service = self.archive_service.clone();
+        
+        ui.on_fonds_selected(move |fonds_index| {
+            if let Some(ui) = ui_weak.upgrade() {
+                let selected_archive = ui.get_selected_archive();
+                if let Ok(Some(db_path)) = archive_service.get_database_path_by_index(selected_archive) {
+                    // Load series for the selected fonds
+                    if let Ok(fonds_list) = FondsService::list_fonds(&db_path) {
+                        if (fonds_index as usize) < fonds_list.len() {
+                            let selected_fonds = &fonds_list[fonds_index as usize];
+                            match FondsService::list_series(&db_path, &selected_fonds.fond_no) {
+                                Ok(series_list) => {
+                                    let series_items: Vec<crate::SeriesItem> = series_list.into_iter()
+                                        .map(|s| crate::SeriesItem {
+                                            series_no: s.series_no.into(),
+                                            name: s.name.into(),
+                                            fond_no: s.fond_no.into(),
+                                        })
+                                        .collect();
+                                    let series_model = slint::ModelRc::new(slint::VecModel::from(series_items));
+                                    ui.set_series_list(series_model);
+                                    
+                                    // Reset series selection
+                                    ui.set_selected_series_index(-1);
+                                    ui.set_selected_series_no("".into());
+                                }
+                                Err(e) => {
+                                    eprintln!("Failed to load series for fonds {}: {}", selected_fonds.fond_no, e);
+                                    let empty_series: Vec<crate::SeriesItem> = Vec::new();
+                                    let series_model = slint::ModelRc::new(slint::VecModel::from(empty_series));
+                                    ui.set_series_list(series_model);
+                                    ui.set_selected_series_index(-1);
+                                    ui.set_selected_series_no("".into());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    /// Public method to refresh fonds data for a specific archive
+    pub fn refresh_fonds_data_for_archive(&self, archive_index: i32, ui: &AppWindow) {
+        self.reload_fonds_and_series_for_archive(archive_index, ui);
+    }
+    
+    /// Helper to reload fonds and series lists into UI for a specific archive
+    pub fn reload_fonds_and_series_for_archive(&self, archive_index: i32, ui: &AppWindow) {
+        if let Ok(Some(db_path)) = self.archive_service.get_database_path_by_index(archive_index) {
+            Self::reload_fonds_and_series(&db_path, ui);
+        } else {
+            // Clear data if no valid archive selected
+            let empty_names: Vec<slint::SharedString> = Vec::new();
+            let names_model = slint::ModelRc::new(slint::VecModel::from(empty_names));
+            ui.set_fonds_names(names_model);
+
+            let empty_series: Vec<crate::SeriesItem> = Vec::new();
+            let series_model = slint::ModelRc::new(slint::VecModel::from(empty_series));
+            ui.set_series_list(series_model);
+
+            ui.set_selected_fonds(0);
+            ui.set_selected_series_index(-1);
+            ui.set_selected_series_no("".into());
+        }
+    }
+    
+    /// Helper to reload fonds and series data into UI
+    fn reload_fonds_and_series(db_path: &std::path::PathBuf, ui: &AppWindow) {
+        // Get the selected archive path for calculating fonds paths
+        let selected_archive = ui.get_selected_archive();
+        let archive_library_items = ui.get_archive_library_items();
+        let lib_path = if selected_archive >= 0 && (selected_archive as usize) < archive_library_items.row_count() {
+            if let Some(archive_item) = archive_library_items.row_data(selected_archive as usize) {
+                archive_item.path.to_string()
+            } else {
+                String::new()
+            }
+        } else {
+            String::new()
+        };
+        
+        // Load fonds names for dropdown and fonds items with paths
+        match FondsService::list_fonds(db_path) {
+            Ok(fonds_list) => {
+                let names: Vec<slint::SharedString> = fonds_list.iter().map(|f| format!("{} - {}", f.fond_no, f.name).into()).collect();
+                let names_model = slint::ModelRc::new(slint::VecModel::from(names));
+                ui.set_fonds_names(names_model);
+                
+                // Create fonds items with calculated paths
+                let fonds_items: Vec<crate::FondsItem> = fonds_list.into_iter()
+                    .map(|f| {
+                        let fonds_path = if !lib_path.is_empty() {
+                            format!("{}/{}", lib_path, f.fond_no)
+                        } else {
+                            f.fond_no.clone()
+                        };
+                        crate::FondsItem {
+                            fond_no: f.fond_no.into(),
+                            name: f.name.into(),
+                            classification_code: f.fond_classification_code.into(),
+                            created_at: f.created_at.into(),
+                            path: fonds_path.into(),
+                        }
+                    })
+                    .collect();
+                let fonds_model = slint::ModelRc::new(slint::VecModel::from(fonds_items));
+                ui.set_fonds_items(fonds_model);
+            }
+            Err(e) => {
+                eprintln!("Failed to load fonds: {}", e);
+                let empty_names: Vec<slint::SharedString> = Vec::new();
+                let names_model = slint::ModelRc::new(slint::VecModel::from(empty_names));
+                ui.set_fonds_names(names_model);
+                
+                let empty_fonds: Vec<crate::FondsItem> = Vec::new();
+                let fonds_model = slint::ModelRc::new(slint::VecModel::from(empty_fonds));
+                ui.set_fonds_items(fonds_model);
+            }
+        }
+        
+        // Load series for the first fonds (if any)
+        if let Ok(fonds_list) = FondsService::list_fonds(db_path) {
+            if let Some(first_fonds) = fonds_list.first() {
+                match FondsService::list_series(db_path, &first_fonds.fond_no) {
+                    Ok(series_list) => {
+                        let series_items: Vec<crate::SeriesItem> = series_list.into_iter()
+                            .map(|s| crate::SeriesItem {
+                                series_no: s.series_no.into(),
+                                name: s.name.into(),
+                                fond_no: s.fond_no.into(),
+                            })
+                            .collect();
+                        let series_model = slint::ModelRc::new(slint::VecModel::from(series_items));
+                        ui.set_series_list(series_model);
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to load series: {}", e);
+                        let empty_series: Vec<crate::SeriesItem> = Vec::new();
+                        let series_model = slint::ModelRc::new(slint::VecModel::from(empty_series));
+                        ui.set_series_list(series_model);
+                    }
+                }
+            } else {
+                // No fonds, clear series
+                let empty_series: Vec<crate::SeriesItem> = Vec::new();
+                let series_model = slint::ModelRc::new(slint::VecModel::from(empty_series));
+                ui.set_series_list(series_model);
+            }
+        }
+        
+        // Reset selections
+        ui.set_selected_fonds(0);
+        ui.set_selected_series_index(-1);
+        ui.set_selected_series_no("".into());
+    }
+    
+    /// Helper to reload fonds list into UI (backward compatible)
+    fn reload_fonds(db_path: &std::path::PathBuf, ui: &AppWindow) {
+        Self::reload_fonds_and_series(db_path, ui);
+    }
+    
+    /// Helper to reload files for a specific series
+    fn reload_files_for_series(db_path: &std::path::PathBuf, series_no: &str, ui: &AppWindow) {
+        match FondsService::list_files_by_series(db_path, series_no) {
+            Ok(files) => {
+            // Get the selected archive path for calculating file paths
+            let selected_archive = ui.get_selected_archive();
+            let archive_library_items = ui.get_archive_library_items();
+            let lib_path = if selected_archive >= 0 && (selected_archive as usize) < archive_library_items.row_count() {
+                if let Some(archive_item) = archive_library_items.row_data(selected_archive as usize) {
+                    archive_item.path.to_string()
+                } else {
+                    String::new()
+                }
+            } else {
+                String::new()
+            };                // Get the fond_no from series_no (assuming format is fond_no-series_no)
+                let fond_no = series_no.split('-').next().unwrap_or(series_no);
+                
+                let file_items: Vec<crate::FileItem> = files.into_iter()
+                    .map(|f| {
+                        let file_path = if !lib_path.is_empty() {
+                            format!("{}/{}/{}", lib_path, fond_no, f.file_no)
+                        } else {
+                            format!("{}/{}", fond_no, f.file_no)
+                        };
+                        crate::FileItem {
+                            file_no: f.file_no.into(),
+                            name: f.name.into(),
+                            path: file_path.into(),
+                        }
+                    })
+                    .collect();
+                let files_model = slint::ModelRc::new(slint::VecModel::from(file_items));
+                ui.set_files(files_model);
+                
+                // Reset file selection and trigger file_selected
+                ui.set_selected_file(0);
+                ui.invoke_file_selected(0);
+            }
+            Err(e) => {
+                eprintln!("Failed to load files for series {}: {}", series_no, e);
+                let empty_files: Vec<crate::FileItem> = Vec::new();
+                let files_model = slint::ModelRc::new(slint::VecModel::from(empty_files));
+                ui.set_files(files_model);
+                ui.set_selected_file(-1);
+                // Clear items
+                let empty_items: Vec<slint::SharedString> = Vec::new();
+                let items_model = slint::ModelRc::new(slint::VecModel::from(empty_items));
+                ui.set_item_list(items_model);
+                ui.set_selected_item(-1);
+            }
+        }
+    }
+    
+    fn setup_archive_selected(&self, ui: &AppWindow) {
+        let ui_weak = ui.as_weak();
+        let archive_service = self.archive_service.clone();
+        
+        ui.on_archive_selected(move |index| {
+            if let Some(ui) = ui_weak.upgrade() {
+                match archive_service.get_database_path_by_index(index) {
+                    Ok(Some(db_path)) => {
+                        if db_path.exists() {
+                            Self::reload_fonds_and_series(&db_path, &ui);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        });
+    }
+    
+    /// Load initial fonds for an archive
+    pub fn load_initial_fonds(db_path: &std::path::PathBuf, ui: &AppWindow) {
+        if db_path.exists() {
+            Self::reload_fonds_and_series(db_path, ui);
+            // Reset additional selection states when loading initial data
+            ui.set_selected_item(0);
+        }
+    }
 }

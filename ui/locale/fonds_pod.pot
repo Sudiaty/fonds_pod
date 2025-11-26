@@ -1,0 +1,306 @@
+
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2025-11-27 06:27+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: \n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#. Tooltips for navigation (positioned to the right of nav buttons)
+#: ui/app-window.slint:344
+msgctxt "AppWindow"
+msgid "nav_fonds"
+msgstr ""
+
+#: ui/app-window.slint:345
+msgctxt "AppWindow"
+msgid "nav_schema"
+msgstr ""
+
+#: ui/app-window.slint:346
+msgctxt "AppWindow"
+msgid "nav_classification"
+msgstr ""
+
+#: ui/app-window.slint:347
+msgctxt "AppWindow"
+msgid "nav_settings"
+msgstr ""
+
+#: ui/app-window.slint:348
+msgctxt "AppWindow"
+msgid "nav_files"
+msgstr ""
+
+#: ui/dialogs.slint:61
+msgctxt "DialogButtons"
+msgid "btn_cancel"
+msgstr ""
+
+#: ui/dialogs.slint:69
+msgctxt "DialogButtons"
+msgid "btn_confirm"
+msgstr ""
+
+#: ui/dialogs.slint:86
+msgctxt "SchemaInputDialog"
+msgid "dialog_add_schema_title"
+msgstr ""
+
+#: ui/dialogs.slint:124
+msgctxt "SchemaInputDialog"
+msgid "label_code"
+msgstr ""
+
+#: ui/dialogs.slint:154
+msgctxt "SchemaInputDialog"
+msgid "label_name"
+msgstr ""
+
+#: ui/dialogs.slint:198
+msgctxt "FileInputDialog"
+msgid "dialog_add_file_title"
+msgstr ""
+
+#: ui/dialogs.slint:202
+msgctxt "RenameArchiveDialog"
+msgid "dialog_rename_archive_title"
+msgstr ""
+
+#: ui/dialogs.slint:239
+msgctxt "RenameArchiveDialog"
+msgid "label_name"
+msgstr ""
+
+#: ui/dialogs.slint:287
+msgctxt "SchemaItemInputDialog"
+msgid "dialog_add_schema_item_title"
+msgstr ""
+
+#: ui/dialogs.slint:325
+msgctxt "SchemaItemInputDialog"
+msgid "label_code"
+msgstr ""
+
+#: ui/dialogs.slint:355
+msgctxt "SchemaItemInputDialog"
+msgid "label_name"
+msgstr ""
+
+#: ui/dialogs.slint:404
+msgctxt "ConfirmDialog"
+msgid "dialog_confirm_title"
+msgstr ""
+
+#: ui/dialogs.slint:466
+msgctxt "ClassificationInputDialog"
+msgid "dialog_add_classification_title"
+msgstr ""
+
+#: ui/dialogs.slint:498
+msgctxt "ClassificationInputDialog"
+msgid "label_code"
+msgstr ""
+
+#: ui/dialogs.slint:504
+msgctxt "ClassificationInputDialog"
+msgid "label_name"
+msgstr ""
+
+#. e.g., parent code-name for context
+#: ui/dialogs.slint:531
+msgctxt "ClassificationChildInputDialog"
+msgid "dialog_add_child_classification_title"
+msgstr ""
+
+#: ui/dialogs.slint:563
+msgctxt "ClassificationChildInputDialog"
+msgid "label_parent"
+msgstr ""
+
+#: ui/dialogs.slint:568
+msgctxt "ClassificationChildInputDialog"
+msgid "label_code"
+msgstr ""
+
+#: ui/dialogs.slint:574
+msgctxt "ClassificationChildInputDialog"
+msgid "label_name"
+msgstr ""
+
+#: ui/dialogs.slint:600
+msgctxt "AddFondsDialog"
+msgid "dialog_add_fonds_title"
+msgstr ""
+
+#: ui/dialogs.slint:664
+msgctxt "AddFondsDialog"
+msgid "label_fonds_name"
+msgstr ""
+
+#: ui/dialogs.slint:691
+msgctxt "AddFondsDialog"
+msgid "label_primary_classification"
+msgstr ""
+
+#: ui/dialogs.slint:717
+msgctxt "AddFondsDialog"
+msgid "label_secondary_classification"
+msgstr ""
+
+#: ui/dialogs.slint:746
+msgctxt "AddFondsDialog"
+msgid "label_select_schemas"
+msgstr ""
+
+#: ui/dialogs.slint:770
+msgctxt "AddFondsDialog"
+msgid "label_available_schemas"
+msgstr ""
+
+#: ui/dialogs.slint:853
+msgctxt "AddFondsDialog"
+msgid "label_selected_schemas"
+msgstr ""
+
+#: ui/layout/navigation.slint:27
+msgctxt "NavigationPanel"
+msgid "nav_fonds"
+msgstr ""
+
+#: ui/layout/navigation.slint:34
+msgctxt "NavigationPanel"
+msgid "nav_schema"
+msgstr ""
+
+#: ui/layout/navigation.slint:41
+msgctxt "NavigationPanel"
+msgid "nav_classification"
+msgstr ""
+
+#: ui/layout/navigation.slint:48
+msgctxt "NavigationPanel"
+msgid "nav_settings"
+msgstr ""
+
+#: ui/layout/navigation.slint:55
+msgctxt "NavigationPanel"
+msgid "nav_files"
+msgstr ""
+
+#: ui/pages/classification-page.slint:86
+msgctxt "ClassificationPage"
+msgid "label_top_classifications"
+msgstr ""
+
+#: ui/pages/classification-page.slint:152 ui/pages/classification-page.slint:266
+msgctxt "ClassificationPage"
+msgid "menu_delete"
+msgstr ""
+
+#: ui/pages/classification-page.slint:167 ui/pages/classification-page.slint:281
+msgctxt "ClassificationPage"
+msgid "menu_activate"
+msgstr ""
+
+#: ui/pages/classification-page.slint:175 ui/pages/classification-page.slint:289
+msgctxt "ClassificationPage"
+msgid "menu_deactivate"
+msgstr ""
+
+#: ui/pages/classification-page.slint:202
+msgctxt "ClassificationPage"
+msgid "label_child_classifications"
+msgstr ""
+
+#: ui/pages/files-page.slint:32
+msgctxt "FilesPage"
+msgid "label_series"
+msgstr ""
+
+#: ui/pages/files-page.slint:33
+msgctxt "FilesPage"
+msgid "btn_refresh"
+msgstr ""
+
+#: ui/pages/files-page.slint:66
+msgctxt "FilesPage"
+msgid "label_files"
+msgstr ""
+
+#: ui/pages/files-page.slint:67
+msgctxt "FilesPage"
+msgid "btn_add"
+msgstr ""
+
+#: ui/pages/files-page.slint:68
+msgctxt "FilesPage"
+msgid "btn_delete"
+msgstr ""
+
+#: ui/pages/files-page.slint:69
+msgctxt "FilesPage"
+msgid "btn_open"
+msgstr ""
+
+#: ui/pages/fonds-page.slint:120
+msgctxt "FondsPage"
+msgid "label_files"
+msgstr ""
+
+#: ui/pages/fonds-page.slint:154
+msgctxt "FondsPage"
+msgid "label_items"
+msgstr ""
+
+#: ui/pages/schema-page.slint:37
+msgctxt "SchemaPage"
+msgid "label_schema"
+msgstr ""
+
+#: ui/pages/schema-page.slint:124 ui/pages/schema-page.slint:246
+msgctxt "SchemaPage"
+msgid "menu_delete"
+msgstr ""
+
+#: ui/pages/schema-page.slint:159
+msgctxt "SchemaPage"
+msgid "label_items"
+msgstr ""
+
+#: ui/pages/settings-page.slint:64 ui/pages/settings-page.slint:69
+msgctxt "SettingsPage"
+msgid "label_language"
+msgstr ""
+
+#: ui/pages/settings-page.slint:79
+msgctxt "SettingsPage"
+msgid "label_archive_libraries"
+msgstr ""
+
+#: ui/pages/settings-page.slint:141
+msgctxt "SettingsPage"
+msgid "menu_rename"
+msgstr ""
+
+#: ui/pages/settings-page.slint:151
+msgctxt "SettingsPage"
+msgid "menu_delete"
+msgstr ""
+
+#: ui/pages/settings-page.slint:173
+msgctxt "SettingsPage"
+msgid "btn_cancel"
+msgstr ""
+
+#: ui/pages/settings-page.slint:174
+msgctxt "SettingsPage"
+msgid "btn_apply"
+msgstr ""
+

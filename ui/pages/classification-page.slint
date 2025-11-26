@@ -1,0 +1,341 @@
+import { VerticalBox, HorizontalBox, ScrollView } from "std-widgets.slint";
+import { Theme, Layout } from "../theme.slint";
+import { ClassificationItem } from "../models.slint";
+
+component IconButton inherits Rectangle {
+    in property <string> icon: "";
+    callback on-clicked();
+
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    background: button_touch.has-hover ? Theme.brand_soft : transparent;
+
+    Text {
+        width: 32px;
+        height: 32px;
+        text: root.icon;
+        font-size: 18px;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+
+    button_touch := TouchArea { clicked => { root.on-clicked(); } }
+}
+
+component MenuRow inherits Rectangle {
+    in property <string> text: "";
+    in property <color> text-color: Theme.text_primary;
+    callback on-clicked();
+
+    height: 32px;
+    background: row_touch.has-hover ? Theme.bg_soft : transparent;
+
+    HorizontalBox {
+        padding-left: 12px;
+        padding-right: 12px;
+        Text { text: root.text; font-size: 13px; color: root.text-color; vertical-alignment: center; }
+    }
+
+    row_touch := TouchArea { clicked => { root.on-clicked(); } }
+}
+
+component MenuDivider inherits Rectangle {
+    height: 1px;
+    background: Theme.nav_border;
+}
+
+export component ClassificationPage inherits HorizontalBox {
+    in property <[ClassificationItem]> classification_items: [];
+    in-out property <int> selected_classification: 0;
+    in property <[int]> selected_classifications: [];
+
+    in property <[ClassificationItem]> classification_children: [];
+    in-out property <int> selected_child: 0;
+    in property <[int]> selected_children: [];
+
+    callback add_classification();
+    callback delete_classification();
+    callback delete_selected_classifications();
+    callback classification_item_clicked(int, bool, bool);
+    callback activate_classification();
+    callback deactivate_classification();
+    callback export_classifications();
+    callback import_classifications();
+
+    callback add_child_classification();
+    callback delete_child_classification();
+    callback delete_selected_children();
+    callback child_classification_clicked(int, bool, bool);
+    callback activate_child_classification();
+    callback deactivate_child_classification();
+
+    spacing: 0px;
+
+    VerticalBox {
+        horizontal-stretch: 0.4;
+        padding: Layout.standard_padding;
+        spacing: Layout.standard_spacing;
+
+        HorizontalBox {
+            height: 40px;
+            padding: 5px;
+            spacing: Layout.standard_spacing;
+            alignment: start;
+
+            Text { text: @tr("label_top_classifications"); font-size: 14px; vertical-alignment: center; }
+            IconButton { icon: "➕"; on-clicked => root.add_classification(); }
+            IconButton { icon: "📤"; on-clicked => root.export_classifications(); }
+            IconButton { icon: "📥"; on-clicked => root.import_classifications(); }
+        }
+
+        ScrollView {
+            VerticalBox {
+                for classification_item[index] in root.classification_items : Rectangle {
+                    height: 50px;
+                    background: root.classification_background(index, classification_item.is_active);
+                    border-width: 1px;
+                    border-color: Theme.nav_border;
+
+                    VerticalBox {
+                        padding-left: 10px;
+                        padding-right: 10px;
+                        padding-top: 6px;
+                        padding-bottom: 6px;
+                        spacing: 2px;
+
+                        Text {
+                            text: classification_item.code;
+                            font-size: 14px;
+                            font-weight: 600;
+                            color: classification_item.is_active ? #333 : #999;
+                            overflow: elide;
+                        }
+
+                        Text {
+                            text: classification_item.name;
+                            font-size: 12px;
+                            color: classification_item.is_active ? #666 : #bbb;
+                            overflow: elide;
+                        }
+                    }
+
+                    classification_area := TouchArea {
+                        pointer-event(event) => {
+                            if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
+                                root.classification_item_clicked(index, event.modifiers.control, event.modifiers.shift);
+                            }
+                            if event.kind == PointerEventKind.up && event.button == PointerEventButton.right {
+                                root.ensure_classification_selection(index);
+                                classification_menu.show();
+                            }
+                        }
+                    }
+
+                    classification_menu := PopupWindow {
+                        x: classification_area.mouse-x;
+                        y: classification_area.mouse-y;
+                        width: 140px;
+
+                        Rectangle {
+                            background: white;
+                            border-width: 1px;
+                            border-color: #ccc;
+                            border-radius: 4px;
+                            drop-shadow-blur: 10px;
+                            drop-shadow-color: #00000040;
+
+                            VerticalBox {
+                                spacing: 0px;
+
+                                MenuRow {
+                                    text: @tr("menu_delete");
+                                    text-color: Theme.brand_primary;
+                                    on-clicked => {
+                                        classification_menu.close();
+                                        if root.selected_classifications.length > 0 {
+                                            root.delete_selected_classifications();
+                                        } else {
+                                            root.delete_classification();
+                                        }
+                                    }
+                                }
+
+                                MenuDivider { }
+
+                                MenuRow {
+                                    text: @tr("menu_activate");
+                                    on-clicked => {
+                                        classification_menu.close();
+                                        root.activate_classification();
+                                    }
+                                }
+
+                                MenuRow {
+                                    text: @tr("menu_deactivate");
+                                    on-clicked => {
+                                        classification_menu.close();
+                                        root.deactivate_classification();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Rectangle { width: Layout.separator_width; background: Theme.nav_border; }
+
+    VerticalBox {
+        horizontal-stretch: 0.6;
+        padding: Layout.standard_padding;
+        spacing: Layout.standard_spacing;
+
+        HorizontalBox {
+            height: 40px;
+            padding: 5px;
+            spacing: Layout.standard_spacing;
+            alignment: start;
+
+            Text { text: @tr("label_child_classifications"); font-size: 14px; vertical-alignment: center; }
+            IconButton { icon: "➕"; on-clicked => root.add_child_classification(); }
+        }
+
+        ScrollView {
+            VerticalBox {
+                for child_item[index] in root.classification_children : Rectangle {
+                    height: 50px;
+                    background: root.child_background(index, child_item.is_active);
+                    border-width: 1px;
+                    border-color: Theme.nav_border;
+
+                    VerticalBox {
+                        padding-left: 10px;
+                        padding-right: 10px;
+                        padding-top: 6px;
+                        padding-bottom: 6px;
+                        spacing: 2px;
+
+                        Text {
+                            text: child_item.code;
+                            font-size: 14px;
+                            font-weight: 600;
+                            color: child_item.is_active ? #333 : #999;
+                            overflow: elide;
+                        }
+
+                        Text {
+                            text: child_item.name;
+                            font-size: 12px;
+                            color: child_item.is_active ? #666 : #bbb;
+                            overflow: elide;
+                        }
+                    }
+
+                    child_area := TouchArea {
+                        pointer-event(event) => {
+                            if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
+                                root.child_classification_clicked(index, event.modifiers.control, event.modifiers.shift);
+                            }
+                            if event.kind == PointerEventKind.up && event.button == PointerEventButton.right {
+                                root.ensure_child_selection(index);
+                                child_menu.show();
+                            }
+                        }
+                    }
+
+                    child_menu := PopupWindow {
+                        x: child_area.mouse-x;
+                        y: child_area.mouse-y;
+                        width: 140px;
+
+                        Rectangle {
+                            background: white;
+                            border-width: 1px;
+                            border-color: #ccc;
+                            border-radius: 4px;
+                            drop-shadow-blur: 10px;
+                            drop-shadow-color: #00000040;
+
+                            VerticalBox {
+                                spacing: 0px;
+
+                                MenuRow {
+                                    text: @tr("menu_delete");
+                                    text-color: Theme.brand_primary;
+                                    on-clicked => {
+                                        child_menu.close();
+                                        if root.selected_children.length > 0 {
+                                            root.delete_selected_children();
+                                        } else {
+                                            root.delete_child_classification();
+                                        }
+                                    }
+                                }
+
+                                MenuDivider { }
+
+                                MenuRow {
+                                    text: @tr("menu_activate");
+                                    on-clicked => {
+                                        child_menu.close();
+                                        root.activate_child_classification();
+                                    }
+                                }
+
+                                MenuRow {
+                                    text: @tr("menu_deactivate");
+                                    on-clicked => {
+                                        child_menu.close();
+                                        root.deactivate_child_classification();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    pure function classification_background(idx: int, is_active: bool) -> color {
+        if root.selected_classifications.length > 0 {
+            if idx < root.selected_classifications.length && root.selected_classifications[idx] == 1 {
+                return is_active ? Theme.list_selected : Theme.list_selected_inactive;
+            }
+            return Theme.list_background;
+        }
+        if root.selected_classification == idx {
+            return is_active ? Theme.list_selected : Theme.list_selected_inactive;
+        }
+        return Theme.list_background;
+    }
+
+    pure function child_background(idx: int, is_active: bool) -> color {
+        if root.selected_children.length > 0 {
+            if idx < root.selected_children.length && root.selected_children[idx] == 1 {
+                return is_active ? Theme.list_selected : Theme.list_selected_inactive;
+            }
+            return Theme.list_background;
+        }
+        if root.selected_child == idx {
+            return is_active ? Theme.list_selected : Theme.list_selected_inactive;
+        }
+        return Theme.list_background;
+    }
+
+    function ensure_classification_selection(index: int) {
+        if root.selected_classifications.length == 0 || !(index < root.selected_classifications.length && root.selected_classifications[index] == 1) {
+            root.selected_classification = index;
+        }
+    }
+
+    function ensure_child_selection(index: int) {
+        if root.selected_children.length == 0 || !(index < root.selected_children.length && root.selected_children[index] == 1) {
+            root.selected_child = index;
+        }
+    }
+}
+

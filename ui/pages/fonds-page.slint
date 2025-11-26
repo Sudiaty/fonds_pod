@@ -1,0 +1,515 @@
+import { VerticalBox, HorizontalBox, ComboBox, ScrollView } from "std-widgets.slint";
+import { Theme, Layout } from "../theme.slint";
+import { FondsTreeNode, SeriesItem, FondsItem, FileItem } from "../models.slint";
+
+export component FondsPage inherits VerticalBox {
+    // Toolbar data
+    in property <[string]> archive_libraries: [];
+    in-out property <int> selected_archive: 0;
+    in property <[string]> fonds_names: [];
+    in-out property <int> selected_fonds: 0;
+
+    // Series list data
+    in property <[SeriesItem]> series_list: [];
+    in-out property <int> selected_series_index: -1;
+    in-out property <string> selected_series_no: "";
+
+    in property <[FileItem]> files: [];
+    in-out property <int> selected_file: 0;
+    in property <[int]> selected_files: [];
+
+    in property <[string]> item_list: [];
+    in-out property <int> selected_item: 0;
+    in property <[int]> selected_items: [];
+
+    callback request_add_fonds_dialog();
+    callback archive_selected(int);
+    callback open_fonds(string);
+    callback select_series(int, string);
+
+    callback add_file();
+    callback delete_file();
+    callback delete_selected_files();
+    callback file_clicked(int, bool, bool);
+
+    callback add_item();
+    callback delete_item();
+    callback delete_selected_items();
+    callback item_clicked(int, bool, bool);
+
+    callback file_selected(int);
+
+    spacing: 0px;
+
+    // Top Toolbar
+    Rectangle {
+        height: 48px;
+        background: Theme.toolbar_background;
+
+        HorizontalBox {
+            padding: 8px;
+            spacing: 8px;
+
+            ComboBox {
+                width: 200px;
+                model: root.archive_libraries;
+                current-index <=> root.selected_archive;
+            }
+
+            ComboBox {
+                width: 200px;
+                model: root.fonds_names;
+                current-index <=> root.selected_fonds;
+            }
+
+            Rectangle {
+                width: 32px;
+                height: 32px;
+                border-radius: 4px;
+                background: add_fonds_touch.has-hover ? Theme.brand_soft : transparent;
+
+                Text {
+                    width: 100%;
+                    height: 100%;
+                    text: "➕";
+                    font-size: 18px;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+
+                add_fonds_touch := TouchArea {
+                    clicked => { root.request_add_fonds_dialog(); }
+                }
+            }
+        }
+    }
+
+    // Main content area
+    HorizontalBox {
+        horizontal-stretch: 1;
+        spacing: 0px;
+
+        // Left side - Series list
+        VerticalBox {
+            width: 320px;
+            height: 100%;
+            padding: 8px;
+            spacing: 8px;
+
+            Rectangle {
+                height: 40px;
+                background: Theme.toolbar_background;
+                border-radius: 4px;
+
+                HorizontalBox {
+                    padding: 8px;
+                    spacing: 8px;
+
+                    Text {
+                        text: @tr("label_series");
+                        font-size: 14px;
+                        font-weight: 600;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+
+            ScrollView {
+                VerticalBox {
+                    spacing: 2px;
+
+                    for series_item[series_idx] in root.series_list : Rectangle {
+                        height: 50px;
+                        border-radius: 4px;
+                        background: root.selected_series_index == series_idx
+                            ? Theme.brand_soft
+                            : series_touch.has-hover ? Theme.bg_alt : transparent;
+                        border-width: 1px;
+                        border-color: Theme.nav_border;
+
+                        VerticalBox {
+                            padding-left: 12px;
+                            padding-right: 12px;
+                            padding-top: 6px;
+                            padding-bottom: 6px;
+                            spacing: 2px;
+
+                            Text {
+                                text: series_item.series_no;
+                                font-size: 14px;
+                                font-weight: 600;
+                                color: Theme.text_primary;
+                                overflow: elide;
+                            }
+
+                            Text {
+                                text: series_item.name;
+                                font-size: 12px;
+                                color: Theme.text_secondary;
+                                overflow: elide;
+                                visible: series_item.name != "" && series_item.name != series_item.series_no;
+                            }
+                        }
+
+                        series_touch := TouchArea {
+                            clicked => {
+                                root.selected_series_index = series_idx;
+                                root.select_series(series_idx, series_item.series_no);
+                            }
+                        }
+                    }
+
+                    // Empty state
+                    if root.series_list.length == 0 : Rectangle {
+                        height: 100px;
+
+                        VerticalBox {
+                            alignment: center;
+                            spacing: 8px;
+
+                            Text {
+                                text: "📋";
+                                font-size: 32px;
+                                horizontal-alignment: center;
+                            }
+
+                            Text {
+                                text: @tr("empty_series_list");
+                                font-size: 13px;
+                                color: Theme.text_secondary;
+                                horizontal-alignment: center;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Separator
+        Rectangle { width: 1px; background: Theme.nav_border; }
+
+        // Right side - Files and Items
+        VerticalBox {
+            horizontal-stretch: 1;
+            height: 100%;
+
+            // Files section
+            VerticalBox {
+                height: 50%;
+                padding: 8px;
+                spacing: 8px;
+
+                Rectangle {
+                    height: 40px;
+                    background: Theme.toolbar_background;
+                    border-radius: 4px;
+
+                    HorizontalBox {
+                        padding: 8px;
+                        spacing: 8px;
+
+                        Text {
+                            text: @tr("label_files");
+                            font-size: 14px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
+
+                        Text {
+                            horizontal-stretch: 1;
+                            text: root.selected_series_no != "" ? "(" + root.selected_series_no + ")" : "";
+                            font-size: 12px;
+                            color: Theme.text_secondary;
+                            vertical-alignment: center;
+                        }
+
+                        Rectangle {
+                            width: 32px;
+                            height: 32px;
+                            border-radius: 4px;
+                            background: add_file_touch.has-hover ? Theme.brand_soft : transparent;
+
+                            Text {
+                                width: 32px;
+                                height: 32px;
+                                text: "➕";
+                                font-size: 18px;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            add_file_touch := TouchArea { clicked => { root.add_file(); } }
+                        }
+                    }
+                }
+
+                ScrollView {
+                    VerticalBox {
+                        for file_item[file_index] in root.files : Rectangle {
+                            height: 50px;
+                            background: root.is_file_selected(file_index) ? Theme.list_selected : Theme.list_background;
+                            border-width: 1px;
+                            border-color: Theme.nav_border;
+
+                            VerticalBox {
+                                padding-left: 10px;
+                                padding-right: 10px;
+                                padding-top: 6px;
+                                padding-bottom: 6px;
+                                spacing: 2px;
+
+                                Text {
+                                    text: file_item.file_no;
+                                    font-size: 14px;
+                                    font-weight: 600;
+                                    color: #333;
+                                    overflow: elide;
+                                }
+
+                                Text {
+                                    text: file_item.name;
+                                    font-size: 12px;
+                                    color: #666;
+                                    overflow: elide;
+                                }
+                            }
+
+                            file_touch := TouchArea {
+                                pointer-event(event) => {
+                                    if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
+                                        root.file_clicked(file_index, event.modifiers.control, event.modifiers.shift);
+                                    }
+                                    if event.kind == PointerEventKind.up && event.button == PointerEventButton.right {
+                                        root.ensure_file_selection(file_index);
+                                        file_menu.show();
+                                    }
+                                }
+                            }
+
+                            file_menu := PopupWindow {
+                                x: file_touch.mouse-x;
+                                y: file_touch.mouse-y;
+                                width: 120px;
+
+                                Rectangle {
+                                    background: white;
+                                    border-width: 1px;
+                                    border-color: #ccc;
+                                    border-radius: 4px;
+                                    drop-shadow-blur: 10px;
+                                    drop-shadow-color: #00000040;
+
+                                    VerticalBox {
+                                        spacing: 0px;
+
+                                        Rectangle {
+                                            height: 32px;
+                                            background: del_file_area.has-hover ? Theme.bg_soft : transparent;
+
+                                            HorizontalBox {
+                                                padding-left: 12px;
+                                                padding-right: 12px;
+                                                Text { text: @tr("menu_delete"); font-size: 13px; color: Theme.brand_primary; vertical-alignment: center; }
+                                            }
+
+                                            del_file_area := TouchArea {
+                                                clicked => {
+                                                    file_menu.close();
+                                                    if root.selected_files.length > 0 {
+                                                        root.delete_selected_files();
+                                                    } else {
+                                                        root.delete_file();
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if root.files.length == 0 : Rectangle {
+                            height: 60px;
+
+                            Text {
+                                text: root.selected_series_no == "" ? @tr("select_series_hint") : @tr("no_files");
+                                font-size: 12px;
+                                color: Theme.text_secondary;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Separator
+            Rectangle { height: 1px; background: Theme.nav_border; }
+
+            // Items section
+            VerticalBox {
+                height: 50%;
+                padding: 8px;
+                spacing: 8px;
+
+                Rectangle {
+                    height: 40px;
+                    background: Theme.toolbar_background;
+                    border-radius: 4px;
+
+                    HorizontalBox {
+                        padding: 8px;
+                        spacing: 8px;
+
+                        Text {
+                            text: @tr("label_items");
+                            font-size: 14px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
+
+                        Rectangle {
+                            width: 32px;
+                            height: 32px;
+                            border-radius: 4px;
+                            background: add_item_touch.has-hover ? Theme.brand_soft : transparent;
+
+                            Text {
+                                width: 32px;
+                                height: 32px;
+                                text: "➕";
+                                font-size: 18px;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+
+                            add_item_touch := TouchArea { clicked => { root.add_item(); } }
+                        }
+                    }
+                }
+
+                ScrollView {
+                    VerticalBox {
+                        spacing: 2px;
+
+                        for item[item_index] in root.item_list : Rectangle {
+                            height: 32px;
+                            border-radius: 4px;
+                            background: root.is_item_selected(item_index) ? Theme.brand_soft : item_touch.has-hover ? Theme.bg_alt : transparent;
+
+                            HorizontalBox {
+                                padding-left: 12px;
+                                padding-right: 12px;
+                                spacing: 8px;
+
+                                Text {
+                                    text: "📎";
+                                    font-size: 14px;
+                                    vertical-alignment: center;
+                                }
+
+                                Text {
+                                    text: item;
+                                    font-size: 13px;
+                                    vertical-alignment: center;
+                                }
+                            }
+
+                            item_touch := TouchArea {
+                                pointer-event(event) => {
+                                    if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
+                                        root.item_clicked(item_index, event.modifiers.control, event.modifiers.shift);
+                                    }
+                                    if event.kind == PointerEventKind.up && event.button == PointerEventButton.right {
+                                        root.ensure_item_selection(item_index);
+                                        item_menu.show();
+                                    }
+                                }
+                            }
+
+                            item_menu := PopupWindow {
+                                x: item_touch.mouse-x;
+                                y: item_touch.mouse-y;
+                                width: 120px;
+
+                                Rectangle {
+                                    background: white;
+                                    border-width: 1px;
+                                    border-color: #ccc;
+                                    border-radius: 4px;
+                                    drop-shadow-blur: 10px;
+                                    drop-shadow-color: #00000040;
+
+                                    VerticalBox {
+                                        spacing: 0px;
+
+                                        Rectangle {
+                                            height: 32px;
+                                            background: del_item_area.has-hover ? Theme.bg_soft : transparent;
+
+                                            HorizontalBox {
+                                                padding-left: 12px;
+                                                padding-right: 12px;
+                                                Text { text: @tr("menu_delete"); font-size: 13px; color: Theme.brand_primary; vertical-alignment: center; }
+                                            }
+
+                                            del_item_area := TouchArea {
+                                                clicked => {
+                                                    item_menu.close();
+                                                    if root.selected_items.length > 0 {
+                                                        root.delete_selected_items();
+                                                    } else {
+                                                        root.delete_item();
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if root.item_list.length == 0 : Rectangle {
+                            height: 60px;
+
+                            Text {
+                                text: @tr("no_items");
+                                font-size: 12px;
+                                color: Theme.text_secondary;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    pure function is_file_selected(idx: int) -> bool {
+        if root.selected_files.length == 0 {
+            return root.selected_file == idx;
+        }
+        return idx < root.selected_files.length && root.selected_files[idx] == 1;
+    }
+
+    pure function is_item_selected(idx: int) -> bool {
+        if root.selected_items.length == 0 {
+            return root.selected_item == idx;
+        }
+        return idx < root.selected_items.length && root.selected_items[idx] == 1;
+    }
+
+    function ensure_file_selection(index: int) {
+        if root.selected_files.length == 0 || !root.is_file_selected(index) {
+            root.selected_file = index;
+        }
+    }
+
+    function ensure_item_selection(index: int) {
+        if root.selected_items.length == 0 || !root.is_item_selected(index) {
+            root.selected_item = index;
+        }
+    }
+}
+

@@ -36,3 +36,10 @@ about the Slint APIs and the `.slint` markup language, check out our [online doc
 
 Don't forget to edit this readme to replace it by yours, and edit the `name =` field in `Cargo.toml` to match the name of your
 project.
+
+# i18n
+
+
+```sh
+find -name \*.slint | xargs slint-tr-extractor -o ui/translations/fonds_pod.pot
+```

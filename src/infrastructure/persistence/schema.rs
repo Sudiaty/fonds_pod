@@ -30,9 +30,8 @@ diesel::table! {
     fonds (fond_no) {
         fond_no -> Text,
         fond_classification_code -> Text,
-        created_at -> Text,
         name -> Text,
-        createAt -> Text,
+        created_at -> Text,
     }
 }
 
@@ -49,7 +48,7 @@ diesel::table! {
         series_no -> Text,
         fond_no -> Text,
         name -> Text,
-        createAt -> Text,
+        created_at -> Text,
     }
 }
 
@@ -58,7 +57,7 @@ diesel::table! {
         file_no -> Text,
         series_no -> Text,
         name -> Text,
-        createAt -> Text,
+        created_at -> Text,
     }
 }
 
@@ -67,7 +66,7 @@ diesel::table! {
         item_no -> Text,
         file_no -> Text,
         name -> Text,
-        createAt -> Text,
+        created_at -> Text,
     }
 }
 
@@ -147,9 +146,8 @@ pub fn init_schema(connection: &mut SqliteConnection) -> Result<(), Box<dyn std:
         CREATE TABLE IF NOT EXISTS fonds (
             fond_no TEXT PRIMARY KEY,
             fond_classification_code TEXT NOT NULL,
-            created_at TEXT NOT NULL,
             name TEXT NOT NULL,
-            createAt TEXT NOT NULL,
+            created_at TEXT NOT NULL,
             FOREIGN KEY (fond_classification_code) REFERENCES fond_classifications(code)
         )
         "#,
@@ -178,7 +176,7 @@ pub fn init_schema(connection: &mut SqliteConnection) -> Result<(), Box<dyn std:
             series_no TEXT PRIMARY KEY,
             fond_no TEXT NOT NULL,
             name TEXT NOT NULL,
-            createAt TEXT NOT NULL,
+            created_at TEXT NOT NULL,
             FOREIGN KEY (fond_no) REFERENCES fonds(fond_no)
         )
         "#,
@@ -192,7 +190,7 @@ pub fn init_schema(connection: &mut SqliteConnection) -> Result<(), Box<dyn std:
             file_no TEXT PRIMARY KEY,
             series_no TEXT NOT NULL,
             name TEXT NOT NULL,
-            createAt TEXT NOT NULL,
+            created_at TEXT NOT NULL,
             FOREIGN KEY (series_no) REFERENCES series(series_no)
         )
         "#,
@@ -206,7 +204,7 @@ pub fn init_schema(connection: &mut SqliteConnection) -> Result<(), Box<dyn std:
             item_no TEXT PRIMARY KEY,
             file_no TEXT NOT NULL,
             name TEXT NOT NULL,
-            createAt TEXT NOT NULL,
+            created_at TEXT NOT NULL,
             FOREIGN KEY (file_no) REFERENCES files(file_no)
         )
         "#,

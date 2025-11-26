@@ -34,3 +34,4 @@ Desktop.ini
 
 # Logs
 *.log
+ui/test.slint

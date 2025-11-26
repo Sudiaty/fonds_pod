@@ -33,7 +33,7 @@ pub struct AppSettings {
 impl Default for AppSettings {
     fn default() -> Self {
         AppSettings {
-            language: "zh".to_string(),
+            language: "zh_CN".to_string(),
             archive_libraries: Vec::new(),
             last_opened_library: None,
         }

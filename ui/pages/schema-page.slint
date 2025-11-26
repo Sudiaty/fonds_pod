@@ -1,0 +1,294 @@
+import { VerticalBox, HorizontalBox, ScrollView } from "std-widgets.slint";
+import { Theme, Layout } from "../theme.slint";
+import { SchemaItem, SchemaItemDetail } from "../models.slint";
+
+export component SchemaPage inherits HorizontalBox {
+    in property <[SchemaItem]> schema_items: [];
+    in-out property <int> selected_schema: 0;
+    in property <[int]> selected_schemas: [];
+
+    in property <[SchemaItemDetail]> item_details: [];
+    in-out property <int> selected_item: 0;
+    in property <[int]> selected_items: [];
+
+    callback add_schema();
+    callback delete_schema();
+    callback delete_selected_schemas();
+    callback schema_item_clicked(int, bool, bool);
+
+    callback add_schema_item();
+    callback delete_schema_item();
+    callback delete_selected_items();
+    callback schema_item_item_clicked(int, bool, bool);
+
+    spacing: 0px;
+
+    VerticalBox {
+        horizontal-stretch: 0.4;
+        padding: Layout.standard_padding;
+        spacing: Layout.standard_spacing;
+
+        HorizontalBox {
+            height: 40px;
+            padding: 5px;
+            spacing: Layout.standard_spacing;
+            alignment: start;
+
+            Text { text: @tr("label_schema"); font-size: 14px; vertical-alignment: center; }
+
+            Rectangle {
+                width: 32px;
+                height: 32px;
+                border-radius: 4px;
+                background: add_schema_touch.has-hover ? Theme.brand_soft : transparent;
+
+                Text {
+                    width: 32px;
+                    height: 32px;
+                    text: "➕";
+                    font-size: 18px;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+
+                add_schema_touch := TouchArea { clicked => { root.add_schema(); } }
+            }
+        }
+
+        ScrollView {
+            VerticalBox {
+                for schema_item[index] in root.schema_items : Rectangle {
+                    height: 50px;
+                    background: root.is_schema_selected(index) ? Theme.list_selected : Theme.list_background;
+                    border-width: 1px;
+                    border-color: Theme.nav_border;
+
+                    VerticalBox {
+                        padding-left: 10px;
+                        padding-right: 10px;
+                        padding-top: 6px;
+                        padding-bottom: 6px;
+                        spacing: 2px;
+
+                        Text {
+                            text: schema_item.code;
+                            font-size: 14px;
+                            font-weight: 600;
+                            color: #333;
+                            overflow: elide;
+                        }
+
+                        Text {
+                            text: schema_item.name;
+                            font-size: 12px;
+                            color: #666;
+                            overflow: elide;
+                        }
+                    }
+
+                    schema_area := TouchArea {
+                        pointer-event(event) => {
+                            if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
+                                root.schema_item_clicked(index, event.modifiers.control, event.modifiers.shift);
+                            }
+                            if event.kind == PointerEventKind.up && event.button == PointerEventButton.right {
+                                root.ensure_schema_selection(index);
+                                schema_menu.show();
+                            }
+                        }
+                    }
+
+                    schema_menu := PopupWindow {
+                        x: schema_area.mouse-x;
+                        y: schema_area.mouse-y;
+                        width: 120px;
+
+                        Rectangle {
+                            background: white;
+                            border-width: 1px;
+                            border-color: #ccc;
+                            border-radius: 4px;
+                            drop-shadow-blur: 10px;
+                            drop-shadow-color: #00000040;
+
+                            VerticalBox {
+                                spacing: 0px;
+
+                                Rectangle {
+                                    height: 32px;
+                                    background: del_schema_area.has-hover ? Theme.bg_soft : transparent;
+
+                                    HorizontalBox {
+                                        padding-left: 12px;
+                                        padding-right: 12px;
+                                        Text { text: @tr("menu_delete"); font-size: 13px; color: Theme.brand_primary; vertical-alignment: center; }
+                                    }
+
+                                    del_schema_area := TouchArea {
+                                        clicked => {
+                                            schema_menu.close();
+                                            if root.selected_schemas.length > 0 {
+                                                root.delete_selected_schemas();
+                                            } else {
+                                                root.delete_schema();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Rectangle { width: Layout.separator_width; background: Theme.nav_border; }
+
+    VerticalBox {
+        horizontal-stretch: 0.6;
+        padding: Layout.standard_padding;
+        spacing: Layout.standard_spacing;
+
+        HorizontalBox {
+            height: 40px;
+            padding: 5px;
+            spacing: Layout.standard_spacing;
+            alignment: start;
+
+            Text { text: @tr("label_items"); font-size: 14px; vertical-alignment: center; }
+
+            Rectangle {
+                width: 32px;
+                height: 32px;
+                border-radius: 4px;
+                background: add_item_btn.has-hover ? Theme.brand_soft : transparent;
+
+                Text {
+                    width: 32px;
+                    height: 32px;
+                    text: "➕";
+                    font-size: 18px;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+
+                add_item_btn := TouchArea { clicked => { root.add_schema_item(); } }
+            }
+        }
+
+        ScrollView {
+            VerticalBox {
+                for detail_item[index] in root.item_details : Rectangle {
+                    height: 50px;
+                    background: root.is_item_selected(index) ? Theme.list_selected : Theme.list_background;
+                    border-width: 1px;
+                    border-color: Theme.nav_border;
+
+                    VerticalBox {
+                        padding-left: 10px;
+                        padding-right: 10px;
+                        padding-top: 6px;
+                        padding-bottom: 6px;
+                        spacing: 2px;
+
+                        Text {
+                            text: detail_item.code;
+                            font-size: 14px;
+                            font-weight: 600;
+                            color: #333;
+                            overflow: elide;
+                        }
+
+                        Text {
+                            text: detail_item.name;
+                            font-size: 12px;
+                            color: #666;
+                            overflow: elide;
+                        }
+                    }
+
+                    item_area := TouchArea {
+                        pointer-event(event) => {
+                            if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
+                                root.schema_item_item_clicked(index, event.modifiers.control, event.modifiers.shift);
+                            }
+                            if event.kind == PointerEventKind.up && event.button == PointerEventButton.right {
+                                root.ensure_item_selection(index);
+                                item_menu.show();
+                            }
+                        }
+                    }
+
+                    item_menu := PopupWindow {
+                        x: item_area.mouse-x;
+                        y: item_area.mouse-y;
+                        width: 120px;
+
+                        Rectangle {
+                            background: white;
+                            border-width: 1px;
+                            border-color: #ccc;
+                            border-radius: 4px;
+                            drop-shadow-blur: 10px;
+                            drop-shadow-color: #00000040;
+
+                            VerticalBox {
+                                spacing: 0px;
+
+                                Rectangle {
+                                    height: 32px;
+                                    background: del_item_area.has-hover ? Theme.bg_soft : transparent;
+
+                                    HorizontalBox {
+                                        padding-left: 12px;
+                                        padding-right: 12px;
+                                        Text { text: @tr("menu_delete"); font-size: 13px; color: Theme.brand_primary; vertical-alignment: center; }
+                                    }
+
+                                    del_item_area := TouchArea {
+                                        clicked => {
+                                            item_menu.close();
+                                            if root.selected_items.length > 0 {
+                                                root.delete_selected_items();
+                                            } else {
+                                                root.delete_schema_item();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    pure function is_schema_selected(idx: int) -> bool {
+        if root.selected_schemas.length == 0 {
+            return root.selected_schema == idx;
+        }
+        return idx < root.selected_schemas.length && root.selected_schemas[idx] == 1;
+    }
+
+    pure function is_item_selected(idx: int) -> bool {
+        if root.selected_items.length == 0 {
+            return root.selected_item == idx;
+        }
+        return idx < root.selected_items.length && root.selected_items[idx] == 1;
+    }
+
+    function ensure_schema_selection(index: int) {
+        if root.selected_schemas.length == 0 || !root.is_schema_selected(index) {
+            root.selected_schema = index;
+        }
+    }
+
+    function ensure_item_selection(index: int) {
+        if root.selected_items.length == 0 || !root.is_item_selected(index) {
+            root.selected_item = index;
+        }
+    }
+}
+
