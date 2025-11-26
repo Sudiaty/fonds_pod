@@ -20,6 +20,7 @@ struct SerializedSettings {
 }
 
 /// File-based configuration repository
+#[derive(Clone)]
 pub struct FileConfigRepository {
     config_path: PathBuf,
 }

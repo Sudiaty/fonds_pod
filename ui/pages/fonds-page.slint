@@ -1,0 +1,221 @@
+import { VerticalBox, HorizontalBox, ComboBox } from "std-widgets.slint";
+import { Theme, Layout } from "../theme.slint";
+import { FondsTreeNode, SeriesItem, FondsItem, FileItem, ItemItem, CrudListItem, QuickAction } from "../models.slint";
+import { CrudList } from "../crud-list.slint";
+
+export component FondsPage inherits VerticalBox {
+    // Toolbar data
+    in property <[string]> archive_libraries: [];
+    in-out property <int> selected_archive: 0;
+    in property <[string]> fonds_names: [];
+    in-out property <int> selected_fonds: 0;
+
+    // Series list data
+    in property <[SeriesItem]> series_list: [];
+    in-out property <int> selected_series_index: -1;
+    in-out property <string> selected_series_no: "";
+    
+    // CrudList format data for series
+    in property <[CrudListItem]> series_list_items: [];
+
+    // Files data
+    in property <[FileItem]> files: [];
+    in-out property <int> selected_file: 0;
+    in property <[int]> selected_files: [];
+    
+    // CrudList format data for files
+    in property <[CrudListItem]> files_list_items: [];
+
+    // Items data
+    in property <[ItemItem]> item_list: [];
+    in-out property <int> selected_item: 0;
+    in property <[int]> selected_items: [];
+    
+    // CrudList format data for items
+    in property <[CrudListItem]> items_list_items: [];
+    
+    in-out property <string> open_file_path: "";
+    in-out property <string> open_item_path: "";
+
+    // Toolbar callbacks
+    callback request_add_fonds_dialog();
+    callback archive_selected(int);
+    callback open_fonds(string);
+    
+    // Series callbacks
+    callback select_series(int, string);
+    callback series_activated(int);
+
+    // File callbacks
+    callback add_file();
+    callback delete_file();
+    callback delete_selected_files();
+    callback file_clicked(int, bool, bool);
+    callback file_activated(int);
+    callback open_file();
+    callback open_file_at(int);  // Open file at specific index
+
+    // Item callbacks
+    callback add_item();
+    callback delete_item();
+    callback delete_selected_items();
+    callback item_clicked(int, bool, bool);
+    callback item_activated(int);
+    callback open_item();
+    callback open_item_at(int);  // Open item at specific index
+
+    callback file_selected(int);
+
+    spacing: 0px;
+
+    // Top Toolbar
+    Rectangle {
+        height: 48px;
+        background: Theme.toolbar_background;
+
+        HorizontalBox {
+            padding: 8px;
+            spacing: 8px;
+
+            ComboBox {
+                width: 200px;
+                model: root.archive_libraries;
+                current-index <=> root.selected_archive;
+            }
+
+            ComboBox {
+                width: 200px;
+                model: root.fonds_names;
+                current-index <=> root.selected_fonds;
+            }
+
+            Rectangle {
+                width: 32px;
+                height: 32px;
+                border-radius: 4px;
+                background: add_fonds_touch.has-hover ? Theme.brand_soft : transparent;
+
+                Text {
+                    width: 100%;
+                    height: 100%;
+                    text: "➕";
+                    font-size: 18px;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+
+                add_fonds_touch := TouchArea {
+                    clicked => { root.request_add_fonds_dialog(); }
+                }
+            }
+        }
+    }
+
+    // Main content area
+    HorizontalBox {
+        horizontal-stretch: 1;
+        spacing: 0px;
+
+        // Left side - Series list
+        CrudList {
+            width: 320px;
+            title: @tr("label_series");
+            items: root.series_list_items;
+            active-index <=> root.selected_series_index;
+            show-add-button: false;
+            
+            item-clicked(index, ctrl, shift) => {
+                // Series doesn't support multi-selection, just activate
+                root.selected_series_index = index;
+                if index >= 0 && index < root.series_list.length {
+                    root.selected_series_no = root.series_list[index].series_no;
+                    root.select_series(index, root.series_list[index].series_no);
+                }
+            }
+            
+            item-activated(index) => {
+                if index >= 0 && index < root.series_list.length {
+                    root.selected_series_no = root.series_list[index].series_no;
+                    root.series_activated(index);
+                }
+            }
+        }
+
+        // Separator
+        Rectangle { width: 1px; background: Theme.nav_border; }
+
+        // Right side - Files and Items
+        VerticalBox {
+            horizontal-stretch: 1;
+            height: 100%;
+
+            // Files section
+            CrudList {
+                vertical-stretch: 1;
+                title: @tr("label_files");
+                items: root.files_list_items;
+                active-index <=> root.selected_file;
+                selected-indices: root.selected_files;
+                quick-actions: [
+                    { icon: "🔗", tooltip: "Open" }
+                ];
+                
+                add-clicked => { root.add_file(); }
+                
+                item-clicked(index, ctrl, shift) => {
+                    root.file_clicked(index, ctrl, shift);
+                }
+                
+                item-activated(index) => {
+                    root.file_activated(index);
+                }
+                
+                quick-action-clicked(item_idx, action_idx) => {
+                    // action_idx 0 = open file
+                    if action_idx == 0 {
+                        root.open_file_at(item_idx);
+                    }
+                }
+                
+                delete-clicked => { root.delete_file(); }
+                delete-selected-clicked => { root.delete_selected_files(); }
+            }
+
+            // Separator
+            Rectangle { height: 1px; background: Theme.nav_border; }
+
+            // Items section
+            CrudList {
+                vertical-stretch: 1;
+                title: @tr("label_items");
+                items: root.items_list_items;
+                active-index <=> root.selected_item;
+                selected-indices: root.selected_items;
+                activate-first-on-load: false;
+                quick-actions: [
+                    { icon: "🔗", tooltip: "Open" }
+                ];
+                
+                add-clicked => { root.add_item(); }
+                
+                item-clicked(index, ctrl, shift) => {
+                    root.item_clicked(index, ctrl, shift);
+                }
+                
+                item-activated(index) => {
+                    root.item_activated(index);
+                }
+                
+                quick-action-clicked(item_idx, action_idx) => {
+                    // action_idx 0 = open item
+                    if action_idx == 0 {
+                        root.open_item_at(item_idx);
+                    }
+                }
+                
+                delete-clicked => { root.delete_item(); }
+                delete-selected-clicked => { root.delete_selected_items(); }
+            }
+        }
+    }
+}

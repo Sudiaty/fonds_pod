@@ -1,34 +1,45 @@
-import { Button, VerticalBox, HorizontalBox, GroupBox, ComboBox, ScrollView } from "std-widgets.slint";
+import { HorizontalBox } from "std-widgets.slint";
 import { Theme, Layout } from "theme.slint";
-import { Translations } from "translations.slint";
-import { SidebarButtonWithTooltip } from "components.slint";
-import { SchemaInputDialog, RenameArchiveDialog, SchemaItemInputDialog, ClassificationInputDialog, ClassificationChildInputDialog, ThemedButton, ConfirmDialog } from "dialogs.slint";
+import { SchemaInputDialog, RenameArchiveDialog, SchemaItemInputDialog, ClassificationInputDialog, ClassificationChildInputDialog, ConfirmDialog, AddFondsDialog, FileInputDialog, AddItemDialog, FondsSchemaOption } from "dialogs.slint";
+import { NavigationPanel } from "layout/navigation.slint";
 
-// Archive Library struct for settings display
-export struct ArchiveLibraryItem {
-    name: string,
-    path: string,
+export { SchemaInputDialog, RenameArchiveDialog, SchemaItemInputDialog, ClassificationInputDialog, ClassificationChildInputDialog, ConfirmDialog, AddFondsDialog, FileInputDialog, AddItemDialog, FondsItem, FondsTreeNode, SeriesItem, FileItem, ItemItem, CrudListItem, CrudListRowStyle }
+import { FondsPage } from "pages/fonds-page.slint";
+import { SchemaPage } from "pages/schema-page.slint";
+import { ClassificationPage } from "pages/classification-page.slint";
+import { SettingsPage } from "pages/settings-page.slint";
+import { AboutPage } from "pages/about-page.slint";
+import { ArchiveLibraryItem, SchemaItem, SchemaItemDetail, ClassificationItem, FondsItem, FondsTreeNode, SeriesItem, FileItem, ItemItem, CrudListItem, CrudListRowStyle } from "models.slint";
+
+component TooltipLayer inherits Rectangle {
+    in property <bool> is_hovered: false;
+    in property <length> offset_y: 0px;
+    in property <length> offset_x: 55px;
+    in property <string> text: "";
+    in property <length> tooltip_width: 100px;
+
+    x: offset_x;
+    y: offset_y;
+    width: tooltip_width;
+    height: 32px;
+    visible: is_hovered;
+    background: #333;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #555;
+
+    Text {
+        x: 0px;
+        y: 0px;
+        width: 100%;
+        height: 100%;
+        text: root.text;
+        font-size: 12px;
+        color: white;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
 }
-
-// Schema struct for schema management display
-export struct SchemaItem {
-    code: string,
-    name: string,
-}
-
-// Schema Item struct for schema items display
-export struct SchemaItemDetail {
-    code: string,
-    name: string,
-}
-
-export struct ClassificationItem {
-    code: string,
-    name: string,
-    is_active: bool,
-}
-
-export { SchemaInputDialog, RenameArchiveDialog, SchemaItemInputDialog, ClassificationInputDialog, ClassificationChildInputDialog }
 
 export component AppWindow inherits Window {
     title: "FondsPod";
@@ -38,31 +49,97 @@ export component AppWindow inherits Window {
     default-font-family: "Microsoft YaHei";
     default-font-size: 14px;
     
+    // Translation properties
+    out property <string> language_applied: @tr("language_applied");
+    out property <string> code_exists: @tr("code_exists");
+    out property <string> create_failed: @tr("create_failed");
+    out property <string> delete_failed: @tr("delete_failed");
+    out property <string> cannot_delete: @tr("cannot_delete");
+    out property <string> activate_failed: @tr("activate_failed");
+    out property <string> deactivate_failed: @tr("deactivate_failed");
+    out property <string> export_failed: @tr("export_failed");
+    out property <string> import_failed: @tr("import_failed");
+    out property <string> no_archive_selected: @tr("no_archive_selected");
+    out property <string> import_success: @tr("import_success");
+    out property <string> export_success: @tr("export_success");
+    out property <string> read_file_failed: @tr("read_file_failed");
+    out property <string> confirm_delete: @tr("confirm_delete");
+    out property <string> confirm_delete_classification: @tr("confirm_delete_classification");
+    out property <string> confirm_delete_selected_classifications: @tr("confirm_delete_selected_classifications");
+    out property <string> confirm_delete_child_classification: @tr("confirm_delete_child_classification");
+    out property <string> confirm_delete_selected_children: @tr("confirm_delete_selected_children");
+    
     property <string> current_page: "fonds";
     property <[string]> fonds_list: ["2020-HR", "2020-IT", "2021-HR", "2021-IT"];
-    property <int> selected_fonds: 0;
+    in-out property <int> selected_fonds: 0;
+    changed selected_fonds => { fonds_selected(selected_fonds); }
+    in-out property <[FondsItem]> fonds_items: [];
+    // Series list properties
+    in-out property <[SeriesItem]> series_list: [];
+    in-out property <[CrudListItem]> series_list_items: [];  // CrudList format for series
+    in-out property <int> selected_series_index: -1;
+    in-out property <string> selected_series_no: "";
+    in-out property <[string]> fonds_names: [];
     property <[string]> schema_list: ["Year", "Department", "Category"];
     in-out property <[SchemaItem]> schema_items: [];
-    property <[string]> item_list: ["2020", "2021", "2022"];
+    in-out property <[CrudListItem]> schema_list_items: [];  // CrudList format for schemas
+    in-out property <[string]> item_list: [];
+    in-out property <[ItemItem]> file_item_list: [];
+    in-out property <[CrudListItem]> items_list_items: [];  // CrudList format for items
     in-out property <[SchemaItemDetail]> item_details: [];
+    in-out property <[CrudListItem]> detail_list_items: [];  // CrudList format for schema items
     in-out property <int> selected_schema: 0;
     in-out property <[int]> selected_schemas: [];
     in-out property <int> selected_item: 0;
     in-out property <[int]> selected_items: [];
+    in-out property <string> open_file_path: "";
+    in-out property <string> open_item_path: "";
     property <[string]> series: ["2020-HR", "2020-IT", "2021-HR", "2021-IT"];
-    property <[string]> files: ["002", "003"];
+    in-out property <[FileItem]> files: [];
+    in-out property <[CrudListItem]> files_list_items: [];  // CrudList format for files
     property <int> selected_series: 0;
-    property <int> selected_file: 0;
+    in-out property <int> selected_file: 0;
+    in-out property <[int]> selected_files: [];
     in-out property <[string]> archive_libraries: ["Default Archive"];
     in-out property <[ArchiveLibraryItem]> archive_library_items: [];
     in-out property <int> selected_archive: 0;
+    changed selected_archive => { archive_selected(selected_archive); }
+    in-out property <int> selected_language: 0;
     // Classification management properties
     in-out property <[ClassificationItem]> classification_items: []; // reuse struct: code/name
     in-out property <[ClassificationItem]> classification_children: [];
+    in-out property <[CrudListItem]> classification_crud_items: []; // CrudList format for top classifications
+    in-out property <[CrudListItem]> child_crud_items: []; // CrudList format for child classifications
+    in-out property <[CrudListRowStyle]> classification_row_styles: []; // Row styles for top classifications
+    in-out property <[CrudListRowStyle]> child_row_styles: []; // Row styles for child classifications
     in-out property <int> selected_classification: 0;
     in-out property <[int]> selected_classifications: [];
     in-out property <int> selected_child: 0;
     in-out property <[int]> selected_children: [];
+    // Add fonds dialog properties
+    in-out property <bool> show_add_fonds_dialog: false;
+    in-out property <string> add_fonds_name_input: "";
+    in-out property <[string]> add_fonds_primary_categories: ["行政管理类", "业务管理类", "综合类"];
+    in-out property <[[string]]> add_fonds_secondary_categories: [
+        ["人事管理", "综合治理", "后勤保障"],
+        ["财务会计", "审计监督", "业务指导"],
+        ["项目管理", "成果汇编"]
+    ];
+    in-out property <int> add_fonds_primary_index: 0;
+    in-out property <int> add_fonds_secondary_index: 0;
+    in-out property <[FondsSchemaOption]> add_fonds_available_schemas: [
+        { code: "YEAR", name: "年度" },
+        { code: "DEPT", name: "部门" },
+        { code: "TYPE", name: "类别" },
+        { code: "MEDIA", name: "载体" },
+        { code: "LEVEL", name: "密级" },
+        { code: "RETENTION", name: "保管期限" }
+    ];
+    in-out property <[FondsSchemaOption]> add_fonds_selected_schemas: [
+        { code: "SERIES", name: "系列" }
+    ];
+    in-out property <int> add_fonds_highlight_available: -1;
+    in-out property <int> add_fonds_highlight_selected: -1;
     
     // Toast notification properties
     in-out property <string> toast_message: "";
@@ -71,16 +148,26 @@ export component AppWindow inherits Window {
     // Callbacks
     callback show_toast(string);
     callback add_fonds();
+    callback page_changed(string);
+    callback archive_selected(int);
     callback delete_fonds();
     callback open_fonds(string);
+    callback open_add_fonds_dialog();
+    callback toggle_fonds_expand(int);
+    callback select_fonds(int, string);
+    callback select_series(int, string);
+    callback file_selected(int);
+    callback fonds_selected(int);
     callback add_schema();
     callback delete_schema();
     callback delete_selected_schemas();
     callback schema_item_clicked(int, bool, bool);
+    callback schema_activated(int);  // Called when schema is activated (single click without modifiers)
     callback add_schema_item();
     callback delete_schema_item();
     callback delete_selected_items();
     callback schema_item_item_clicked(int, bool, bool);
+    callback schema_item_activated(int);  // Called when schema item is activated
     callback schema_selected(int);
     callback load_schemas([string]);
     callback load_schema_items([string]);
@@ -162,7 +249,18 @@ export component AppWindow inherits Window {
     }
     callback add_file();
     callback delete_file();
+    callback delete_selected_files();
+    callback file_clicked(int, bool, bool);
+    callback file_activated(int);
+    callback open_file_at(int);
+    callback add_item();
+    callback delete_item();
+    callback item_clicked(int, bool, bool);
+    callback item_activated(int);
     callback open_file();
+    callback open_item();
+    callback open_item_at(int);
+    callback series_activated(int);
     callback update_series();
     callback add_archive_library();
     callback remove_archive_library();
@@ -171,928 +269,170 @@ export component AppWindow inherits Window {
     callback cancel_settings();
     
     // Helper functions for accessing global Translations
-    public function set_language(index: int) {
-        Translations.language = index;
-    }
-    
-    public function get_language() -> int {
-        return Translations.language;
-    }
-    
-    // Helper functions for multi-selection
-    pure public function schema_is_selected(idx: int) -> bool {
-        if root.selected_schemas.length == 0 {
-            return false;
-        }
-        // Check if idx is in selected_schemas array
-        return root.selected_schemas[idx] == 1;
-    }
-    
-    pure public function item_is_selected(idx: int) -> bool {
-        if root.selected_items.length == 0 {
-            return false;
-        }
-        // Check if idx is in selected_items array
-        return root.selected_items[idx] == 1;
-    }
-    pure public function classification_is_selected(idx: int) -> bool {
-        if root.selected_classifications.length == 0 { return false; }
-        return root.selected_classifications[idx] == 1;
-    }
-    pure public function child_is_selected(idx: int) -> bool {
-        if root.selected_children.length == 0 { return false; }
-        return root.selected_children[idx] == 1;
+    public function reset_add_fonds_dialog_state() {
+        root.add_fonds_name_input = "";
+        root.add_fonds_primary_index = 0;
+        root.add_fonds_secondary_index = 0;
+        root.add_fonds_highlight_available = -1;
+        root.add_fonds_highlight_selected = -1;
+        root.add_fonds_available_schemas = [
+            { code: "YEAR", name: "年度" },
+            { code: "DEPT", name: "部门" },
+            { code: "TYPE", name: "类别" },
+            { code: "MEDIA", name: "载体" },
+            { code: "LEVEL", name: "密级" },
+            { code: "RETENTION", name: "保管期限" }
+        ];
+        root.add_fonds_selected_schemas = [
+            { code: "SERIES", name: "系列" }
+        ];
     }
     
     HorizontalBox {
         spacing: 0px;
-        
-        // Left Navigation - Icon-only sidebar (VS Code style)
-        VerticalBox {
-            width: 50px;
-            padding: 0px;
-            spacing: 0px;
-            alignment: start;
-            
-            btn_fonds := SidebarButtonWithTooltip {
-                icon: "📁";
-                tooltip: Translations.nav_fonds;
-                is_active: root.current_page == "fonds";
-                clicked => { root.current_page = "fonds"; }
-            }
-            
-            btn_schema := SidebarButtonWithTooltip {
-                icon: "⚙️";
-                tooltip: Translations.nav_schema;
-                is_active: root.current_page == "schema";
-                clicked => { root.current_page = "schema"; }
-            }
+        padding-left: 10px;
 
-            btn_classification := SidebarButtonWithTooltip {
-                icon: "🗂";
-                tooltip: Translations.nav_classification;
-                is_active: root.current_page == "classification";
-                clicked => { root.current_page = "classification"; }
-            }
-            
-            btn_settings := SidebarButtonWithTooltip {
-                icon: "🔧";
-                tooltip: Translations.nav_settings;
-                is_active: root.current_page == "settings";
-                clicked => { root.current_page = "settings"; }
-            }
-            
-            btn_files := SidebarButtonWithTooltip {
-                icon: "📂";
-                tooltip: Translations.nav_files;
-                is_active: root.current_page == "files";
-                clicked => { root.current_page = "files"; }
+        nav_panel := NavigationPanel {
+            width: Layout.nav_width;
+            height: parent.height;
+            current_page <=> root.current_page;
+            navigate(page_id) => { 
+                root.current_page = page_id; 
+                root.page_changed(page_id);
             }
         }
-        
-        // Separator
+
         Rectangle {
             width: Layout.separator_width;
+            height: parent.height;
             background: Theme.nav_border;
         }
-        
-        // Main Content Area
-        VerticalBox {
-            // Fonds Management
-            if root.current_page == "fonds" : VerticalBox {
-                Rectangle {
-                    height: Layout.toolbar_height;
-                    background: Theme.toolbar_background;
-                    
-                    HorizontalBox {
-                        padding: Layout.standard_padding;
-                        spacing: Layout.standard_spacing;
-                        
-                        ComboBox {
-                            model: root.archive_libraries;
-                            current-index: root.selected_archive;
-                        }
-                        ThemedButton { text: Translations.btn_add_fonds; is_primary: true; clicked => { root.add_fonds(); } }
-                        ThemedButton { text: Translations.btn_delete; is_primary: false; clicked => { root.delete_fonds(); } }
-                    }
-                }
-                
-                VerticalBox {
-                    for item[index] in root.fonds_list : Rectangle {
-                        height: Layout.list_item_height;
-                        background: root.selected_fonds == index ? Theme.list_selected : Theme.list_background;
-                        
-                        HorizontalBox {
-                            padding: Layout.standard_spacing;
-                            Text { text: item; }
-                        }
-                        
-                        TouchArea {
-                            clicked => {
-                                root.selected_fonds = index;
-                            }
-                            double-clicked => {
-                                root.open_fonds(item);
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Schema Management
-            if root.current_page == "schema" : HorizontalBox {
-                spacing: 0px;
-                
-                // Left side - Schema list (40% width)
-                VerticalBox {
-                    horizontal-stretch: 0.4;
-                    padding: Layout.standard_padding;
-                    spacing: Layout.standard_spacing;
-                    
-                    // Toolbar with icon button
-                    HorizontalBox {
-                        height: 40px;
-                        padding: 5px;
-                        spacing: Layout.standard_spacing;
-                        alignment: start;
-                        
-                        Text { text: Translations.label_schema; font-size: 14px; vertical-alignment: center; }
-                        
-                        Rectangle {
-                            width: 32px;
-                            height: 32px;
-                            border-radius: 4px;
-                            background: add_schema_touch.has-hover ? Theme.brand_soft : transparent;
-                            
-                            Text {
-                                x: 0;
-                                y: 2px;
-                                width: 32px;
-                                height: 32px;
-                                text: "➕";
-                                font-size: 18px;
-                                horizontal-alignment: center;
-                                vertical-alignment: center;
-                            }
-                            
-                            add_schema_touch := TouchArea {
-                                clicked => { root.add_schema(); }
-                            }
-                        }
-                    }
-                    
-                    ScrollView {
-                        VerticalBox {
-                            for schema_item[index] in root.schema_items : Rectangle {
-                                height: 50px;
-                                background: root.selected_schemas.length > 0 ? (root.schema_is_selected(index) ? Theme.list_selected : Theme.list_background) : (root.selected_schema == index ? Theme.list_selected : Theme.list_background);
-                                border-width: 1px;
-                                border-color: Theme.nav_border;
-                                
-                                VerticalBox {
-                                    padding-left: 10px;
-                                    padding-right: 10px;
-                                    padding-top: 6px;
-                                    padding-bottom: 6px;
-                                    spacing: 2px;
-                                    
-                                    Text {
-                                        text: schema_item.code;
-                                        font-size: 14px;
-                                        font-weight: 600;
-                                        color: #333;
-                                        overflow: elide;
-                                    }
-                                    
-                                    Text {
-                                        text: schema_item.name;
-                                        font-size: 12px;
-                                        color: #666;
-                                        overflow: elide;
-                                    }
-                                }
-                                
-                                schema_area := TouchArea {
-                                    pointer-event(event) => {
-                                        if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
-                                            root.schema_item_clicked(index, event.modifiers.control, event.modifiers.shift);
-                                        }
-                                        if event.kind == PointerEventKind.up && event.button == PointerEventButton.right {
-                                            if root.selected_schemas.length == 0 || !root.schema_is_selected(index) {
-                                                root.selected_schema = index;
-                                                root.selected_schemas = [];
-                                            }
-                                            schema_menu.show();
-                                        }
-                                    }
-                                }
-                                
-                                schema_menu := PopupWindow {
-                                    x: schema_area.mouse-x;
-                                    y: schema_area.mouse-y;
-                                    width: 120px;
-                                    
-                                    Rectangle {
-                                        background: white;
-                                        border-width: 1px;
-                                        border-color: #ccc;
-                                        border-radius: 4px;
-                                        drop-shadow-blur: 10px;
-                                        drop-shadow-color: #00000040;
-                                        
-                                        VerticalBox {
-                                            spacing: 0px;
-                                            
-                                            Rectangle {
-                                                height: 32px;
-                                                background: del_schema_area.has-hover ? Theme.bg_soft : transparent;
-                                                
-                                                HorizontalBox {
-                                                    padding-left: 12px;
-                                                    padding-right: 12px;
-                                                    
-                                                    Text {
-                                                        text: Translations.menu_delete;
-                                                        font-size: 13px;
-                                                        color: Theme.brand_primary;
-                                                        vertical-alignment: center;
-                                                    }
-                                                }
-                                                
-                                                del_schema_area := TouchArea {
-                                                    clicked => {
-                                                        schema_menu.close();
-                                                        if root.selected_schemas.length > 0 {
-                                                            root.delete_selected_schemas();
-                                                        } else {
-                                                            root.delete_schema();
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                // Divider
-                Rectangle {
-                    width: Layout.separator_width;
-                    background: Theme.nav_border;
-                }
-                
-                // Right side - Items list (60% width)
-                VerticalBox {
-                    horizontal-stretch: 0.6;
-                    padding: Layout.standard_padding;
-                    spacing: Layout.standard_spacing;
-                    
-                    // Toolbar with icon button
-                    HorizontalBox {
-                        height: 40px;
-                        padding: 5px;
-                        spacing: Layout.standard_spacing;
-                        alignment: start;
-                        
-                        Text { text: Translations.label_items; font-size: 14px; vertical-alignment: center; }
-                        
-                        Rectangle {
-                            width: 32px;
-                            height: 32px;
-                            border-radius: 4px;
-                            background: add_item_btn.has-hover ? Theme.brand_soft : transparent;
-                            
-                            Text {
-                                x: 0;
-                                y: 2px;
-                                width: 32px;
-                                height: 32px;
-                                text: "➕";
-                                font-size: 18px;
-                                horizontal-alignment: center;
-                                vertical-alignment: center;
-                            }
-                            
-                            add_item_btn := TouchArea {
-                                clicked => { root.add_schema_item(); }
-                            }
-                        }
-                    }
-                    
-                    ScrollView {
-                        VerticalBox {
-                            for detail_item[index] in root.item_details : Rectangle {
-                                height: 50px;
-                                background: root.selected_items.length > 0 ? (root.item_is_selected(index) ? Theme.list_selected : Theme.list_background) : (root.selected_item == index ? Theme.list_selected : Theme.list_background);
-                                border-width: 1px;
-                                border-color: Theme.nav_border;
-                                
-                                VerticalBox {
-                                    padding-left: 10px;
-                                    padding-right: 10px;
-                                    padding-top: 6px;
-                                    padding-bottom: 6px;
-                                    spacing: 2px;
-                                    
-                                    Text {
-                                        text: detail_item.code;
-                                        font-size: 14px;
-                                        font-weight: 600;
-                                        color: #333;
-                                        overflow: elide;
-                                    }
-                                    
-                                    Text {
-                                        text: detail_item.name;
-                                        font-size: 12px;
-                                        color: #666;
-                                        overflow: elide;
-                                    }
-                                }
-                                
-                                item_area := TouchArea {
-                                    pointer-event(event) => {
-                                        if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
-                                            root.schema_item_item_clicked(index, event.modifiers.control, event.modifiers.shift);
-                                        }
-                                        if event.kind == PointerEventKind.up && event.button == PointerEventButton.right {
-                                            if root.selected_items.length == 0 || !root.item_is_selected(index) {
-                                                root.selected_item = index;
-                                                root.selected_items = [];
-                                            }
-                                            item_menu.show();
-                                        }
-                                    }
-                                }
-                                
-                                item_menu := PopupWindow {
-                                    x: item_area.mouse-x;
-                                    y: item_area.mouse-y;
-                                    width: 120px;
-                                    
-                                    Rectangle {
-                                        background: white;
-                                        border-width: 1px;
-                                        border-color: #ccc;
-                                        border-radius: 4px;
-                                        drop-shadow-blur: 10px;
-                                        drop-shadow-color: #00000040;
-                                        
-                                        VerticalBox {
-                                            spacing: 0px;
-                                            
-                                            Rectangle {
-                                                height: 32px;
-                                                background: del_item_area.has-hover ? Theme.bg_soft : transparent;
-                                                
-                                                HorizontalBox {
-                                                    padding-left: 12px;
-                                                    padding-right: 12px;
-                                                    
-                                                    Text {
-                                                        text: Translations.menu_delete;
-                                                        font-size: 13px;
-                                                        color: Theme.brand_primary;
-                                                        vertical-alignment: center;
-                                                    }
-                                                }
-                                                
-                                                del_item_area := TouchArea {
-                                                    clicked => {
-                                                        item_menu.close();
-                                                        if root.selected_items.length > 0 {
-                                                            root.delete_selected_items();
-                                                        } else {
-                                                            root.delete_schema_item();
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
 
-            // Classification Management (two-pane similar to Schema)
-            if root.current_page == "classification" : HorizontalBox {
-                spacing: 0px;
-                // Left pane: top-level classifications
-                VerticalBox {
-                    horizontal-stretch: 0.4;
-                    padding: Layout.standard_padding;
-                    spacing: Layout.standard_spacing;
-                    HorizontalBox { height: 40px; padding: 5px; spacing: Layout.standard_spacing; alignment: start;
-                        Text { text: Translations.label_top_classifications; font-size: 14px; vertical-alignment: center; }
-                        Rectangle { width: 32px; height: 32px; border-radius: 4px; background: add_classification_touch.has-hover ? Theme.brand_soft : transparent;
-                            Text { x: 0; y: 2px; width: 32px; height: 32px; text: "➕"; font-size: 18px; horizontal-alignment: center; vertical-alignment: center; }
-                            add_classification_touch := TouchArea { clicked => { root.add_classification(); } }
-                        }
-                        Rectangle { width: 32px; height: 32px; border-radius: 4px; background: export_classifications_touch.has-hover ? Theme.brand_soft : transparent;
-                            Text { x: 0; y: 2px; width: 32px; height: 32px; text: "📤"; font-size: 18px; horizontal-alignment: center; vertical-alignment: center; }
-                            export_classifications_touch := TouchArea { clicked => { root.export_classifications(); } }
-                        }
-                        Rectangle { width: 32px; height: 32px; border-radius: 4px; background: import_classifications_touch.has-hover ? Theme.brand_soft : transparent;
-                            Text { x: 0; y: 2px; width: 32px; height: 32px; text: "📥"; font-size: 18px; horizontal-alignment: center; vertical-alignment: center; }
-                            import_classifications_touch := TouchArea { clicked => { root.import_classifications(); } }
-                        }
-                    }
-                    ScrollView {
-                        VerticalBox {
-                            for classification_item[index] in root.classification_items : Rectangle {
-                                height: 50px;
-                                background: root.selected_classifications.length > 0 ? (root.classification_is_selected(index) ? (classification_item.is_active ? Theme.list_selected : Theme.list_selected_inactive) : Theme.list_background) : (root.selected_classification == index ? (classification_item.is_active ? Theme.list_selected : Theme.list_selected_inactive) : Theme.list_background);
-                                border-width: 1px; border-color: Theme.nav_border;
-                                VerticalBox { padding-left: 10px; padding-right: 10px; padding-top: 6px; padding-bottom: 6px; spacing: 2px;
-                                    Text { text: classification_item.code; font-size: 14px; font-weight: 600; color: classification_item.is_active ? #333 : #999; overflow: elide; }
-                                    Text { text: classification_item.name; font-size: 12px; color: classification_item.is_active ? #666 : #bbb; overflow: elide; }
-                                }
-                                classification_area := TouchArea {
-                                    pointer-event(event) => {
-                                        if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
-                                            root.classification_item_clicked(index, event.modifiers.control, event.modifiers.shift);
-                                        }
-                                        if event.kind == PointerEventKind.up && event.button == PointerEventButton.right {
-                                            if root.selected_classifications.length == 0 || !root.classification_is_selected(index) {
-                                                root.selected_classification = index;
-                                                root.selected_classifications = [];
-                                            }
-                                            classification_menu.show();
-                                        }
-                                    }
-                                }
-                                classification_menu := PopupWindow { x: classification_area.mouse-x; y: classification_area.mouse-y; width: 120px;
-                                    Rectangle { background: white; border-width: 1px; border-color: #ccc; border-radius: 4px; drop-shadow-blur: 10px; drop-shadow-color: #00000040;
-                                        VerticalBox { spacing: 0px;
-                                            Rectangle { height: 32px; background: del_classification_area.has-hover ? Theme.bg_soft : transparent;
-                                                HorizontalBox { padding-left: 12px; padding-right: 12px; Text { text: Translations.menu_delete; font-size: 13px; color: Theme.brand_primary; vertical-alignment: center; } }
-                                                del_classification_area := TouchArea { clicked => { classification_menu.close(); if root.selected_classifications.length > 0 { root.delete_selected_classifications(); } else { root.delete_classification(); } } }
-                                            }
-                                            Rectangle { height: 1px; background: Theme.nav_border; }
-                                            Rectangle { height: 32px; background: activate_classification_area.has-hover ? Theme.bg_soft : transparent;
-                                                HorizontalBox { padding-left: 12px; padding-right: 12px; Text { text: Translations.menu_activate; font-size: 13px; vertical-alignment: center; } }
-                                                activate_classification_area := TouchArea { clicked => { classification_menu.close(); root.activate_classification(); } }
-                                            }
-                                            Rectangle { height: 32px; background: deactivate_classification_area.has-hover ? Theme.bg_soft : transparent;
-                                                HorizontalBox { padding-left: 12px; padding-right: 12px; Text { text: Translations.menu_deactivate; font-size: 13px; vertical-alignment: center; } }
-                                                deactivate_classification_area := TouchArea { clicked => { classification_menu.close(); root.deactivate_classification(); } }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                Rectangle { width: Layout.separator_width; background: Theme.nav_border; }
-                // Right pane: child classifications
-                VerticalBox {
-                    horizontal-stretch: 0.6;
-                    padding: Layout.standard_padding;
-                    spacing: Layout.standard_spacing;
-                    HorizontalBox { height: 40px; padding: 5px; spacing: Layout.standard_spacing; alignment: start;
-                        Text { text: Translations.label_child_classifications; font-size: 14px; vertical-alignment: center; }
-                        Rectangle { width: 32px; height: 32px; border-radius: 4px; background: add_child_classification_touch.has-hover ? Theme.brand_soft : transparent;
-                            Text { x: 0; y: 2px; width: 32px; height: 32px; text: "➕"; font-size: 18px; horizontal-alignment: center; vertical-alignment: center; }
-                            add_child_classification_touch := TouchArea { clicked => { root.add_child_classification(); } }
-                        }
-                    }
-                    ScrollView {
-                        VerticalBox {
-                            for child_item[index] in root.classification_children : Rectangle {
-                                height: 50px;
-                                background: root.selected_children.length > 0 ? (root.child_is_selected(index) ? (child_item.is_active ? Theme.list_selected : Theme.list_selected_inactive) : Theme.list_background) : (root.selected_child == index ? (child_item.is_active ? Theme.list_selected : Theme.list_selected_inactive) : Theme.list_background);
-                                border-width: 1px; border-color: Theme.nav_border;
-                                VerticalBox { padding-left: 10px; padding-right: 10px; padding-top: 6px; padding-bottom: 6px; spacing: 2px;
-                                    Text { text: child_item.code; font-size: 14px; font-weight: 600; color: child_item.is_active ? #333 : #999; overflow: elide; }
-                                    Text { text: child_item.name; font-size: 12px; color: child_item.is_active ? #666 : #bbb; overflow: elide; }
-                                }
-                                child_area := TouchArea {
-                                    pointer-event(event) => {
-                                        if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
-                                            root.child_classification_clicked(index, event.modifiers.control, event.modifiers.shift);
-                                        }
-                                        if event.kind == PointerEventKind.up && event.button == PointerEventButton.right {
-                                            if root.selected_children.length == 0 || !root.child_is_selected(index) {
-                                                root.selected_child = index;
-                                                root.selected_children = [];
-                                            }
-                                            child_menu.show();
-                                        }
-                                    }
-                                }
-                                child_menu := PopupWindow { x: child_area.mouse-x; y: child_area.mouse-y; width: 120px;
-                                    Rectangle { background: white; border-width: 1px; border-color: #ccc; border-radius: 4px; drop-shadow-blur: 10px; drop-shadow-color: #00000040;
-                                        VerticalBox { spacing: 0px;
-                                            Rectangle { height: 32px; background: del_child_area.has-hover ? Theme.bg_soft : transparent;
-                                                HorizontalBox { padding-left: 12px; padding-right: 12px; Text { text: Translations.menu_delete; font-size: 13px; color: Theme.brand_primary; vertical-alignment: center; } }
-                                                del_child_area := TouchArea { clicked => { child_menu.close(); if root.selected_children.length > 0 { root.delete_selected_children(); } else { root.delete_child_classification(); } } }
-                                            }
-                                            Rectangle { height: 1px; background: Theme.nav_border; }
-                                            Rectangle { height: 32px; background: activate_child_area.has-hover ? Theme.bg_soft : transparent;
-                                                HorizontalBox { padding-left: 12px; padding-right: 12px; Text { text: Translations.menu_activate; font-size: 13px; vertical-alignment: center; } }
-                                                activate_child_area := TouchArea { clicked => { child_menu.close(); root.activate_child_classification(); } }
-                                            }
-                                            Rectangle { height: 32px; background: deactivate_child_area.has-hover ? Theme.bg_soft : transparent;
-                                                HorizontalBox { padding-left: 12px; padding-right: 12px; Text { text: Translations.menu_deactivate; font-size: 13px; vertical-alignment: center; } }
-                                                deactivate_child_area := TouchArea { clicked => { child_menu.close(); root.deactivate_child_classification(); } }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Settings
-            if root.current_page == "settings" : VerticalBox {
-                height: 500px;  // Increased height for archive library management
-                padding: Layout.standard_padding;
-                spacing: Layout.standard_spacing;
-
-                GroupBox {
-                    title: Translations.label_language;
-                    HorizontalBox {
-                        padding: Layout.standard_padding;
-                        Text { text: Translations.label_language; width: 100px; }
-                        ComboBox {
-                            model: ["中文 (Chinese)", "English (英文)"];
-                            current-index <=> Translations.language;
-                        }
-                    }
-                }
-
-                GroupBox {
-                    title: Translations.label_archive_libraries;
-                    VerticalBox {
-                        padding: Layout.standard_padding;
-                        spacing: Layout.standard_spacing;
-
-                        // Toolbar for archive library management - icon button only
-                        HorizontalBox {
-                            height: 40px;
-                            padding: 5px;
-                            spacing: Layout.standard_spacing;
-                            alignment: start;
-                            
-                            // Icon button for adding archive library
-                            Rectangle {
-                                width: 32px;
-                                height: 32px;
-                                border-radius: 4px;
-                                background: add_touch.has-hover ? Theme.brand_soft : transparent;
-                                
-                                Text {
-                                    x: 0;
-                                    y: 2px;
-                                    width: 32px;
-                                    height: 32px;
-                                    text: "➕";
-                                    font-size: 18px;
-                                    horizontal-alignment: center;
-                                    vertical-alignment: center;
-                                }
-                                
-                                add_touch := TouchArea {
-                                    clicked => { root.add_archive_library(); }
-                                }
-                            }
-                        }
-
-                        // Archive library list with scroll - display name and path
-                        ScrollView {
-                            height: 250px;
-                            VerticalBox {
-                                for item[index] in root.archive_library_items : Rectangle {
-                                    height: 60px;
-                                    background: root.selected_archive == index ? Theme.list_selected : Theme.list_background;
-                                    border-width: 1px;
-                                    border-color: Theme.nav_border;
-                                    
-                                    VerticalBox {
-                                        padding-left: 10px;
-                                        padding-right: 10px;
-                                        padding-top: 8px;
-                                        padding-bottom: 8px;
-                                        spacing: 4px;
-                                        
-                                        // Library name
-                                        Text {
-                                            text: item.name;
-                                            font-size: 14px;
-                                            font-weight: 600;
-                                            color: #333;
-                                            overflow: elide;
-                                        }
-                                        
-                                        // Library path
-                                        Text {
-                                            text: item.path;
-                                            font-size: 12px;
-                                            color: #666;
-                                            overflow: elide;
-                                        }
-                                    }
-                                    
-                                    item_touch := TouchArea {
-                                        clicked => { root.selected_archive = index; }
-                                        
-                                        // Right-click menu
-                                        pointer-event(event) => {
-                                            if event.kind == PointerEventKind.up && event.button == PointerEventButton.right {
-                                                root.selected_archive = index;
-                                                context_menu.show();
-                                            }
-                                        }
-                                    }
-                                    
-                                    // Context menu popup
-                                    context_menu := PopupWindow {
-                                        x: item_touch.mouse-x;
-                                        y: item_touch.mouse-y;
-                                        width: 120px;
-                                        
-                                        Rectangle {
-                                            background: white;
-                                            border-width: 1px;
-                                            border-color: #ccc;
-                                            border-radius: 4px;
-                                            drop-shadow-blur: 10px;
-                                            drop-shadow-color: #00000040;
-                                            
-                                            VerticalBox {
-                                                spacing: 0px;
-                                                
-                                                // Rename option
-                                                Rectangle {
-                                                    height: 32px;
-                                                    background: rename_touch.has-hover ? Theme.bg_soft : transparent;
-                                                    
-                                                    HorizontalBox {
-                                                        padding-left: 12px;
-                                                        padding-right: 12px;
-                                                        
-                                                        Text {
-                                                            text: Translations.menu_rename;
-                                                            font-size: 13px;
-                                                            vertical-alignment: center;
-                                                        }
-                                                    }
-                                                    
-                                                    rename_touch := TouchArea {
-                                                        clicked => {
-                                                            context_menu.close();
-                                                            // Trigger rename dialog (to be handled in Rust)
-                                                            root.rename_archive_library(index, item.name);
-                                                        }
-                                                    }
-                                                }
-                                                
-                                                // Separator
-                                                Rectangle {
-                                                    height: 1px;
-                                                    background: Theme.nav_border;
-                                                }
-                                                
-                                                // Delete option
-                                                Rectangle {
-                                                    height: 32px;
-                                                    background: delete_touch.has-hover ? Theme.bg_soft : transparent;
-                                                    
-                                                    HorizontalBox {
-                                                        padding-left: 12px;
-                                                        padding-right: 12px;
-                                                        
-                                                        Text {
-                                                            text: Translations.menu_delete;
-                                                            font-size: 13px;
-                                                            color: Theme.brand_primary;
-                                                            vertical-alignment: center;
-                                                        }
-                                                    }
-                                                    
-                                                    delete_touch := TouchArea {
-                                                        clicked => {
-                                                            context_menu.close();
-                                                            root.selected_archive = index;
-                                                            root.remove_archive_library();
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                HorizontalBox {
-                    alignment: end;
-                    spacing: Layout.standard_spacing;
-                    ThemedButton { text: Translations.btn_cancel; is_primary: false; clicked => { root.cancel_settings(); } }
-                    ThemedButton { text: Translations.btn_apply; is_primary: true; clicked => { root.apply_settings(); } }
-                }
-            }
-            
-            // Files Management
-            if root.current_page == "files" : HorizontalBox {
-                spacing: 0px;
-                
-                // Left side
-                VerticalBox {
-                    width: 200px;
-                    padding: Layout.standard_padding;
-                    spacing: Layout.standard_spacing;
-                    
-                    Rectangle {
-                        height: Layout.toolbar_height;
-                        background: Theme.toolbar_background;
-                        
-                        HorizontalBox {
-                            padding: Layout.standard_padding;
-                            spacing: Layout.standard_spacing;
-                            
-                            Text { text: Translations.label_series; font-size: 14px; }
-                            ThemedButton { text: Translations.btn_refresh; is_primary: true; clicked => { root.update_series(); } }
-                        }
-                    }
-                    
-                    VerticalBox {
-                        for item[index] in root.series : Rectangle {
-                            height: Layout.list_item_height;
-                            background: root.selected_series == index ? Theme.list_selected : Theme.list_background;
-                            HorizontalBox {
-                                padding: Layout.standard_spacing;
-                                Text { text: item; }
-                            }
-                            TouchArea {
-                                clicked => { root.selected_series = index; }
-                            }
-                        }
-                    }
-                }
-                
-                // Divider
-                Rectangle {
-                    width: Layout.separator_width;
-                    background: Theme.nav_border;
-                }
-                
-                // Right side
-                VerticalBox {
-                    padding: Layout.standard_padding;
-                    spacing: Layout.standard_spacing;
-                    
-                    Rectangle {
-                        height: Layout.toolbar_height;
-                        background: Theme.toolbar_background;
-                        
-                        HorizontalBox {
-                            padding: Layout.standard_padding;
-                            spacing: Layout.standard_spacing;
-                            
-                            Text { text: Translations.label_files; font-size: 14px; }
-                            ThemedButton { text: Translations.btn_add; is_primary: true; clicked => { root.add_file(); } }
-                            ThemedButton { text: Translations.btn_delete; is_primary: false; clicked => { root.delete_file(); } }
-                            ThemedButton { text: Translations.btn_open; is_primary: true; clicked => { root.open_file(); } }
-                        }
-                    }
-                    
-                    VerticalBox {
-                        for item[index] in root.files : Rectangle {
-                            height: Layout.list_item_height;
-                            background: root.selected_file == index ? Theme.list_selected : Theme.list_background;
-                            HorizontalBox {
-                                padding: Layout.standard_spacing;
-                                Text { text: item; }
-                            }
-                            
-                            TouchArea {
-                                double-clicked => { root.open_file(); }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    // Tooltip layer - rendered at window level, always on top
-    if btn_fonds.is_hovered : Rectangle {
-        x: 55px;
-        y: 9px;
-        width: 100px;
-        height: 32px;
-        background: #333;
-        border-radius: 4px;
-        border-width: 1px;
-        border-color: #555;
-        
-        Text {
-            x: 0px;
-            y: 0px;
-            width: 100%;
+        Rectangle {
+            horizontal-stretch: 1;
             height: 100%;
-            text: btn_fonds.tooltip;
-            font-size: 12px;
-            color: white;
-            horizontal-alignment: center;
-            vertical-alignment: center;
-        }
-    }
-    
-    if btn_schema.is_hovered : Rectangle {
-        x: 55px;
-        y: 59px;
-        width: 100px;
-        height: 32px;
-        background: #333;
-        border-radius: 4px;
-        border-width: 1px;
-        border-color: #555;
-        
-        Text {
-            x: 0px;
-            y: 0px;
-            width: 100%;
-            height: 100%;
-            text: btn_schema.tooltip;
-            font-size: 12px;
-            color: white;
-            horizontal-alignment: center;
-            vertical-alignment: center;
-        }
-    }
-    
-    if btn_classification.is_hovered : Rectangle {
-        x: 55px;
-        y: 109px;
-        width: 120px;
-        height: 32px;
-        background: #333;
-        border-radius: 4px;
-        border-width: 1px;
-        border-color: #555;
-        Text { x: 0px; y: 0px; width: 100%; height: 100%; text: btn_classification.tooltip; font-size: 12px; color: white; horizontal-alignment: center; vertical-alignment: center; }
-    }
+            background: Theme.bg_primary;
 
-    if btn_settings.is_hovered : Rectangle {
-        x: 55px;
-        y: 159px;
-        width: 100px;
-        height: 32px;
-        background: #333;
-        border-radius: 4px;
-        border-width: 1px;
-        border-color: #555;
-        
-        Text {
-            x: 0px;
-            y: 0px;
-            width: 100%;
-            height: 100%;
-            text: btn_settings.tooltip;
-            font-size: 12px;
-            color: white;
-            horizontal-alignment: center;
-            vertical-alignment: center;
+            if root.current_page == "fonds" : FondsPage {
+                width: parent.width;
+                height: parent.height;
+                archive_libraries <=> root.archive_libraries;
+                selected_archive <=> root.selected_archive;
+                fonds_names <=> root.fonds_names;
+                selected_fonds <=> root.selected_fonds;
+                series_list <=> root.series_list;
+                series_list_items <=> root.series_list_items;
+                selected_series_index <=> root.selected_series_index;
+                selected_series_no <=> root.selected_series_no;
+                files <=> root.files;
+                files_list_items <=> root.files_list_items;
+                selected_file <=> root.selected_file;
+                selected_files <=> root.selected_files;
+                item_list <=> root.file_item_list;
+                items_list_items <=> root.items_list_items;
+                selected_item <=> root.selected_item;
+                selected_items <=> root.selected_items;
+                open_file_path <=> root.open_file_path;
+                open_item_path <=> root.open_item_path;
+                add_file => { root.add_file(); }
+                delete_file => { root.delete_file(); }
+                delete_selected_files => { root.delete_selected_files(); }
+                file_clicked(index, ctrl, shift) => { root.file_clicked(index, ctrl, shift); }
+                file_activated(index) => { root.file_activated(index); }
+                add_item => { root.add_item(); }
+                delete_item => { root.delete_item(); }
+                delete_selected_items => { root.delete_selected_items(); }
+                open_file => { root.open_file(); }
+                open_file_at(index) => { root.open_file_at(index); }
+                open_item => { root.open_item(); }
+                open_item_at(index) => { root.open_item_at(index); }
+                item_clicked(index, ctrl, shift) => { root.item_clicked(index, ctrl, shift); }
+                item_activated(index) => { root.item_activated(index); }
+                series_activated(index) => { root.series_activated(index); }
+                request_add_fonds_dialog => { root.open_add_fonds_dialog(); }
+                archive_selected(index) => { root.archive_selected(index); }
+                select_series(index, series_no) => { root.select_series(index, series_no); }
+                file_selected(index) => { root.file_selected(index); }
+            }
+
+            if root.current_page == "schema" : SchemaPage {
+                width: parent.width;
+                height: parent.height;
+                schema_items <=> root.schema_items;
+                schema_list_items <=> root.schema_list_items;
+                selected_schema <=> root.selected_schema;
+                selected_schemas <=> root.selected_schemas;
+                item_details <=> root.item_details;
+                detail_list_items <=> root.detail_list_items;
+                selected_item <=> root.selected_item;
+                selected_items <=> root.selected_items;
+                add_schema => { root.add_schema(); }
+                delete_schema => { root.delete_schema(); }
+                delete_selected_schemas => { root.delete_selected_schemas(); }
+                schema_item_clicked(index, ctrl, shift) => { root.schema_item_clicked(index, ctrl, shift); }
+                schema_activated(index) => { root.schema_activated(index); }
+                add_schema_item => { root.add_schema_item(); }
+                delete_schema_item => { root.delete_schema_item(); }
+                delete_selected_items => { root.delete_selected_items(); }
+                schema_item_item_clicked(index, ctrl, shift) => { root.schema_item_item_clicked(index, ctrl, shift); }
+                schema_item_activated(index) => { root.schema_item_activated(index); }
+            }
+
+            if root.current_page == "classification" : ClassificationPage {
+                width: parent.width;
+                height: parent.height;
+                classification_items <=> root.classification_items;
+                classification_crud_items <=> root.classification_crud_items;
+                classification_row_styles <=> root.classification_row_styles;
+                selected_classification <=> root.selected_classification;
+                selected_classifications <=> root.selected_classifications;
+                classification_children <=> root.classification_children;
+                child_crud_items <=> root.child_crud_items;
+                child_row_styles <=> root.child_row_styles;
+                selected_child <=> root.selected_child;
+                selected_children <=> root.selected_children;
+                add_classification => { root.add_classification(); }
+                delete_classification => { root.delete_classification(); }
+                delete_selected_classifications => { root.delete_selected_classifications(); }
+                classification_item_clicked(index, ctrl, shift) => { root.classification_item_clicked(index, ctrl, shift); }
+                activate_classification => { root.activate_classification(); }
+                deactivate_classification => { root.deactivate_classification(); }
+                export_classifications => { root.export_classifications(); }
+                import_classifications => { root.import_classifications(); }
+                add_child_classification => { root.add_child_classification(); }
+                delete_child_classification => { root.delete_child_classification(); }
+                delete_selected_children => { root.delete_selected_children(); }
+                child_classification_clicked(index, ctrl, shift) => { root.child_classification_clicked(index, ctrl, shift); }
+                activate_child_classification => { root.activate_child_classification(); }
+                deactivate_child_classification => { root.deactivate_child_classification(); }
+            }
+
+            if root.current_page == "settings" : SettingsPage {
+                width: parent.width;
+                height: parent.height;
+                archive_library_items <=> root.archive_library_items;
+                selected_archive <=> root.selected_archive;
+                selected_language <=> root.selected_language;
+                add_archive_library => { root.add_archive_library(); }
+                remove_archive_library => { root.remove_archive_library(); }
+                rename_archive_library(index, name) => { root.rename_archive_library(index, name); }
+                apply_settings => { root.apply_settings(); }
+                cancel_settings => { root.cancel_settings(); }
+            }
+
+            if root.current_page == "about" : AboutPage {
+                width: parent.width;
+                height: parent.height;
+            }
         }
     }
     
-    if btn_files.is_hovered : Rectangle {
-        x: 55px;
-        y: 209px;
-        width: 100px;
-        height: 32px;
-        background: #333;
-        border-radius: 4px;
-        border-width: 1px;
-        border-color: #555;
-        
-        Text {
-            x: 0px;
-            y: 0px;
-            width: 100%;
-            height: 100%;
-            text: btn_files.tooltip;
-            font-size: 12px;
-            color: white;
-            horizontal-alignment: center;
-            vertical-alignment: center;
-        }
-    }
-    
-    // Toast notification
+    // Tooltips for navigation (positioned to the right of nav buttons)
+    TooltipLayer { is_hovered: nav_panel.fonds_hovered; offset_y: 9px; offset_x: 65px; text: @tr("nav_fonds"); }
+    TooltipLayer { is_hovered: nav_panel.schema_hovered; offset_y: 59px; offset_x: 65px; text: @tr("nav_schema"); }
+    TooltipLayer { is_hovered: nav_panel.classification_hovered; offset_y: 109px; offset_x: 65px; tooltip_width: 120px; text: @tr("nav_classification"); }
+    TooltipLayer { is_hovered: nav_panel.settings_hovered; offset_y: 159px; offset_x: 65px; text: @tr("nav_settings"); }
+    TooltipLayer { is_hovered: nav_panel.about_hovered; offset_y: 209px; offset_x: 65px; text: @tr("nav_about"); }
     if root.toast_visible : Rectangle {
         x: parent.width / 2 - self.width / 2;
         y: parent.height - 100px;
@@ -1118,6 +458,26 @@ export component AppWindow inherits Window {
         // Auto-hide animation
         animate opacity {
             duration: 300ms;
+        }
+    }
+    
+    if root.show_add_fonds_dialog : AddFondsDialog {
+        current_language: 0;
+        fonds_name_input <=> root.add_fonds_name_input;
+        primary_classifications <=> root.add_fonds_primary_categories;
+        secondary_classifications <=> root.add_fonds_secondary_categories;
+        selected_primary_classification <=> root.add_fonds_primary_index;
+        selected_secondary_classification <=> root.add_fonds_secondary_index;
+        available_schema_items <=> root.add_fonds_available_schemas;
+        chosen_schema_items <=> root.add_fonds_selected_schemas;
+        highlighted_available_schema <=> root.add_fonds_highlight_available;
+        highlighted_chosen_schema <=> root.add_fonds_highlight_selected;
+        cancel => {
+            root.show_add_fonds_dialog = false;
+        }
+        confirm => {
+            root.show_add_fonds_dialog = false;
+            root.add_fonds();
         }
     }
 }

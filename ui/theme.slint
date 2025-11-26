@@ -24,6 +24,7 @@ export global Theme {
     out property <color> list_background: white;
     out property <color> toolbar_background: #fff0eb;
     out property <color> text_primary: #333;
+    out property <color> text_secondary: #666;
     out property <color> text_on_brand: white;
 }
 
@@ -35,4 +36,11 @@ export global Layout {
     out property <length> list_item_height: 40px;
     out property <length> standard_padding: 10px;
     out property <length> standard_spacing: 5px;
+    out property <length> row_height: 60px;
+    
+    // CrudList component spacing
+    out property <length> crud_list_padding: 12px;           // Outer padding
+    out property <length> crud_list_item_spacing: 8px;       // Space between items
+    out property <length> crud_list_item_padding: 12px;      // Padding inside each item
+    out property <length> crud_list_toolbar_spacing: 12px;   // Space between toolbar and list
 }

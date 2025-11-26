@@ -33,7 +33,7 @@ pub struct AppSettings {
 impl Default for AppSettings {
     fn default() -> Self {
         AppSettings {
-            language: "zh".to_string(),
+            language: "zh_CN".to_string(),
             archive_libraries: Vec::new(),
             last_opened_library: None,
         }
@@ -45,10 +45,5 @@ pub const PROTECTED_SCHEMA: &str = "Year";
 
 /// Validates if a schema operation is allowed
 pub fn can_modify_schema(schema_no: &str) -> bool {
-    schema_no != PROTECTED_SCHEMA
-}
-
-/// Validates if schema items can be modified
-pub fn can_modify_schema_items(schema_no: &str) -> bool {
     schema_no != PROTECTED_SCHEMA
 }

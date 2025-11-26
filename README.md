@@ -1,38 +1,144 @@
-# Slint Rust Template
+# FondsPod
 
-A template for a Rust application that's using [Slint](https://slint.rs/) for the user interface.
+FondsPod is an open-source document management tool based on archival management principles. It helps users efficiently organize, store, and retrieve various types of documents and files.
 
-## About
+## Features
 
-This template helps you get started developing a Rust application with Slint as toolkit
-for the user interface. It demonstrates the integration between the `.slint` UI markup and
-Rust code, how to react to callbacks, get and set properties, and use basic widgets.
+- **Archive Library Management**: Create and manage multiple archive libraries, each associated with a local directory. Archive libraries are collections of Fonds, and each library is linked to a local SQLite database (`.fondspod.db`) for metadata storage.
+- **Fonds Management**: Organize documents into hierarchical structures:
+  - **Fonds**: The highest level of archival management.
+  - **Series**: Subsets under Fonds for further classification.
+  - **Files**: Collections of documents under Series.
+  - **Items**: Specific entries within Files.
+  Fonds are classified using `FondClassifications`, and their metadata includes creation time and classification codes.
+- **Schema Management**: Define and manage metadata structures for Series. Schemas have two levels:
+  - **Schema**: Represents the metadata structure.
+  - **Schema Items**: Represents individual fields within a Schema. A special `Year` schema is initialized by default and cannot be modified.
+- **File Management**: Add, delete, and organize files within Series. File identifiers are generated using the format `[FondNo]-[SeriesNo]-[Two-digit Sequence Number]`. Deleted files are moved to a `.trash` directory to prevent accidental loss.
+- **Settings**: Configure themes (e.g., light/dark mode), languages (e.g., Chinese, English), and archive paths. Settings are stored in user configuration files.
+- **Internationalization**: Supports multiple languages (Chinese, English). Translations are managed using Slint's `@tr()` macro and Fluent files.
 
-## Usage
+### Additional Features
 
-1. Install Rust by following its [getting-started guide](https://www.rust-lang.org/learn/get-started).
-   Once this is done, you should have the `rustc` compiler and the `cargo` build system installed in your `PATH`.
-2. Download and extract the [ZIP archive of this repository](https://github.com/slint-ui/slint-rust-template/archive/refs/heads/main.zip).
-3. Rename the extracted directory and change into it:
-    ```
-    mv slint-rust-template-main my-project
-    cd my-project    
-    ```
-4. Build with `cargo`:
-    ```
-    cargo build
-    ```
-5. Run the application binary:
-    ```
-    cargo run
-    ```
+- **Number Generation**: Unique identifiers for Fonds, Series, Files, and Items are generated using a prefix and sequence number stored in the `Sequences` table. The sequence number format is configurable (default: 2 digits).
+- **Dynamic Series Generation**: Series are dynamically generated based on the Cartesian product of Schema Items. For example, selecting `Year` (2020, 2021) and `Department` (HR, IT) results in Series like `2020-HR`, `2020-IT`, `2021-HR`, `2021-IT`.
 
-We recommend using an IDE for development, along with our [LSP-based IDE integration for `.slint` files](https://github.com/slint-ui/slint/blob/master/tools/lsp/README.md). You can also load this project directly in [Visual Studio Code](https://code.visualstudio.com) and install our [Slint extension](https://marketplace.visualstudio.com/items?itemName=Slint.slint).
+## Installation
 
-## Next Steps
+1. Install Rust from [rust-lang.org](https://www.rust-lang.org/learn/get-started).
+2. Clone the repository:
+   ```bash
+   git clone https://github.com/Sudiaty/fonds_pod.git
+   cd fonds_pod
+   ```
+3. Build and run:
+   ```bash
+   cargo build
+   cargo run
+   ```
 
-We hope that this template helps you get started, and that you enjoy exploring making user interfaces with Slint. To learn more
-about the Slint APIs and the `.slint` markup language, check out our [online documentation](https://slint.dev/docs).
+## Architecture
 
-Don't forget to edit this readme to replace it by yours, and edit the `name =` field in `Cargo.toml` to match the name of your
-project.
+FondsPod uses a layered architecture with the following layers:
+
+- **Presentation Layer**: Handles UI events and callbacks.
+- **Application Layer**: Coordinates business logic.
+- **Domain Layer**: Defines core business rules and abstractions.
+- **Infrastructure Layer**: Manages database and external dependencies.
+
+### Layer Responsibilities
+
+1. **Presentation Layer**: Handles UI events and updates UI state.
+2. **Application Layer**: Orchestrates business logic and validates rules.
+3. **Domain Layer**: Defines core entities and business rules.
+4. **Infrastructure Layer**: Implements repositories and manages external dependencies.
+
+## Development Plan
+
+FondsPod adopts a hierarchical structure for document management:
+
+- **Fonds**: The highest level of archival management.
+- **Series**: Subsets under Fonds for further classification.
+- **Files**: Collections of documents under Series.
+- **Items**: Specific entries within Files.
+
+### SQLite Schema
+
+The database schema includes tables for Fonds, Series, Files, Items, and their relationships. Metadata is stored in `.fondspod.db` files.
+
+```mermaid
+erDiagram
+    schemas {
+        string schema_no "schema_no"
+        string name "name"
+    }
+    schema_items {
+        string schema_no FK "schema_no"
+        string item_no "item_no"
+        string item_name "item_name"
+    }
+    schemas ||--o{ schema_items : has
+
+    fond_classifications {
+        string code "code"
+        string name "name"
+        string parent_id "parent_id"
+        bool is_active "is_active"
+    }
+    fonds {
+        string fond_no "fond_no"
+        string fond_classification_code FK "fond_classification_code"
+        string name "name"
+        string created_at "created_at"
+    }
+    fond_schemas {
+        string fond_no FK "fond_no"
+        string schema_no FK "schema_no"
+        int order_no "order_no"
+    }
+    series {
+        string series_no "series_no"
+        string fond_no FK "fond_no"
+        string name "name"
+        string created_at "created_at"
+    }
+    files {
+        string file_no "file_no"
+        string series_no FK "series_no"
+        string name "name"
+        string created_at "created_at"
+    }
+    items {
+        string item_no "item_no"
+        string file_no FK "file_no"
+        string name "name"
+        string path "path"
+        string created_at "created_at"
+    }
+    sequences {
+        string prefix "prefix"
+        int current_value "current_value"
+    }
+
+    fonds ||--o{ series : contains
+    series ||--o{ files : contains
+    files ||--o{ items : contains
+    fonds ||--o{ fond_schemas : links
+    fond_schemas ||--|| schemas : includes
+    fonds ||--|| fond_classifications : classified_as
+```
+
+### Key Modules
+
+1. **Archive Library Management**: Create and manage archive libraries.
+2. **Schema Management**: Define metadata structures for Series.
+3. **File Management**: Add, delete, and organize files.
+4. **Settings**: Configure themes, languages, and archive paths.
+
+## Internationalization
+
+Supports Chinese (zh-CN) and English (en-US). Translations are managed using Slint's `@tr()` macro and Fluent files.
+
+## License
+
+MIT License

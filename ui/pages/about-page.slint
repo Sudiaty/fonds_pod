@@ -1,0 +1,56 @@
+import { VerticalBox, HorizontalBox, ScrollView } from "std-widgets.slint";
+import { Theme, Layout } from "../theme.slint";
+
+export component AboutPage inherits VerticalBox {
+    spacing: 16px;
+    padding: 24px;
+
+    Text {
+        text: @tr("about_title");
+        font-size: 24px;
+        font-weight: 600;
+        color: Theme.text_primary;
+        horizontal-alignment: center;
+    }
+
+    Rectangle {
+        background: Theme.bg_alt;
+        border-radius: 8px;
+
+        VerticalBox {
+            spacing: 12px;
+            padding: 16px;
+
+            Text {
+                text: @tr("about_description");
+                font-size: 14px;
+                color: Theme.text_secondary;
+                wrap: word-wrap;
+            }
+
+            Text {
+                text: @tr("about_version") + " 1.0.0";
+                font-size: 14px;
+                color: Theme.text_primary;
+            }
+
+            Text {
+                text: @tr("about_author") + " Sudiaty";
+                font-size: 14px;
+                color: Theme.text_primary;
+            }
+
+            Text {
+                text: @tr("about_license") + " MIT";
+                font-size: 14px;
+                color: Theme.text_primary;
+            }
+
+            Text {
+                text: @tr("about_website") + " https://github.com/Sudiaty/fonds_pod";
+                font-size: 14px;
+                color: Theme.text_primary;
+            }
+        }
+    }
+}

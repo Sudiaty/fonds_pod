@@ -1,0 +1,408 @@
+import { VerticalBox, HorizontalBox, ScrollView } from "std-widgets.slint";
+import { Theme, Layout } from "theme.slint";
+import { CrudListItem, CrudListRowStyle, QuickAction, ContextMenuItem } from "models.slint";
+
+// Re-export for convenience
+export { CrudListItem, CrudListRowStyle, QuickAction, ContextMenuItem }
+
+// ============================================================================
+// Icon Button Component
+// ============================================================================
+component IconButton inherits Rectangle {
+    in property <string> icon: "";
+    in property <string> tooltip: "";
+    callback on-clicked();
+
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    background: button_touch.has-hover ? Theme.brand_soft : transparent;
+
+    Text {
+        width: 32px;
+        height: 32px;
+        text: root.icon;
+        font-size: 18px;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+
+    button_touch := TouchArea {
+        mouse-cursor: MouseCursor.default;
+        x: 0px;
+        y: -2px; clicked => { root.on-clicked(); } }
+}
+
+// ============================================================================
+// Menu Row Component
+// ============================================================================
+component MenuRow inherits Rectangle {
+    in property <string> text: "";
+    in property <string> icon: "";
+    in property <color> text-color: Theme.text_primary;
+    callback on-clicked();
+
+    height: 32px;
+    background: row_touch.has-hover ? Theme.bg_soft : transparent;
+
+    HorizontalBox {
+        padding-left: 12px;
+        padding-right: 12px;
+        spacing: 8px;
+
+        if root.icon != "" : Text {
+            text: root.icon;
+            font-size: 14px;
+            vertical-alignment: center;
+        }
+
+        Text {
+            text: root.text;
+            font-size: 13px;
+            color: root.text-color;
+            vertical-alignment: center;
+        }
+    }
+
+    row_touch := TouchArea { clicked => { root.on-clicked(); } }
+}
+
+// ============================================================================
+// Menu Divider Component
+// ============================================================================
+component MenuDivider inherits Rectangle {
+    height: 1px;
+    background: Theme.nav_border;
+}
+
+// ============================================================================
+// CrudList - A generic CRUD list component
+// ============================================================================
+export component CrudList inherits VerticalBox {
+    // ========== Properties ==========
+    
+    // Title and configuration
+    in property <string> title: "";
+    in property <bool> show-add-button: true;
+    
+    // Data
+    in property <[CrudListItem]> items: [];
+    
+    // Selection state
+    in-out property <int> active-index: -1;
+    in property <[int]> selected-indices: [];  // Multi-selection mask (1 = selected, 0 = not selected)
+    
+    // Quick actions for each item (right side buttons)
+    in property <[QuickAction]> quick-actions: [];
+    
+    // Toolbar icons (additional icons after add button)
+    in property <[QuickAction]> toolbar-actions: [];
+    
+    // Behavior settings
+    in property <bool> activate-first-on-load: true;
+    
+    // Default row style
+    in property <CrudListRowStyle> default-row-style: {
+        title_color: Theme.text_primary,
+        subtitle_color: Theme.text_secondary,
+        background_color: Theme.list_background,
+        opacity: 1.0,
+    };
+    
+    // Row styles array - one for each item, provided by parent
+    in property <[CrudListRowStyle]> row-styles: [];
+    
+    // ========== Callbacks ==========
+    
+    // Toolbar callbacks
+    callback add-clicked();
+    callback toolbar-action-clicked(int);
+    
+    // Item callbacks
+    callback item-clicked(int, bool, bool);  // index, ctrl, shift
+    callback item-activated(int);  // Triggered when item is activated (single click without ctrl/shift)
+    callback quick-action-clicked(int, int);  // item-index, action-index
+    
+    // Context menu callbacks
+    callback delete-clicked();
+    callback delete-selected-clicked();
+    callback activate-clicked();      // Built-in activate action
+    callback deactivate-clicked();    // Built-in deactivate action
+    
+    // Whether to show activate/deactivate menu items
+    in property <bool> show-activate-menu: false;
+    
+    // Lifecycle callbacks
+    callback on-render();  // Called when component is rendered, before data is loaded
+    callback on-load();    // Called after data is loaded
+    
+    // Internal function to notify data loaded and activate first item if needed
+    public function notify-data-loaded() {
+        root.on-load();
+        if root.activate-first-on-load && root.items.length > 0 && root.active-index < 0 {
+            root.active-index = 0;
+            root.item-activated(0);
+        }
+    }
+    
+    spacing: Layout.crud_list_toolbar_spacing;
+    padding: Layout.crud_list_padding;
+    
+    // Initialize - trigger on-render
+    init => {
+        root.on-render();
+    }
+    
+    // Toolbar
+    Rectangle {
+        height: 40px;
+        background: Theme.toolbar_background;
+        border-radius: 4px;
+        
+        HorizontalBox {
+            padding: 6px;
+            spacing: Layout.standard_spacing;
+            alignment: LayoutAlignment.stretch;
+            
+            // Title
+            Text {
+                text: root.title;
+                font-size: 14px;
+                font-weight: 600;
+                vertical-alignment: center;
+            }
+            
+            // Spacer
+            Rectangle { horizontal-stretch: 1; }
+            
+            // Add button
+            if root.show-add-button : IconButton {
+                icon: "➕";
+                on-clicked => { root.add-clicked(); }
+            }
+            
+            // Additional toolbar actions
+            for action[action_idx] in root.toolbar-actions : IconButton {
+                icon: action.icon;
+                tooltip: action.tooltip;
+                on-clicked => { root.toolbar-action-clicked(action_idx); }
+            }
+        }
+    }
+    
+    // Items list
+    ScrollView {
+        vertical-stretch: 1;
+        
+        VerticalBox {
+            spacing: Layout.crud_list_item_spacing;
+            padding: Layout.crud_list_padding;
+            
+            for item[item_idx] in root.items : Rectangle {
+                height: 50px;
+                background: root.is-item-selected(item_idx) ? Theme.list_selected : root.get-row-style(item_idx).background_color;
+                opacity: root.get-row-style(item_idx).opacity;
+                border-width: 1px;
+                border-color: Theme.nav_border;
+                border-radius: 4px;
+                
+                // Touch area for item interaction
+                item_touch := TouchArea {
+                    height: 50px;
+                    mouse-cursor: MouseCursor.default;
+                    visible: true;
+                    pointer-event(event) => {
+                        if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
+                            root.handle-item-click(item_idx, event.modifiers.control, event.modifiers.shift);
+                        }
+                        if event.kind == PointerEventKind.up && event.button == PointerEventButton.right {
+                            root.ensure-item-selection(item_idx);
+                            item_context_menu.show();
+                        }
+                    }
+                }
+                
+                HorizontalBox {
+                    alignment: LayoutAlignment.stretch;
+                    padding: 0px;
+                    padding-left: Layout.crud_list_item_padding;
+                    padding-right: Layout.crud_list_item_padding;
+                    spacing: 8px;
+                    
+                    // Content area
+                    VerticalBox {
+                        horizontal-stretch: 1;
+                        spacing: 2px;
+                        
+                        // Title
+                        Text {
+                            text: item.title;
+                            font-size: 14px;
+                            font-weight: 600;
+                            color: root.get-row-style(item_idx).title_color;
+                            overflow: elide;
+                        }
+                        
+                        // Subtitle
+                        if item.subtitle != "" : Text {
+                            text: item.subtitle;
+                            font-size: 12px;
+                            color: root.get-row-style(item_idx).subtitle_color;
+                            overflow: elide;
+                        }
+                    }
+                    
+                    // Quick action buttons (using HorizontalBox instead of absolute positioning)
+                    if root.quick-actions.length > 0 : HorizontalBox {
+                        padding: 12px;
+                        spacing: 4px;
+                        
+                        for action[action_idx] in root.quick-actions : Rectangle {
+                            width: 28px;
+                            height: 28px;
+                            border-radius: 3px;
+                            background: quick_action_touch.has-hover ? Theme.bg_alt : transparent;
+                            
+                            Text {
+                                text: action.icon;
+                                font-size: 16px;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                            
+                            quick_action_touch := TouchArea {
+                                clicked => {
+                                    root.quick-action-clicked(item_idx, action_idx);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Context menu
+                item_context_menu := PopupWindow {
+                    x: item_touch.mouse-x;
+                    y: item_touch.mouse-y;
+                    width: 140px;
+                    
+                    Rectangle {
+                        background: white;
+                        border-width: 1px;
+                        border-color: #ccc;
+                        border-radius: 4px;
+                        drop-shadow-blur: 10px;
+                        drop-shadow-color: #00000040;
+                        
+                        VerticalBox {
+                            spacing: 0px;
+                            
+                            // Default delete action
+                            MenuRow {
+                                text: @tr("menu_delete");
+                                icon: "🗑️";
+                                text-color: Theme.brand_primary;
+                                on-clicked => {
+                                    if root.selected-indices.length > 0 {
+                                        root.delete-selected-clicked();
+                                    } else {
+                                        root.delete-clicked();
+                                    }
+                                    item_context_menu.close();
+                                }
+                            }
+                            
+                            // Built-in activate/deactivate menu items
+                            if root.show-activate-menu : MenuDivider { }
+                            
+                            if root.show-activate-menu : MenuRow {
+                                text: @tr("menu_activate");
+                                // icon: "✅";
+                                text-color: Theme.text_primary;
+                                on-clicked => {
+                                    root.activate-clicked();
+                                    item_context_menu.close();
+                                }
+                            }
+                            
+                            if root.show-activate-menu : MenuRow {
+                                text: @tr("menu_deactivate");
+                                // icon: "❎";
+                                text-color: Theme.text_primary;
+                                on-clicked => {
+                                    root.deactivate-clicked();
+                                    item_context_menu.close();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Empty state
+            if root.items.length == 0 : Rectangle {
+                height: 120px;
+                background: Theme.bg_soft;
+                border-radius: 4px;
+                border-width: 1px;
+                border-color: Theme.nav_border;
+                
+                VerticalBox {
+                    alignment: center;
+                    spacing: 12px;
+                    
+                    Text {
+                        text: "📋";
+                        font-size: 40px;
+                        horizontal-alignment: center;
+                    }
+                    
+                    Text {
+                        text: @tr("empty_list");
+                        font-size: 14px;
+                        font-weight: 500;
+                        color: Theme.text_secondary;
+                        horizontal-alignment: center;
+                    }
+                }
+            }
+        }
+    }
+    
+    // ========== Helper Functions ==========
+    
+    // Get row style for a specific index
+    pure function get-row-style(idx: int) -> CrudListRowStyle {
+        if idx < root.row-styles.length {
+            return root.row-styles[idx];
+        }
+        return root.default-row-style;
+    }
+    
+    // Check if item is selected (either active or in multi-selection)
+    pure function is-item-selected(idx: int) -> bool {
+        if root.selected-indices.length == 0 {
+            return root.active-index == idx;
+        }
+        return idx < root.selected-indices.length && root.selected-indices[idx] == 1;
+    }
+    
+    // Handle item click with modifier keys
+    function handle-item-click(idx: int, ctrl: bool, shift: bool) {
+        root.item-clicked(idx, ctrl, shift);
+        
+        // Only activate if not using ctrl or shift for multi-selection
+        if !ctrl && !shift {
+            root.active-index = idx;
+            root.item-activated(idx);
+        }
+    }
+    
+    // Ensure item is selected when right-clicking
+    function ensure-item-selection(index: int) {
+        if root.selected-indices.length == 0 || !root.is-item-selected(index) {
+            root.active-index = index;
+            // Also notify the callback to clear multi-selection state on single item right-click
+            root.item-clicked(index, false, false);
+        }
+    }
+}

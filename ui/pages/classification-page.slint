@@ -1,0 +1,123 @@
+import { VerticalBox, HorizontalBox, ScrollView } from "std-widgets.slint";
+import { Theme, Layout } from "../theme.slint";
+import { ClassificationItem, CrudListItem, CrudListRowStyle, QuickAction, ContextMenuItem } from "../models.slint";
+import { CrudList } from "../crud-list.slint";
+
+export component ClassificationPage inherits HorizontalBox {
+    in property <[ClassificationItem]> classification_items: [];
+    in-out property <int> selected_classification: 0;
+    in property <[int]> selected_classifications: [];
+
+    in property <[ClassificationItem]> classification_children: [];
+    in-out property <int> selected_child: 0;
+    in property <[int]> selected_children: [];
+
+    // Computed properties for CrudList - these should be provided by the Rust backend
+    in property <[CrudListItem]> classification_crud_items: [];
+    in property <[CrudListItem]> child_crud_items: [];
+    
+    // Row styles for visual formatting based on is_active state
+    in property <[CrudListRowStyle]> classification_row_styles: [];
+    in property <[CrudListRowStyle]> child_row_styles: [];
+
+    callback add_classification();
+    callback delete_classification();
+    callback delete_selected_classifications();
+    callback classification_item_clicked(int, bool, bool);
+    callback activate_classification();
+    callback deactivate_classification();
+    callback export_classifications();
+    callback import_classifications();
+
+    callback add_child_classification();
+    callback delete_child_classification();
+    callback delete_selected_children();
+    callback child_classification_clicked(int, bool, bool);
+    callback activate_child_classification();
+    callback deactivate_child_classification();
+
+    spacing: 0px;
+
+    VerticalBox {
+        horizontal-stretch: 0.4;
+        padding: Layout.standard_padding;
+        spacing: Layout.standard_spacing;
+
+        CrudList {
+            vertical-stretch: 1;
+            title: @tr("label_top_classifications");
+            items: root.classification_crud_items;
+            row-styles: root.classification_row_styles;
+            active-index <=> root.selected_classification;
+            selected-indices: root.selected_classifications;
+            show-add-button: true;
+            show-activate-menu: true;
+            activate-first-on-load: false;
+
+            // Toolbar actions: export and import
+            toolbar-actions: [
+                { icon: "📤", tooltip: @tr("tooltip_export") },
+                { icon: "📥", tooltip: @tr("tooltip_import") }
+            ];
+
+            add-clicked => { root.add_classification(); }
+
+            toolbar-action-clicked(action_idx) => {
+                if action_idx == 0 {
+                    root.export_classifications();
+                } else if action_idx == 1 {
+                    root.import_classifications();
+                }
+            }
+
+            item-clicked(index, ctrl, shift) => {
+                root.classification_item_clicked(index, ctrl, shift);
+            }
+
+            item-activated(index) => {
+                // Handle activation if needed
+            }
+
+            delete-clicked => { root.delete_classification(); }
+            delete-selected-clicked => { root.delete_selected_classifications(); }
+            activate-clicked => { root.activate_classification(); }
+            deactivate-clicked => { root.deactivate_classification(); }
+        }
+    }
+
+    Rectangle { width: Layout.separator_width; background: Theme.nav_border; }
+
+    VerticalBox {
+        horizontal-stretch: 0.6;
+        padding: Layout.standard_padding;
+        spacing: Layout.standard_spacing;
+
+        CrudList {
+            vertical-stretch: 1;
+            title: @tr("label_child_classifications");
+            items: root.child_crud_items;
+            row-styles: root.child_row_styles;
+            active-index <=> root.selected_child;
+            selected-indices: root.selected_children;
+            show-add-button: true;
+            show-activate-menu: true;
+            activate-first-on-load: false;
+
+            add-clicked => { root.add_child_classification(); }
+
+            item-clicked(index, ctrl, shift) => {
+                root.child_classification_clicked(index, ctrl, shift);
+            }
+
+            item-activated(index) => {
+                // Handle activation if needed
+            }
+
+            delete-clicked => { root.delete_child_classification(); }
+            delete-selected-clicked => { root.delete_selected_children(); }
+            activate-clicked => { root.activate_child_classification(); }
+            deactivate-clicked => { root.deactivate_child_classification(); }
+        }
+    }
+}
+

@@ -1,0 +1,91 @@
+export struct ArchiveLibraryItem {
+    name: string,
+    path: string,
+}
+
+export struct SchemaItem {
+    code: string,
+    name: string,
+}
+
+export struct SchemaItemDetail {
+    code: string,
+    name: string,
+}
+
+export struct ClassificationItem {
+    code: string,
+    name: string,
+    is_active: bool,
+}
+
+export struct FondsItem {
+    fond_no: string,
+    name: string,
+    classification_code: string,
+    created_at: string,
+    path: string,
+}
+
+// File item for file list
+export struct FileItem {
+    file_no: string,
+    name: string,
+    path: string,
+}
+
+// Series item for tree view
+export struct SeriesItem {
+    series_no: string,
+    name: string,
+    fond_no: string,
+}
+
+// Item for item list
+export struct ItemItem {
+    item_no: string,
+    name: string,
+    path: string,
+}
+
+// Tree node for fonds-series tree view
+export struct FondsTreeNode {
+    fond_no: string,
+    fond_name: string,
+    classification_code: string,
+    created_at: string,
+    is_expanded: bool,
+    series_count: int,
+}
+
+// ============================================================================
+// Generic CRUD List Data Structures
+// ============================================================================
+
+// Generic list item for CrudList component
+export struct CrudListItem {
+    title: string,
+    subtitle: string,
+}
+
+// Row style for CrudList item formatting
+export struct CrudListRowStyle {
+    title_color: color,
+    subtitle_color: color,
+    background_color: color,
+    opacity: float,
+}
+
+// Quick action button definition
+export struct QuickAction {
+    icon: string,
+    tooltip: string,
+}
+
+// Context menu item definition
+export struct ContextMenuItem {
+    text: string,
+    icon: string,
+    is_danger: bool,
+    show_separator_before: bool,
+}

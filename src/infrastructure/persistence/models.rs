@@ -27,12 +27,9 @@ pub struct Fond {
     #[diesel(sql_type = diesel::sql_types::Text)]
     pub fond_classification_code: String,
     #[diesel(sql_type = diesel::sql_types::Text)]
-    pub created_at: String, // ISO 8601 format
-    #[diesel(sql_type = diesel::sql_types::Text)]
     pub name: String,
-    #[diesel(column_name = "createAt")]
     #[diesel(sql_type = diesel::sql_types::Text)]
-    pub create_at: String,
+    pub created_at: String, // ISO 8601 format
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Queryable, Insertable, QueryableByName)]
@@ -55,9 +52,8 @@ pub struct Series {
     pub fond_no: String,
     #[diesel(sql_type = diesel::sql_types::Text)]
     pub name: String,
-    #[diesel(column_name = "createAt")]
     #[diesel(sql_type = diesel::sql_types::Text)]
-    pub create_at: String,
+    pub created_at: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Queryable, Insertable, QueryableByName)]
@@ -69,9 +65,8 @@ pub struct File {
     pub series_no: String,
     #[diesel(sql_type = diesel::sql_types::Text)]
     pub name: String,
-    #[diesel(column_name = "createAt")]
     #[diesel(sql_type = diesel::sql_types::Text)]
-    pub create_at: String,
+    pub created_at: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Queryable, Insertable, QueryableByName)]
@@ -83,9 +78,10 @@ pub struct Item {
     pub file_no: String,
     #[diesel(sql_type = diesel::sql_types::Text)]
     pub name: String,
-    #[diesel(column_name = "createAt")]
+    #[diesel(sql_type = diesel::sql_types::Nullable<diesel::sql_types::Text>)]
+    pub path: Option<String>,
     #[diesel(sql_type = diesel::sql_types::Text)]
-    pub create_at: String,
+    pub created_at: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Queryable, Insertable, QueryableByName)]

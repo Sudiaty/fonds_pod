@@ -1,0 +1,39 @@
+import { VerticalBox } from "std-widgets.slint";
+import { CrudList } from "../crud-list.slint";
+import { CrudListItem, QuickAction } from "../models.slint";
+
+export component FakeCrudPage inherits VerticalBox {
+    spacing: 0px;
+
+    CrudList {
+        vertical-stretch: 1;
+        title: "Fake CRUD List";
+        items: [
+            { title: "Item 1", subtitle: "This is the first fake item: growing" },
+            { title: "Item 2", subtitle: "This is the second fake item: shrinking" },
+            { title: "Item 3", subtitle: "This is the third fake item: stable" },
+            { title: "Item 4", subtitle: "This is the fourth fake item" },
+            { title: "Item 5", subtitle: "This is the fifth fake item" },
+        ];
+        quick-actions: [
+            { icon: "✏️", tooltip: "Edit" },
+            { icon: "🗑️", tooltip: "Delete" }
+        ];
+
+        add-clicked => {
+            // Handle add action (fake)
+        }
+
+        item-activated(index) => {
+            // Handle item activation (fake)
+        }
+
+        quick-action-clicked(item_idx, action_idx) => {
+            // Handle quick actions (fake)
+        }
+
+        delete-clicked => {
+            // Handle delete (fake)
+        }
+    }
+}
