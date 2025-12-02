@@ -5,6 +5,15 @@ export component AboutPage inherits VerticalBox {
     spacing: 16px;
     padding: 24px;
 
+    HorizontalBox {
+        alignment: center;
+        Image {
+            source: @image-url("../images/logo.png");
+            width: 128px;
+            height: 128px;
+        }
+    }
+
     Text {
         text: @tr("about_title");
         font-size: 24px;
