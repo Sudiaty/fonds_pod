@@ -47,9 +47,9 @@ jobs:
         include:
           # Windows对应的打包格式和产物路径
           - os: windows-latest
-            bundle-format: msi
-            artifact-name: my-slint-app-${{ needs.prepare-release.outputs.app_version }}-windows-x86_64.msi
-            bundle-path: target/release/bundle/msi/*.msi
+            bundle-format: exe
+            artifact-name: fonds-pod-${{ needs.prepare-release.outputs.app_version }}-windows-x86_64.exe
+            bundle-path: target/release/bundle/exe/*.exe
 
     steps:
       - name: Checkout 代码
@@ -59,7 +59,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-          target: x86_64-unknown-linux-gnu  # Linux目标架构（其他系统自动适配）
+          target: x86_64-pc-windows-msvc  # Windows目标架构
 
       - name: 安装打包工具（cargo-bundle）
         run: cargo install cargo-bundle  # 用于生成系统安装包（deb/msi/dmg）

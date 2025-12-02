@@ -3,6 +3,15 @@ name = "fonds-pod"
 version = "0.1.0"
 edition = "2021"
 
+[package.metadata.bundle]
+name = "Fonds Pod"
+identifier = "wiki.martis.fonds-pod"
+version = "0.1.0"
+copyright = "Copyright (c) 2025 Sudiaty"
+category = "Productivity"
+short_description = "Fonds management application"
+long_description = "A desktop application for managing fonds using Slint UI"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
