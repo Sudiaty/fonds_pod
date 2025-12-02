@@ -1686,6 +1686,7 @@ impl<CR: ConfigRepository + 'static> FondsHandler<CR> {
         self.setup_series_activated(ui);
         self.setup_open_file_at(ui);
         self.setup_open_item_at(ui);
+        self.setup_rebuild_series(ui);
     }
     
     fn setup_add_file(&self, ui: &AppWindow) {
@@ -3188,6 +3189,56 @@ impl<CR: ConfigRepository + 'static> FondsHandler<CR> {
                         if !path.is_empty() {
                             ui.set_open_item_path(path.into());
                             ui.invoke_open_item();
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    fn setup_rebuild_series(&self, ui: &AppWindow) {
+        let ui_weak = ui.as_weak();
+        let archive_service = self.archive_service.clone();
+        
+        ui.on_rebuild_series(move || {
+            if let Some(ui) = ui_weak.upgrade() {
+                let selected_archive = ui.get_selected_archive();
+                let selected_fonds = ui.get_selected_fonds();
+                
+                if let Ok(Some(db_path)) = archive_service.get_database_path_by_index(selected_archive) {
+                    if let Ok(fonds_list) = FondsService::list_fonds(&db_path) {
+                        if (selected_fonds as usize) < fonds_list.len() {
+                            let fond = &fonds_list[selected_fonds as usize];
+                            
+                            match FondsService::generate_series_for_fond(&db_path, &fond.fond_no, &fond.created_at) {
+                                Ok(series_count) => {
+                                    println!("Rebuilt {} series for fonds {}", series_count, fond.fond_no);
+                                    
+                                    // Reload series list
+                                    match FondsService::list_series(&db_path, &fond.fond_no) {
+                                        Ok(series_list) => {
+                                            let series_items: Vec<crate::SeriesItem> = series_list.into_iter()
+                                                .map(|s| crate::SeriesItem {
+                                                    series_no: s.series_no.into(),
+                                                    name: s.name.into(),
+                                                    fond_no: s.fond_no.into(),
+                                                })
+                                                .collect();
+                                            set_series_with_crud_items(series_items, &ui);
+                                            
+                                            // Reset series selection
+                                            ui.set_selected_series_index(-1);
+                                            ui.set_selected_series_no("".into());
+                                        }
+                                        Err(e) => {
+                                            eprintln!("Failed to reload series after rebuild: {}", e);
+                                        }
+                                    }
+                                }
+                                Err(e) => {
+                                    eprintln!("Failed to rebuild series for fonds {}: {}", fond.fond_no, e);
+                                }
+                            }
                         }
                     }
                 }

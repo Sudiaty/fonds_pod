@@ -45,6 +45,7 @@ export component FondsPage inherits VerticalBox {
     // Series callbacks
     callback select_series(int, string);
     callback series_activated(int);
+    callback rebuild_series();
 
     // File callbacks
     callback add_file();
@@ -123,6 +124,9 @@ export component FondsPage inherits VerticalBox {
             items: root.series_list_items;
             active-index <=> root.selected_series_index;
             show-add-button: false;
+            toolbar-actions: [
+                { icon: "🔄", tooltip: "Rebuild" }
+            ];
             
             item-clicked(index, ctrl, shift) => {
                 // Series doesn't support multi-selection, just activate
@@ -137,6 +141,12 @@ export component FondsPage inherits VerticalBox {
                 if index >= 0 && index < root.series_list.length {
                     root.selected_series_no = root.series_list[index].series_no;
                     root.series_activated(index);
+                }
+            }
+            
+            toolbar-action-clicked(action_idx) => {
+                if action_idx == 0 {
+                    root.rebuild_series();
                 }
             }
         }
