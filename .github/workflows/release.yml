@@ -64,21 +64,16 @@ jobs:
           toolchain: stable
           target: x86_64-pc-windows-msvc  # Windows目标架构
 
-      - name: 安装打包工具（cargo-bundle）
-        run: cargo install cargo-bundle  # 用于生成系统安装包（deb/msi/dmg）
-
-      - name: 构建 + 注入版本号 + 打包
-        run: |
-          # 构建时注入版本号（通过环境变量传递给Rust代码）
-          cargo bundle --release --format ${{ matrix.bundle-format }}
+      - name: 构建 Release 版本
+        run: cargo build --release
         env:
           # 版本号从prepare-release步骤传递，注入到应用中
           APP_VERSION: ${{ needs.prepare-release.outputs.app_version }}
 
       - name: 重命名产物（统一命名格式，便于发布）
         run: |
-          # 找到打包后的文件，重命名为统一格式（系统+版本+架构）
-          Move-Item "${{ matrix.bundle-path }}" "./${{ matrix.artifact-name }}"
+          # 重命名为统一格式（系统+版本+架构）
+          Move-Item "${{ matrix.exe-path }}" "./${{ matrix.artifact-name }}"
 
       - name: 上传产物到GitHub Actions（供后续发布步骤使用）
         uses: actions/upload-artifact@v4
