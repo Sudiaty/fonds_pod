@@ -32,7 +32,7 @@ jobs:
         uses: orhun/git-cliff-action@v4
         with:
           # 从最新标签到上一个标签的变更（无上个标签则显示所有历史）
-          args: --tag ${{ github.ref_name }} --config cliff.toml
+          args: --tag ${{ github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
