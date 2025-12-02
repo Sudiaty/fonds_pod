@@ -461,3 +461,19 @@ msgstr "Show Window"
 msgctxt "AppWindow"
 msgid "tray_quit"
 msgstr "Quit"
+
+#: ui/dialogs.slint:953
+msgctxt "AddItemDialog"
+msgid "add_item"
+msgstr "Add Item"
+
+#: ui/dialogs.slint:1020
+msgctxt "AddItemDialog"
+msgid "label_path"
+msgstr "Path"
+
+#: ui/dialogs.slint:1034
+msgctxt "AddItemDialog"
+msgid "no_file_selected"
+msgstr "No file selected"
+

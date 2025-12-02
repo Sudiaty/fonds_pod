@@ -6,6 +6,10 @@ on:
     tags:
       - 'v*'
 
+# 授予必要的权限以创建 Release 和上传产物
+permissions:
+  contents: write  # 允许创建 release 和上传产物
+
 jobs:
   # 步骤1：提取版本号 + 生成CHANGELOG
   prepare-release:

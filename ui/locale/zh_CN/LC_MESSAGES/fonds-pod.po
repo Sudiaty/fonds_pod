@@ -481,3 +481,19 @@ msgstr "显示窗口"
 msgctxt "AppWindow"
 msgid "tray_quit"
 msgstr "退出"
+
+#: ui/dialogs.slint:953
+msgctxt "AddItemDialog"
+msgid "add_item"
+msgstr "添加项目"
+
+#: ui/dialogs.slint:1020
+msgctxt "AddItemDialog"
+msgid "label_path"
+msgstr "路径"
+
+#: ui/dialogs.slint:1034
+msgctxt "AddItemDialog"
+msgid "no_file_selected"
+msgstr "未选择文件"
+
