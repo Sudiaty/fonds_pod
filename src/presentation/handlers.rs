@@ -2453,34 +2453,51 @@ impl<CR: ConfigRepository + 'static> FondsHandler<CR> {
                                 let normalized_browse_path = browse_base_path.clone();
                                 
                                 let start_dir = std::path::Path::new(&normalized_browse_path);
-                                let mut file_dialog = rfd::FileDialog::new();
                                 
+                                // Try to pick a file first
+                                let mut file_dialog = rfd::FileDialog::new();
                                 if start_dir.exists() && start_dir.is_dir() {
                                     file_dialog = file_dialog.set_directory(start_dir);
                                 } else {
                                     println!("Browse start directory does not exist or is not a dir: {}", normalized_browse_path);
                                 }
                                 
-                                // Pick a file - if user cancels, just do nothing
+                                // First try to get a file, if cancelled, try folder
                                 if let Some(path) = file_dialog.add_filter("All", &["*"]).pick_file() {
                                     if let Some(d) = dialog_weak_for_browse.upgrade() {
                                         let path_str = path.to_string_lossy().to_string();
-                                        
-                                        // Extract file/folder name from path
                                         let file_name = std::path::Path::new(&path_str)
                                             .file_name()
                                             .and_then(|n| n.to_str())
                                             .unwrap_or("")
                                             .to_string();
-                                        
-                                        // Set both the path and the item name
                                         d.set_selected_file_path(path_str.into());
                                         if !file_name.is_empty() {
                                             d.set_item_name_input(file_name.into());
                                         }
                                     }
+                                } else {
+                                    // If pick_file was cancelled, try pick_folder
+                                    let mut folder_dialog = rfd::FileDialog::new();
+                                    if start_dir.exists() && start_dir.is_dir() {
+                                        folder_dialog = folder_dialog.set_directory(start_dir);
+                                    }
+                                    
+                                    if let Some(path) = folder_dialog.pick_folder() {
+                                        if let Some(d) = dialog_weak_for_browse.upgrade() {
+                                            let path_str = path.to_string_lossy().to_string();
+                                            let folder_name = std::path::Path::new(&path_str)
+                                                .file_name()
+                                                .and_then(|n| n.to_str())
+                                                .unwrap_or("")
+                                                .to_string();
+                                            d.set_selected_file_path(path_str.into());
+                                            if !folder_name.is_empty() {
+                                                d.set_item_name_input(folder_name.into());
+                                            }
+                                        }
+                                    }
                                 }
-                                // If cancelled, do nothing - user can click browse again
                             });
                             
                             dialog.on_confirm_input(move |item_name: slint::SharedString, file_path: slint::SharedString| {
@@ -3108,22 +3125,13 @@ impl<CR: ConfigRepository + 'static> FondsHandler<CR> {
         });
     }
     
-    /// Handle item activation (double-click or Enter) - open the item
+    /// Handle item activation (double-click or Enter) - do nothing, use quick action button to open
     fn setup_item_activated(&self, ui: &AppWindow) {
         let ui_weak = ui.as_weak();
         
-        ui.on_item_activated(move |index| {
-            if let Some(ui) = ui_weak.upgrade() {
-                let item_list = ui.get_file_item_list();
-                if index >= 0 && (index as usize) < item_list.row_count() {
-                    if let Some(item) = item_list.row_data(index as usize) {
-                        let path = item.path.to_string();
-                        if !path.is_empty() {
-                            ui.set_open_item_path(path.into());
-                            ui.invoke_open_item();
-                        }
-                    }
-                }
+        ui.on_item_activated(move |_index| {
+            if let Some(_ui) = ui_weak.upgrade() {
+                // Item click doesn't open the file, use the quick action button instead
             }
         });
     }
