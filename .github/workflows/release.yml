@@ -75,7 +75,7 @@ jobs:
       - name: 重命名产物（统一命名格式，便于发布）
         run: |
           # 找到打包后的文件，重命名为统一格式（系统+版本+架构）
-          find ${{ matrix.bundle-path }} -type f -exec mv {} ./${{ matrix.artifact-name }} \;
+          Move-Item "${{ matrix.bundle-path }}" "./${{ matrix.artifact-name }}"
 
       - name: 上传产物到GitHub Actions（供后续发布步骤使用）
         uses: actions/upload-artifact@v4
