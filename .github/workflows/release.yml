@@ -51,9 +51,8 @@ jobs:
         include:
           # Windows对应的打包格式和产物路径
           - os: windows-latest
-            bundle-format: msi
-            artifact-name: fonds-pod-${{ needs.prepare-release.outputs.app_version }}-windows-x86_64.msi
-            bundle-path: target/release/bundle/msi/*.msi
+            artifact-name: fonds-pod-${{ needs.prepare-release.outputs.app_version }}-windows-x86_64.exe
+            exe-path: target/release/fonds-pod.exe
 
     steps:
       - name: Checkout 代码
