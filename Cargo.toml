@@ -12,6 +12,13 @@ category = "Productivity"
 short_description = "Fonds management application"
 long_description = "A desktop application for managing fonds using Slint UI"
 
+[package.metadata.bundle.windows]
+certificate = ""
+
+[package.metadata.bundle.windows.wix]
+license = "LICENSE"
+eula = ""
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
