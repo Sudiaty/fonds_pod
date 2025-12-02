@@ -52,7 +52,7 @@ jobs:
           # Windows对应的打包格式和产物路径
           - os: windows-latest
             artifact-name: fonds-pod-${{ needs.prepare-release.outputs.app_version }}-windows-x86_64.exe
-            exe-path: target/release/fonds-pod.exe
+            exe-path: target/release/fonds_pod.exe
 
     steps:
       - name: Checkout 代码
