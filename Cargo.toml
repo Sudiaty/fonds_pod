@@ -3,6 +3,11 @@ name = "fonds-pod"
 version = "0.1.0"
 edition = "2021"
 
+# 使用下划线替代连字符，避免 WiX MSI 打包时的 KeyPath 错误
+[[bin]]
+name = "fonds_pod"
+path = "src/main.rs"
+
 [package.metadata.bundle]
 name = "Fonds Pod"
 identifier = "wiki.martis.fonds-pod"
