@@ -1,6 +1,9 @@
 // Prevent console window in addition to Slint window in Windows release builds when, e.g., starting the app via file manager. Ignored on other platforms.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+// 从环境变量读取版本号（由GitHub Actions注入）
+const APP_VERSION: &str = env!("APP_VERSION");
+
 // New layered architecture
 mod domain;
 mod infrastructure;
@@ -13,6 +16,8 @@ use infrastructure::{FileConfigRepository};
 use services::{ArchiveService, FileService};
 use presentation::{SchemaHandler, ArchiveHandler, SettingsHandler, ClassificationHandler, FondsHandler};
 
+use tray_item::{TrayItem, IconSource};
+
 slint::include_modules!();
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -24,6 +29,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("FondsPod starting...");
     
     let ui = AppWindow::new().map_err(|e| { eprintln!("UI create failed: {}", e); e })?;
+
+    // Set application version
+    ui.set_app_version(APP_VERSION.into());
 
     // Load language setting and set UI, then select bundled translation
     if let Ok(settings) = temp_archive_service.get_settings() {
@@ -64,6 +72,35 @@ fn main() -> Result<(), Box<dyn Error>> {
     archive_handler.setup_callbacks(&ui);
     settings_handler.setup_callbacks(&ui);
     fonds_handler.setup_callbacks(&ui);
+    
+    // Get translated strings for tray menu
+    let tray_show_text = ui.get_tray_show_window().to_string();
+    let tray_quit_text = ui.get_tray_quit().to_string();
+
+    // Create tray icon - use Resource with the name defined in resources.rc
+    // "IDI_TRAYICON" is the resource identifier
+    let ui_weak_for_tray = ui.as_weak();
+    if let Ok(mut tray) = TrayItem::new("FondsPod", IconSource::Resource("IDI_TRAYICON")) {
+        tray.add_menu_item(&tray_show_text, move || {
+            // Show window by invoking from main thread
+            if let Some(ui) = ui_weak_for_tray.upgrade() {
+                ui.window().show().unwrap();
+            }
+        }).unwrap();
+        tray.add_menu_item(&tray_quit_text, || {
+            std::process::exit(0);
+        }).unwrap();
+        // Keep tray alive by not letting it drop
+        std::mem::forget(tray);
+    } else {
+        eprintln!("Failed to create tray icon");
+    }
+
+    // Handle window close to minimize to tray (hide window)
+    ui.window().on_close_requested(|| {
+        // Hide window instead of closing
+        slint::CloseRequestResponse::HideWindow
+    });
     
     // Handle page changes to refresh data when switching to any page
     let archive_service_clone = archive_service.clone();

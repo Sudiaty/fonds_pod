@@ -451,3 +451,13 @@ msgstr "Deactivate"
 msgctxt "FondsPage"
 msgid "label_series"
 msgstr "Series"
+
+#: ui/app-window.slint
+msgctxt "AppWindow"
+msgid "tray_show_window"
+msgstr "Show Window"
+
+#: ui/app-window.slint
+msgctxt "AppWindow"
+msgid "tray_quit"
+msgstr "Quit"

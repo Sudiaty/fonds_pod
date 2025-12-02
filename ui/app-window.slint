@@ -54,6 +54,8 @@ export component AppWindow inherits Window {
     out property <string> language_applied: @tr("language_applied");
     out property <string> code_exists: @tr("code_exists");
     out property <string> create_failed: @tr("create_failed");
+    out property <string> tray_show_window: @tr("tray_show_window");
+    out property <string> tray_quit: @tr("tray_quit");
     out property <string> delete_failed: @tr("delete_failed");
     out property <string> cannot_delete: @tr("cannot_delete");
     out property <string> activate_failed: @tr("activate_failed");
@@ -69,6 +71,9 @@ export component AppWindow inherits Window {
     out property <string> confirm_delete_selected_classifications: @tr("confirm_delete_selected_classifications");
     out property <string> confirm_delete_child_classification: @tr("confirm_delete_child_classification");
     out property <string> confirm_delete_selected_children: @tr("confirm_delete_selected_children");
+    
+    // Application version
+    in property <string> app_version;
     
     property <string> current_page: "fonds";
     property <[string]> fonds_list: ["2020-HR", "2020-IT", "2021-HR", "2021-IT"];
@@ -424,6 +429,7 @@ export component AppWindow inherits Window {
             if root.current_page == "about" : AboutPage {
                 width: parent.width;
                 height: parent.height;
+                app_version: root.app_version;
             }
         }
     }

@@ -2,9 +2,9 @@ import { VerticalBox, HorizontalBox, ScrollView } from "std-widgets.slint";
 import { Theme, Layout } from "../theme.slint";
 
 export component AboutPage inherits VerticalBox {
+    in property <string> app_version;
     spacing: 16px;
     padding: 24px;
-
     HorizontalBox {
         alignment: center;
         Image {
@@ -25,11 +25,9 @@ export component AboutPage inherits VerticalBox {
     Rectangle {
         background: Theme.bg_alt;
         border-radius: 8px;
-
         VerticalBox {
             spacing: 12px;
             padding: 16px;
-
             Text {
                 text: @tr("about_description");
                 font-size: 14px;
@@ -38,7 +36,7 @@ export component AboutPage inherits VerticalBox {
             }
 
             Text {
-                text: @tr("about_version") + " 1.0.0";
+                text: @tr("about_version") + " " + root.app_version;
                 font-size: 14px;
                 color: Theme.text_primary;
             }

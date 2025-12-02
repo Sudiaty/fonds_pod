@@ -1,0 +1,126 @@
+name: Slint App Release
+
+# 仅在创建 v* 标签时触发（如 v1.0.0、v2.3.4-beta.1）
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  # 步骤1：提取版本号 + 生成CHANGELOG
+  prepare-release:
+    runs-on: ubuntu-latest
+    outputs:
+      app_version: ${{ steps.extract-version.outputs.version }}  # 提取的版本号（如1.2.3）
+      changelog: ${{ steps.generate-changelog.outputs.changelog }}  # 自动生成的变更日志
+    steps:
+      - name: Checkout 代码（含完整历史，用于生成CHANGELOG）
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 必须获取全量历史，否则CHANGELOG生成不完整
+
+      - name: 提取版本号（去掉v前缀）
+        id: extract-version
+        run: |
+          TAG_NAME=${{ github.ref_name }}  # 获取触发的标签名（如v1.2.3）
+          APP_VERSION=${TAG_NAME#v}       # 去掉v前缀，得到1.2.3
+          echo "version=$APP_VERSION" >> $GITHUB_OUTPUT
+          echo "✅ 提取版本号成功：$APP_VERSION"
+
+      - name: 自动生成CHANGELOG
+        id: generate-changelog
+        uses: orhun/git-cliff-action@v4
+        with:
+          # 从最新标签到上一个标签的变更（无上个标签则显示所有历史）
+          args: --tag ${{ github.ref_name }} --config cliff.toml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # 步骤2：跨平台构建 + 打包
+  build-pack:
+    needs: prepare-release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false  # 某个平台构建失败不影响其他平台
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          # 不同系统对应的打包格式和产物路径
+          - os: ubuntu-latest
+            bundle-format: deb
+            artifact-name: my-slint-app-${{ needs.prepare-release.outputs.app_version }}-linux-x86_64.deb
+            bundle-path: target/release/bundle/deb/*.deb
+          - os: windows-latest
+            bundle-format: msi
+            artifact-name: my-slint-app-${{ needs.prepare-release.outputs.app_version }}-windows-x86_64.msi
+            bundle-path: target/release/bundle/msi/*.msi
+          - os: macos-latest
+            bundle-format: dmg
+            artifact-name: my-slint-app-${{ needs.prepare-release.outputs.app_version }}-macos-x86_64.dmg
+            bundle-path: target/release/bundle/dmg/*.dmg
+
+    steps:
+      - name: Checkout 代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Rust 环境（兼容Slint构建）
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          target: x86_64-unknown-linux-gnu  # Linux目标架构（其他系统自动适配）
+
+      - name: 安装 Slint 打包依赖（Linux）
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev  # Slint打包deb需要的依赖
+
+      - name: 安装打包工具（cargo-bundle）
+        run: cargo install cargo-bundle  # 用于生成系统安装包（deb/msi/dmg）
+
+      - name: 构建 + 注入版本号 + 打包
+        run: |
+          # 构建时注入版本号（通过环境变量传递给Rust代码）
+          cargo bundle --release --format ${{ matrix.bundle-format }}
+        env:
+          # 版本号从prepare-release步骤传递，注入到应用中
+          APP_VERSION: ${{ needs.prepare-release.outputs.app_version }}
+
+      - name: 重命名产物（统一命名格式，便于发布）
+        run: |
+          # 找到打包后的文件，重命名为统一格式（系统+版本+架构）
+          find ${{ matrix.bundle-path }} -type f -exec mv {} ./${{ matrix.artifact-name }} \;
+
+      - name: 上传产物到GitHub Actions（供后续发布步骤使用）
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: ./${{ matrix.artifact-name }}
+          retention-days: 7  # 产物保留7天（可选）
+
+  # 步骤3：发布到GitHub Releases
+  publish-release:
+    needs: [prepare-release, build-pack]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 下载所有平台的打包产物
+        uses: actions/download-artifact@v4
+        with:
+          path: ./release-artifacts  # 所有产物下载到该目录
+          merge-multiple: true      # 合并多个产物到同一目录
+
+      - name: 创建GitHub Release并上传产物
+        uses: softprops/action-gh-release@v2
+        with:
+          # 标签名（与触发的标签一致，如v1.2.3）
+          tag_name: ${{ github.ref_name }}
+          # 发布标题（含版本号）
+          name: Release v${{ needs.prepare-release.outputs.app_version }}
+          # 发布说明（使用自动生成的CHANGELOG）
+          body: ${{ needs.prepare-release.outputs.changelog }}
+          # 标记预发布（如果版本号含预发布标签，如beta/rc）
+          prerelease: ${{ contains(needs.prepare-release.outputs.app_version, '-') }}
+          # 上传所有打包产物
+          files: ./release-artifacts/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub自动提供的令牌，无需手动配置

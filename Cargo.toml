@@ -19,6 +19,10 @@ libsqlite3-sys = { version = ">=0.17.2, <0.30.0", features = ["bundled"] }
 chrono = { version = "0.4", features = ["serde"] }
 itertools = "0.12"
 log = "0.4"
+tray-item = "0.10"
+
+[target.'cfg(windows)'.build-dependencies]
+embed-resource = "2.4"
 
 [build-dependencies]
 slint-build = "1.14.1"

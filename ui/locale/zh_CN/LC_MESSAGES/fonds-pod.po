@@ -471,3 +471,13 @@ msgstr "停用"
 msgctxt "FondsPage"
 msgid "label_series"
 msgstr "案卷"
+
+#: ui/app-window.slint
+msgctxt "AppWindow"
+msgid "tray_show_window"
+msgstr "显示窗口"
+
+#: ui/app-window.slint
+msgctxt "AppWindow"
+msgid "tray_quit"
+msgstr "退出"
