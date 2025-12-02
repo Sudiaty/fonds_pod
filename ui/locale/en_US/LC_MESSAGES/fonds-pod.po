@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "POT-Creation-Date: 2025-11-27 06:27+0000\n"
-"PO-Revision-Date: 2025-12-02 11:42+0800\n"
+"PO-Revision-Date: 2025-12-02 16:39+0800\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: en_US\n"
@@ -69,6 +69,16 @@ msgid "label_name"
 msgstr "Name"
 
 #: ui/dialogs.slint:202
+msgctxt "FileInputDialog"
+msgid "dialog_add_file_title"
+msgstr "Add File"
+
+#: ui/dialogs.slint:306
+msgctxt "FileInputDialog"
+msgid "label_name"
+msgstr "Name"
+
+#: ui/dialogs.slint:239
 msgctxt "RenameArchiveDialog"
 msgid "dialog_rename_archive_title"
 msgstr "Rename Archive Library"
@@ -467,6 +477,11 @@ msgctxt "AddItemDialog"
 msgid "add_item"
 msgstr "Add Item"
 
+#: ui/dialogs.slint:988
+msgctxt "AddItemDialog"
+msgid "label_name"
+msgstr "Name"
+
 #: ui/dialogs.slint:1020
 msgctxt "AddItemDialog"
 msgid "label_path"
@@ -476,4 +491,3 @@ msgstr "Path"
 msgctxt "AddItemDialog"
 msgid "no_file_selected"
 msgstr "No file selected"
-

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "POT-Creation-Date: 2025-11-27 06:27+0000\n"
-"PO-Revision-Date: 2025-12-02 11:42+0800\n"
+"PO-Revision-Date: 2025-12-02 16:39+0800\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: zh_CN\n"
@@ -72,6 +72,11 @@ msgstr "名称"
 msgctxt "FileInputDialog"
 msgid "dialog_add_file_title"
 msgstr "添加文件"
+
+#: ui/dialogs.slint:306
+msgctxt "FileInputDialog"
+msgid "label_name"
+msgstr "名称"
 
 #: ui/dialogs.slint:239
 msgctxt "RenameArchiveDialog"
@@ -487,6 +492,11 @@ msgctxt "AddItemDialog"
 msgid "add_item"
 msgstr "添加项目"
 
+#: ui/dialogs.slint:988
+msgctxt "AddItemDialog"
+msgid "label_name"
+msgstr "名称"
+
 #: ui/dialogs.slint:1020
 msgctxt "AddItemDialog"
 msgid "label_path"
@@ -496,4 +506,3 @@ msgstr "路径"
 msgctxt "AddItemDialog"
 msgid "no_file_selected"
 msgstr "未选择文件"
-
