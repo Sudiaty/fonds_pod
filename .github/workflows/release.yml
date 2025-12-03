@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       app_version: ${{ steps.extract-version.outputs.version }}  # 提取的版本号（如1.2.3）
-      changelog: ${{ steps.generate-changelog.outputs.changelog }}  # 自动生成的变更日志
+      changelog: ${{ steps.generate-changelog.outputs.content }}  # 自动生成的变更日志
     steps:
       - name: Checkout 代码（含完整历史，用于生成CHANGELOG）
         uses: actions/checkout@v4
@@ -50,9 +50,10 @@ jobs:
         uses: orhun/git-cliff-action@v4
         with:
           # 从最新标签到上一个标签的变更（无上个标签则显示所有历史）
-          args: --output - ${{ steps.changelog-range.outputs.range }}
+          args: ${{ steps.changelog-range.outputs.range }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OUTPUT: CHANGELOG.md
 
   # 步骤2：跨平台构建 + 打包
   build-pack:
