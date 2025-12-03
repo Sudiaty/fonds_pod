@@ -15,7 +15,6 @@ conventional_commits = true  # 遵循Conventional Commits规范（feat/fix/docs�
 commit_parsers = [
   { message = "^feat", group = "Features" },
   { message = "^fix", group = "Bug Fixes" },
-  { message = "^docs", group = "Documentation" },
 ]
 filter_commits = false
 tag_pattern = "v[0-9].*"

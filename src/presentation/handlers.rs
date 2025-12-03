@@ -3010,17 +3010,30 @@ impl<CR: ConfigRepository + 'static> FondsHandler<CR> {
                                             fond_no: s.fond_no.into(),
                                         })
                                         .collect();
-                                    set_series_with_crud_items(series_items, &ui);
+                                    set_series_with_crud_items(series_items.clone(), &ui);
                                     
-                                    // Reset series selection
-                                    ui.set_selected_series_index(-1);
-                                    ui.set_selected_series_no("".into());
+                                    // If no series, clear files and items
+                                    if series_items.is_empty() {
+                                        clear_files(&ui);
+                                        clear_items(&ui);
+                                        ui.set_selected_file(-1);
+                                        ui.set_selected_item(-1);
+                                    } else {
+                                        // Default select first series
+                                        ui.set_selected_series_index(0);
+                                        ui.set_selected_series_no(series_items[0].series_no.clone());
+                                        ui.invoke_select_series(0, series_items[0].series_no.clone());
+                                    }
                                 }
                                 Err(e) => {
                                     eprintln!("Failed to load series for fonds {}: {}", selected_fonds.fond_no, e);
                                     clear_series(&ui);
+                                    clear_files(&ui);
+                                    clear_items(&ui);
                                     ui.set_selected_series_index(-1);
                                     ui.set_selected_series_no("".into());
+                                    ui.set_selected_file(-1);
+                                    ui.set_selected_item(-1);
                                 }
                             }
                         }
@@ -3175,11 +3188,17 @@ impl<CR: ConfigRepository + 'static> FondsHandler<CR> {
                         }
                     })
                     .collect();
-                set_files_with_crud_items(file_items, ui);
+                set_files_with_crud_items(file_items.clone(), ui);
                 
-                // Reset file selection and trigger file_selected
-                ui.set_selected_file(0);
-                ui.invoke_file_selected(0);
+                // If no files, clear items and set selected_file to -1
+                if file_items.is_empty() {
+                    clear_items(ui);
+                    ui.set_selected_file(-1);
+                } else {
+                    // Reset file selection and trigger file_selected
+                    ui.set_selected_file(0);
+                    ui.invoke_file_selected(0);
+                }
             }
             Err(e) => {
                 eprintln!("Failed to load files for series {}: {}", series_no, e);
