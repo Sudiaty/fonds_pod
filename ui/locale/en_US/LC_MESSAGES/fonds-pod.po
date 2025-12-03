@@ -437,6 +437,16 @@ msgctxt "AppWindow"
 msgid "confirm_delete_selected_children"
 msgstr "Are you sure to delete the selected {} child classifications?"
 
+#: ui/app-window.slint:71
+msgctxt "AppWindow"
+msgid "confirm_delete_series"
+msgstr "Are you sure you want to delete series '{}'?\n\nThis will delete all files and items under this series."
+
+#: ui/app-window.slint:72
+msgctxt "AppWindow"
+msgid "cannot_delete_series_has_files"
+msgstr "Cannot delete series: series contains files, please delete all files first"
+
 #: ui/crud-list.slint
 msgctxt "CrudList"
 msgid "empty_list"

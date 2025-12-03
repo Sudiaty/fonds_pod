@@ -46,6 +46,7 @@ export component FondsPage inherits VerticalBox {
     callback select_series(int, string);
     callback series_activated(int);
     callback rebuild_series();
+    callback delete_series();
 
     // File callbacks
     callback add_file();
@@ -151,6 +152,8 @@ export component FondsPage inherits VerticalBox {
                     root.rebuild_series();
                 }
             }
+            
+            delete-clicked => { root.delete_series(); }
         }
 
         // Separator

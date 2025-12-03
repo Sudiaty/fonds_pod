@@ -1689,6 +1689,7 @@ impl<CR: ConfigRepository + 'static> FondsHandler<CR> {
         self.setup_open_file_at(ui);
         self.setup_open_item_at(ui);
         self.setup_rebuild_series(ui);
+        self.setup_delete_series(ui);
     }
     
     fn setup_add_file(&self, ui: &AppWindow) {
@@ -3448,6 +3449,147 @@ impl<CR: ConfigRepository + 'static> FondsHandler<CR> {
                             }
                         }
                     }
+                }
+            }
+        });
+    }
+    
+    fn setup_delete_series(&self, ui: &AppWindow) {
+        let ui_weak = ui.as_weak();
+        let archive_service = self.archive_service.clone();
+        
+        ui.on_delete_series(move || {
+            if let Some(ui) = ui_weak.upgrade() {
+                // Get the selected series
+                let selected_series_index = ui.get_selected_series_index();
+                if selected_series_index < 0 {
+                    eprintln!("No series selected");
+                    return;
+                }
+                
+                // Get series info from the model
+                let series_list = ui.get_series_list();
+                if let Some(series_item) = series_list.row_data(selected_series_index as usize) {
+                    let series_no_str = series_item.series_no.clone();
+                    let series_name_str = series_item.name.clone();
+                    
+                    // Get the selected fonds for context
+                    let selected_fonds = ui.get_selected_fonds();
+                    let fonds_names = ui.get_fonds_names();
+                    
+                    // Create and show confirmation dialog
+                    match crate::ConfirmDialog::new() {
+                        Ok(dialog) => {
+                            dialog.set_current_language(0);
+                            let confirm_message = ui.get_confirm_delete_series().to_string();
+                            dialog.set_message(confirm_message.replace("{}", &series_name_str).into());
+                            
+                            let archive_service = archive_service.clone();
+                            let ui_weak2 = ui_weak.clone();
+                            let series_no_str = series_no_str.clone();
+                            let dialog_weak = dialog.as_weak();
+                            
+                            dialog.on_confirm(move || {
+                                if let Some(ui) = ui_weak2.upgrade() {
+                                    let selected_index = ui.get_selected_archive();
+                                    
+                                    match archive_service.get_database_path_by_index(selected_index) {
+                                        Ok(Some(db_path)) => {
+                                            if !db_path.exists() {
+                                                eprintln!("Database not found for selected archive");
+                                                return;
+                                            }
+                                            
+                                            // First check if series has files
+                                            match FondsService::list_files_by_series(&db_path, &series_no_str) {
+                                                Ok(files) => {
+                                                    if !files.is_empty() {
+                                                        let error_message = ui.get_cannot_delete_series_has_files().to_string();
+                                                        ui.invoke_show_toast(error_message.into());
+                                                        return;
+                                                    }
+                                                    
+                                                    // Delete the series
+                                                    match FondsService::delete_series(&db_path, &series_no_str) {
+                                                        Ok(deleted) => {
+                                                            if deleted {
+                                                                println!("Series deleted: {}", series_no_str);
+                                                                
+                                                                // Reload series for the current fonds
+                                                                let selected_fonds = ui.get_selected_fonds();
+                                                                let fonds_names = ui.get_fonds_names();
+                                                                if (selected_fonds as usize) < fonds_names.row_count() {
+                                                                    if let Some(fonds_name) = fonds_names.row_data(selected_fonds as usize) {
+                                                                        // Extract fond_no from fonds name (format: "fond_no - name")
+                                                                        let fond_no = fonds_name.split(" - ").next().unwrap_or(&fonds_name);
+                                                                        
+                                                                        match FondsService::list_series(&db_path, fond_no) {
+                                                                            Ok(series_list) => {
+                                                                                let series_items: Vec<crate::SeriesItem> = series_list.into_iter()
+                                                                                    .map(|s| crate::SeriesItem {
+                                                                                        series_no: s.series_no.into(),
+                                                                                        name: s.name.into(),
+                                                                                        fond_no: s.fond_no.into(),
+                                                                                    })
+                                                                                    .collect();
+                                                                                set_series_with_crud_items(series_items, &ui);
+                                                                                
+                                                                                // Reset series selection
+                                                                                ui.set_selected_series_index(-1);
+                                                                                ui.set_selected_series_no("".into());
+                                                                                
+                                                                                // Clear files and items
+                                                                                clear_files(&ui);
+                                                                                clear_items(&ui);
+                                                                            }
+                                                                            Err(e) => {
+                                                                                eprintln!("Failed to reload series after deletion: {}", e);
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                                
+                                                                // Close the dialog
+                                                                if let Some(d) = dialog_weak.upgrade() {
+                                                                    let _ = d.hide();
+                                                                }
+                                                            } else {
+                                                                ui.invoke_show_toast("系列不存在".into());
+                                                            }
+                                                        }
+                                                        Err(e) => {
+                                                            ui.invoke_show_toast(format!("删除系列失败: {}", e).into());
+                                                        }
+                                                    }
+                                                }
+                                                Err(e) => {
+                                                    ui.invoke_show_toast(format!("检查系列文件失败: {}", e).into());
+                                                }
+                                            }
+                                        }
+                                        Ok(None) => eprintln!("No archive selected"),
+                                        Err(e) => eprintln!("Failed to get database path: {}", e),
+                                    }
+                                }
+                            });
+                            
+                            let dialog_weak = dialog.as_weak();
+                            dialog.on_cancel(move || {
+                                println!("Delete series cancelled");
+                                if let Some(d) = dialog_weak.upgrade() {
+                                    let _ = d.hide();
+                                }
+                            });
+                            
+                            // Show the dialog
+                            if let Err(e) = dialog.show() {
+                                eprintln!("Failed to show delete confirmation dialog: {}", e);
+                            }
+                        }
+                        Err(e) => eprintln!("Failed to create confirmation dialog: {}", e),
+                    }
+                } else {
+                    eprintln!("Invalid series selection");
                 }
             }
         });

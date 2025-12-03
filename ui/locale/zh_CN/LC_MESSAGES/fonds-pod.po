@@ -432,6 +432,16 @@ msgctxt "AppWindow"
 msgid "confirm_delete_selected_children"
 msgstr "确定删除选中的 {} 个二级分类?"
 
+#: ui/app-window.slint:71
+msgctxt "AppWindow"
+msgid "confirm_delete_series"
+msgstr "确定要删除系列 \"{}\" 吗？\n\n这将删除该系列下的所有文件和项目。"
+
+#: ui/app-window.slint:72
+msgctxt "AppWindow"
+msgid "cannot_delete_series_has_files"
+msgstr "无法删除系列：系列包含文件，请先删除所有文件"
+
 #: ui/pages/fonds-page.slint
 msgctxt "FondsPage"
 msgid "empty_fonds_list"

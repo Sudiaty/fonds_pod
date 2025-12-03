@@ -237,6 +237,12 @@ impl FondsService {
         queries::list_files_by_series(&mut conn, series_no)
     }
 
+    /// Delete a series
+    pub fn delete_series(db_path: &Path, series_no: &str) -> Result<bool, Box<dyn Error>> {
+        let mut conn = establish_connection(db_path)?;
+        queries::delete_series(&mut conn, series_no)
+    }
+
     /// List items for a file
     pub fn list_items_by_file(db_path: &Path, file_no: &str) -> Result<Vec<crate::infrastructure::persistence::models::Item>, Box<dyn Error>> {
         let mut conn = establish_connection(db_path)?;

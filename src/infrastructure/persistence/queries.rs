@@ -263,6 +263,18 @@ pub fn list_series_by_fond(
     Ok(results)
 }
 
+pub fn delete_series(
+    conn: &mut SqliteConnection,
+    series_number: &str,
+) -> Result<bool, Box<dyn std::error::Error>> {
+    use crate::infrastructure::persistence::schema::series::dsl::*;
+    
+    diesel::delete(series.filter(series_no.eq(series_number)))
+        .execute(conn)?;
+    
+    Ok(true)
+}
+
 // File operations
 pub fn create_file(
     conn: &mut SqliteConnection,

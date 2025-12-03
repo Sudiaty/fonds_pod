@@ -71,6 +71,8 @@ export component AppWindow inherits Window {
     out property <string> confirm_delete_selected_classifications: @tr("confirm_delete_selected_classifications");
     out property <string> confirm_delete_child_classification: @tr("confirm_delete_child_classification");
     out property <string> confirm_delete_selected_children: @tr("confirm_delete_selected_children");
+    out property <string> confirm_delete_series: @tr("confirm_delete_series");
+    out property <string> cannot_delete_series_has_files: @tr("cannot_delete_series_has_files");
     
     // Application version
     in property <string> app_version;
@@ -270,6 +272,7 @@ export component AppWindow inherits Window {
     callback open_item_at(int);
     callback series_activated(int);
     callback rebuild_series();
+    callback delete_series();
     callback update_series();
     callback add_archive_library();
     callback remove_archive_library();
@@ -361,6 +364,7 @@ export component AppWindow inherits Window {
                 item_activated(index) => { root.item_activated(index); }
                 series_activated(index) => { root.series_activated(index); }
                 rebuild_series => { root.rebuild_series(); }
+                delete_series => { root.delete_series(); }
                 request_add_fonds_dialog => { root.open_add_fonds_dialog(); }
                 archive_selected(index) => { root.archive_selected(index); }
                 select_series(index, series_no) => { root.select_series(index, series_no); }
