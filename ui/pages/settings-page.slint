@@ -1,53 +1,18 @@
-import { VerticalBox, HorizontalBox, ComboBox, ScrollView, GroupBox } from "std-widgets.slint";
+import {
+    VerticalBox,
+    HorizontalBox,
+    ComboBox,
+    ScrollView,
+    GroupBox,
+} from "std-widgets.slint";
 import { Theme, Layout } from "../theme.slint";
-import { ArchiveLibraryItem } from "../models.slint";
+import { ArchiveLibraryItem, CrudListItem } from "../models.slint";
 import { ThemedButton } from "../dialogs.slint";
-
-component IconButton inherits Rectangle {
-    in property <string> icon: "";
-    callback on-clicked();
-
-    width: 32px;
-    height: 32px;
-    border-radius: 4px;
-    background: button_touch.has-hover ? Theme.brand_soft : transparent;
-
-    Text {
-        width: 32px;
-        height: 32px;
-        text: root.icon;
-        font-size: 18px;
-        horizontal-alignment: center;
-        vertical-alignment: center;
-    }
-
-    button_touch := TouchArea { clicked => { root.on-clicked(); } }
-}
-
-component MenuRow inherits Rectangle {
-    in property <string> text: "";
-    in property <color> text-color: Theme.text_primary;
-    callback on-clicked();
-
-    height: 32px;
-    background: row_touch.has-hover ? Theme.bg_soft : transparent;
-
-    HorizontalBox {
-        padding-left: 12px;
-        padding-right: 12px;
-        Text { text: root.text; font-size: 13px; color: root.text-color; vertical-alignment: center; }
-    }
-
-    row_touch := TouchArea { clicked => { root.on-clicked(); } }
-}
-
-component MenuDivider inherits Rectangle {
-    height: 1px;
-    background: Theme.nav_border;
-}
+import { CrudList } from "../crud-list.slint";
 
 export component SettingsPage inherits VerticalBox {
     in property <[ArchiveLibraryItem]> archive_library_items: [];
+    in property <[CrudListItem]> archive_library_crud_items: [];
     in-out property <int> selected_archive: 0;
     in-out property <int> selected_language: 0; // 0: Chinese, 1: English
 
@@ -56,19 +21,22 @@ export component SettingsPage inherits VerticalBox {
     callback rename_archive_library(int, string);
     callback apply_settings();
     callback cancel_settings();
-
     alignment: start;
     padding: Layout.standard_padding;
     spacing: Layout.standard_spacing;
     vertical-stretch: 1;
-
     GroupBox {
         title: @tr("label_language");
         HorizontalBox {
             padding: Layout.standard_padding;
             spacing: Layout.standard_spacing;
             height: Layout.row_height;
-            Text { text: @tr("label_language"); width: 120px; vertical-alignment: center; }
+            Text {
+                text: @tr("label_language");
+                width: 120px;
+                vertical-alignment: center;
+            }
+
             ComboBox {
                 model: ["中文 (Chinese)", "English (英文)"];
                 current-index <=> root.selected_language;
@@ -78,89 +46,25 @@ export component SettingsPage inherits VerticalBox {
     }
 
     GroupBox {
-        title: @tr("label_archive_libraries");
-        vertical-stretch: 1;
-        VerticalBox {
-            padding: Layout.standard_spacing;
-            spacing: Layout.standard_spacing;
-            HorizontalBox {
-                height: Layout.toolbar_height;
-                spacing: Layout.standard_spacing;
-                alignment: start;
-
-                IconButton { icon: "➕"; on-clicked => root.add_archive_library(); }
+        height: 400px;
+        CrudList {
+            vertical-stretch: 1;
+            title: @tr("label_archive_libraries");
+            items: root.archive_library_crud_items;
+            active-index <=> root.selected_archive;
+            show-add-button: true;
+            show-rename-menu: true;
+            add-clicked => {
+                root.add_archive_library();
             }
-
-            ScrollView {
-                height: 350px;
-                VerticalBox {
-                    for item[index] in root.archive_library_items : Rectangle {
-                        height: 60px;
-                        background: root.selected_archive == index ? Theme.list_selected : Theme.list_background;
-                        border-width: 1px;
-                        border-color: Theme.nav_border;
-
-                        VerticalBox {
-                            padding-left: 10px;
-                            padding-right: 10px;
-                            padding-top: 8px;
-                            padding-bottom: 8px;
-                            spacing: 4px;
-
-                            Text { text: item.name; font-size: 14px; font-weight: 600; color: #333; overflow: elide; }
-                            Text { text: item.path; font-size: 12px; color: #666; overflow: elide; }
-                        }
-
-                        item_touch := TouchArea {
-                            clicked => { root.selected_archive = index; }
-                            pointer-event(event) => {
-                                if event.kind == PointerEventKind.up && event.button == PointerEventButton.right {
-                                    root.selected_archive = index;
-                                    context_menu.show();
-                                }
-                            }
-                        }
-
-                        context_menu := PopupWindow {
-                            x: item_touch.mouse-x;
-                            y: item_touch.mouse-y;
-                            width: 120px;
-
-                            Rectangle {
-                                background: white;
-                                border-width: 1px;
-                                border-color: #ccc;
-                                border-radius: 4px;
-                                drop-shadow-blur: 10px;
-                                drop-shadow-color: #00000040;
-
-                                VerticalBox {
-                                    spacing: 0px;
-
-                                    MenuRow {
-                                        text: @tr("menu_rename");
-                                        on-clicked => {
-                                            context_menu.close();
-                                            root.rename_archive_library(index, item.name);
-                                        }
-                                    }
-
-                                    MenuDivider { }
-
-                                    MenuRow {
-                                        text: @tr("SettingsPage", "menu_delete");
-                                        text-color: Theme.brand_primary;
-                                        on-clicked => {
-                                            context_menu.close();
-                                            root.selected_archive = index;
-                                            root.remove_archive_library();
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+            item-clicked(index, ctrl, shift) => {
+                root.selected_archive = index;
+            }
+            rename-clicked(index, old_name) => {
+                root.rename_archive_library(index, old_name);
+            }
+            delete-clicked => {
+                root.remove_archive_library();
             }
         }
     }
@@ -168,8 +72,20 @@ export component SettingsPage inherits VerticalBox {
     HorizontalBox {
         alignment: end;
         spacing: Layout.standard_spacing;
-        ThemedButton { text: @tr("btn_cancel"); is_primary: false; clicked => { root.cancel_settings(); } }
-        ThemedButton { text: @tr("btn_apply"); is_primary: true; clicked => { root.apply_settings(); } }
+        ThemedButton {
+            text: @tr("btn_cancel");
+            is_primary: false;
+            clicked => {
+                root.cancel_settings();
+            }
+        }
+
+        ThemedButton {
+            text: @tr("btn_apply");
+            is_primary: true;
+            clicked => {
+                root.apply_settings();
+            }
+        }
     }
 }
-

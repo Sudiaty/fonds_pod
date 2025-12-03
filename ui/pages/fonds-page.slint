@@ -82,13 +82,13 @@ export component FondsPage inherits VerticalBox {
             spacing: 8px;
 
             ComboBox {
-                width: 200px;
+                width: 180px;
                 model: root.archive_libraries;
                 current-index <=> root.selected_archive;
             }
 
             ComboBox {
-                width: 200px;
+                width: 400px;
                 model: root.fonds_names;
                 current-index <=> root.selected_fonds;
             }
