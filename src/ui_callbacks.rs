@@ -63,7 +63,31 @@ pub fn setup_ui_callbacks(
     ui.on_check_update(move || {
         if let Some(ui) = ui_weak_for_update.upgrade() {
             let current_version = ui.get_app_version().to_string();
-            let latest_version = "1.0.15";
+            
+            // Fetch latest version from GitHub API
+            let client = reqwest::blocking::Client::new();
+            let latest_version = match client
+                .get("https://api.github.com/repos/Sudiaty/fonds_pod/releases/latest")
+                .header("User-Agent", "fonds_pod")
+                .send()
+            {
+                Ok(response) => {
+                    if let Ok(json) = response.json::<serde_json::Value>() {
+                        json["tag_name"]
+                            .as_str()
+                            .map(|s| s.trim_start_matches('v').to_string())
+                    } else {
+                        None
+                    }
+                }
+                Err(_) => None,
+            };
+            
+            let Some(latest_version) = latest_version else {
+                ui.invoke_show_toast("Failed to check for updates".into());
+                return;
+            };
+            
             if current_version.trim_start_matches('v') == latest_version {
                 ui.invoke_show_toast("Already up to date".into());
             } else {
