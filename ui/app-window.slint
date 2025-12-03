@@ -156,6 +156,7 @@ export component AppWindow inherits Window {
     
     // Callbacks
     callback show_toast(string);
+    callback check_update();
     callback add_fonds();
     callback page_changed(string);
     callback archive_selected(int);
@@ -442,6 +443,7 @@ export component AppWindow inherits Window {
                 width: parent.width;
                 height: parent.height;
                 app_version: root.app_version;
+                check_update => { root.check_update(); }
             }
         }
     }

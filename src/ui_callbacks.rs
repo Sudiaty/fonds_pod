@@ -1,6 +1,3 @@
-/// UI callbacks setup module
-/// Handles all UI event callbacks including page changes, archive selection, and window management
-
 use std::rc::Rc;
 use crate::infrastructure::FileConfigRepository;
 use crate::services::ArchiveService;
@@ -57,6 +54,65 @@ pub fn setup_ui_callbacks(
             if let Ok(Some(db_path)) = archive_service_clone_for_archive.get_database_path_by_index(archive_index) {
                 SchemaHandler::<FileConfigRepository>::load_initial_schemas(&db_path, &ui);
                 ClassificationHandler::<FileConfigRepository>::load_initial_classifications(&db_path, &ui);
+            }
+        }
+    });
+
+    // Handle check update
+    let ui_weak_for_update = ui.as_weak();
+    ui.on_check_update(move || {
+        if let Some(ui) = ui_weak_for_update.upgrade() {
+            let current_version = ui.get_app_version().to_string();
+            let latest_version = "1.0.15";
+            if current_version.trim_start_matches('v') == latest_version {
+                ui.invoke_show_toast("Already up to date".into());
+            } else {
+                // Download update
+                let url = format!("https://github.com/Sudiaty/fonds_pod/releases/download/v{}/fonds-pod-{}-windows-x86_64.exe", latest_version, latest_version);
+                if let Ok(exe_path) = std::env::current_exe() {
+                    let temp_path = exe_path.with_file_name("fonds_pod_update.exe");
+                    let batch_path = exe_path.with_file_name("update.bat");
+                    match reqwest::blocking::get(&url) {
+                        Ok(response) => {
+                            if let Ok(bytes) = response.bytes() {
+                                if std::fs::write(&temp_path, &bytes).is_ok() {
+                                    // Create batch script to replace exe after program exits
+                                    let batch_content = format!(
+                                        "@echo off\r\n\
+                                        timeout /t 2 /nobreak >nul\r\n\
+                                        copy /Y \"{}\" \"{}\"\r\n\
+                                        del \"{}\"\r\n\
+                                        start \"\" \"{}\"\r\n\
+                                        del \"%~f0\"\r\n",
+                                        temp_path.to_string_lossy(),
+                                        exe_path.to_string_lossy(),
+                                        temp_path.to_string_lossy(),
+                                        exe_path.to_string_lossy()
+                                    );
+                                    if std::fs::write(&batch_path, &batch_content).is_ok() {
+                                        ui.invoke_show_toast("Update downloaded. Restarting...".into());
+                                        // Run batch script and exit
+                                        let _ = std::process::Command::new("cmd")
+                                            .args(&["/C", "start", "", &batch_path.to_string_lossy()])
+                                            .spawn();
+                                        std::process::exit(0);
+                                    } else {
+                                        ui.invoke_show_toast("Failed to create update script".into());
+                                    }
+                                } else {
+                                    ui.invoke_show_toast("Failed to save update file".into());
+                                }
+                            } else {
+                                ui.invoke_show_toast("Failed to download update".into());
+                            }
+                        }
+                        Err(_) => {
+                            ui.invoke_show_toast("Failed to download update".into());
+                        }
+                    }
+                } else {
+                    ui.invoke_show_toast("Cannot determine executable path".into());
+                }
             }
         }
     });

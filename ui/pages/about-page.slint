@@ -1,8 +1,9 @@
-import { VerticalBox, HorizontalBox, ScrollView } from "std-widgets.slint";
+import { VerticalBox, HorizontalBox, ScrollView, Button } from "std-widgets.slint";
 import { Theme, Layout } from "../theme.slint";
 
 export component AboutPage inherits VerticalBox {
     in property <string> app_version;
+    callback check_update();
     spacing: 16px;
     padding: 24px;
     HorizontalBox {
@@ -20,6 +21,15 @@ export component AboutPage inherits VerticalBox {
         font-weight: 600;
         color: Theme.text_primary;
         horizontal-alignment: center;
+    }
+
+    HorizontalBox {
+        alignment: center;
+        spacing: 8px;
+        Button {
+            text: "🔄";
+            clicked => { check_update(); }
+        }
     }
 
     Rectangle {

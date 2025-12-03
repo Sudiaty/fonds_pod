@@ -41,6 +41,7 @@ chrono = { version = "0.4", features = ["serde"] }
 itertools = "0.12"
 log = "0.4"
 tray-item = "0.10"
+reqwest = { version = "0.11", features = ["blocking"] }
 
 [target.'cfg(windows)'.build-dependencies]
 embed-resource = "2.4"
