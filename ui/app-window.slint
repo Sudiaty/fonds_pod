@@ -256,11 +256,13 @@ export component AppWindow inherits Window {
     callback add_file();
     callback delete_file();
     callback delete_selected_files();
+    callback rename_file(int, string);
     callback file_clicked(int, bool, bool);
     callback file_activated(int);
     callback open_file_at(int);
     callback add_item();
     callback delete_item();
+    callback rename_item(int, string);
     callback item_clicked(int, bool, bool);
     callback item_activated(int);
     callback open_file();
@@ -344,11 +346,13 @@ export component AppWindow inherits Window {
                 add_file => { root.add_file(); }
                 delete_file => { root.delete_file(); }
                 delete_selected_files => { root.delete_selected_files(); }
+                rename_file(index, old_name) => { root.rename_file(index, old_name); }
                 file_clicked(index, ctrl, shift) => { root.file_clicked(index, ctrl, shift); }
                 file_activated(index) => { root.file_activated(index); }
                 add_item => { root.add_item(); }
                 delete_item => { root.delete_item(); }
                 delete_selected_items => { root.delete_selected_items(); }
+                rename_item(index, old_name) => { root.rename_item(index, old_name); }
                 open_file => { root.open_file(); }
                 open_file_at(index) => { root.open_file_at(index); }
                 open_item => { root.open_item(); }

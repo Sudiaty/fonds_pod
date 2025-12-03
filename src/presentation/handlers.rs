@@ -19,8 +19,8 @@ fn set_series_with_crud_items(series_items: Vec<crate::SeriesItem>, ui: &AppWind
     // Create CrudListItem format
     let crud_items: Vec<crate::CrudListItem> = series_items.iter()
         .map(|s| crate::CrudListItem {
-            title: s.series_no.clone(),
-            subtitle: s.name.clone(),
+            title: s.name.clone(),
+            subtitle: s.series_no.clone(),
         })
         .collect();
     
@@ -36,8 +36,8 @@ fn set_files_with_crud_items(file_items: Vec<crate::FileItem>, ui: &AppWindow) {
     // Create CrudListItem format
     let crud_items: Vec<crate::CrudListItem> = file_items.iter()
         .map(|f| crate::CrudListItem {
-            title: f.file_no.clone(),
-            subtitle: f.name.clone(),
+            title: f.name.clone(),
+            subtitle: f.file_no.clone(),
         })
         .collect();
     
@@ -53,8 +53,8 @@ fn set_items_with_crud_items(item_items: Vec<crate::ItemItem>, ui: &AppWindow) {
     // Create CrudListItem format
     let crud_items: Vec<crate::CrudListItem> = item_items.iter()
         .map(|i| crate::CrudListItem {
-            title: i.item_no.clone(),
-            subtitle: i.name.clone(),
+            title: i.name.clone(),
+            subtitle: i.item_no.clone(),
         })
         .collect();
     
@@ -1668,12 +1668,14 @@ impl<CR: ConfigRepository + 'static> FondsHandler<CR> {
         self.setup_add_fonds_dialog(ui);
         self.setup_add_file(ui);
         self.setup_delete_file(ui);
+        self.setup_rename_file(ui);
         self.setup_delete_selected_files(ui);
         self.setup_file_clicked(ui);
         self.setup_select_series(ui);
         self.setup_file_selected(ui);
         self.setup_add_item(ui);
         self.setup_delete_item(ui);
+        self.setup_rename_item(ui);
         self.setup_delete_selected_items(ui);
         self.setup_item_clicked(ui);
         self.setup_open_file(ui);
@@ -1919,6 +1921,93 @@ impl<CR: ConfigRepository + 'static> FondsHandler<CR> {
                     }
                 } else {
                     eprintln!("Invalid file selection");
+                }
+            }
+        });
+    }
+
+    fn setup_rename_file(&self, ui: &AppWindow) {
+        let ui_weak = ui.as_weak();
+        let archive_service = self.archive_service.clone();
+        
+        ui.on_rename_file(move |index, old_name| {
+            if let Some(ui) = ui_weak.upgrade() {
+                // Create a rename dialog
+                match crate::RenameArchiveDialog::new() {
+                    Ok(dialog) => {
+                        dialog.set_current_language(0);
+                        dialog.set_library_name_input(old_name.clone());
+                        
+                        let archive_service = archive_service.clone();
+                        let ui_weak2 = ui_weak.clone();
+                        let selected_series_no = ui.get_selected_series_no().to_string();
+                        let dialog_weak = dialog.as_weak();
+                        
+                        dialog.on_confirm_input(move |new_name| {
+                            if let Some(ui) = ui_weak2.upgrade() {
+                                let selected_index = ui.get_selected_archive();
+                                
+                                match archive_service.get_database_path_by_index(selected_index) {
+                                    Ok(Some(db_path)) => {
+                                        if !db_path.exists() {
+                                            eprintln!("Database not found for selected archive");
+                                            return;
+                                        }
+                                        
+                                        // Get files for the series to find the file number
+                                        match FondsService::list_files_by_series(&db_path, &selected_series_no) {
+                                            Ok(files) => {
+                                                // Find the file with matching old name (at the selected index)
+                                                if let Some(file) = files.get(index as usize) {
+                                                    let file_no = file.file_no.clone();
+                                                    match FileService::rename_file(&db_path, &file_no, &new_name) {
+                                                        Ok(true) => {
+                                                            println!("File renamed: {} -> {}", old_name, new_name);
+                                                            
+                                                            // Reload files for the series
+                                                            Self::reload_files_for_series(&db_path, &selected_series_no, &ui);
+                                                            
+                                                            // Close the dialog
+                                                            if let Some(d) = dialog_weak.upgrade() {
+                                                                let _ = d.hide();
+                                                            }
+                                                        }
+                                                        Ok(false) => {
+                                                            ui.invoke_show_toast("文件不存在".into());
+                                                        }
+                                                        Err(e) => {
+                                                            ui.invoke_show_toast(format!("重命名文件失败: {}", e).into());
+                                                        }
+                                                    }
+                                                } else {
+                                                    ui.invoke_show_toast("文件不存在".into());
+                                                }
+                                            }
+                                            Err(e) => {
+                                                ui.invoke_show_toast(format!("获取文件列表失败: {}", e).into());
+                                            }
+                                        }
+                                    }
+                                    Ok(None) => eprintln!("No archive selected"),
+                                    Err(e) => eprintln!("Failed to get database path: {}", e),
+                                }
+                            }
+                        });
+                        
+                        let dialog_weak = dialog.as_weak();
+                        dialog.on_cancel_input(move || {
+                            println!("Rename file cancelled");
+                            if let Some(d) = dialog_weak.upgrade() {
+                                let _ = d.hide();
+                            }
+                        });
+                        
+                        // Show the dialog
+                        if let Err(e) = dialog.show() {
+                            eprintln!("Failed to show rename dialog: {}", e);
+                        }
+                    }
+                    Err(e) => eprintln!("Failed to create rename dialog: {}", e),
                 }
             }
         });
@@ -2654,6 +2743,99 @@ impl<CR: ConfigRepository + 'static> FondsHandler<CR> {
         });
     }
     
+    fn setup_rename_item(&self, ui: &AppWindow) {
+        let ui_weak = ui.as_weak();
+        let archive_service = self.archive_service.clone();
+        
+        ui.on_rename_item(move |index, old_name| {
+            if let Some(ui) = ui_weak.upgrade() {
+                // Create a rename dialog
+                match crate::RenameArchiveDialog::new() {
+                    Ok(dialog) => {
+                        dialog.set_current_language(0);
+                        dialog.set_library_name_input(old_name.clone());
+                        
+                        let archive_service = archive_service.clone();
+                        let ui_weak2 = ui_weak.clone();
+                        let selected_file_no = ui.get_selected_file();
+                        let dialog_weak = dialog.as_weak();
+                        
+                        dialog.on_confirm_input(move |new_name| {
+                            if let Some(ui) = ui_weak2.upgrade() {
+                                let selected_archive = ui.get_selected_archive();
+                                
+                                match archive_service.get_database_path_by_index(selected_archive) {
+                                    Ok(Some(db_path)) => {
+                                        if !db_path.exists() {
+                                            eprintln!("Database not found for selected archive");
+                                            return;
+                                        }
+                                        
+                                        // Get file_no from UI state
+                                        let file_model = ui.get_files();
+                                        if let Some(file_item) = file_model.row_data(selected_file_no as usize) {
+                                            let file_no = file_item.file_no.clone();
+                                            
+                                            // Get items for the file to find the item number
+                                            match FileService::list_items_by_file(&db_path, &file_no) {
+                                                Ok(items) => {
+                                                    // Find the item with matching old name (at the selected index)
+                                                    if let Some(item) = items.get(index as usize) {
+                                                        let item_no = item.item_no.clone();
+                                                        match FileService::rename_item(&db_path, &item_no, &new_name) {
+                                                            Ok(true) => {
+                                                                println!("Item renamed: {} -> {}", old_name, new_name);
+                                                                
+                                                                // Reload items for the file
+                                                                Self::reload_items_for_file(&db_path, &file_no, &ui);
+                                                                
+                                                                // Close the dialog
+                                                                if let Some(d) = dialog_weak.upgrade() {
+                                                                    let _ = d.hide();
+                                                                }
+                                                            }
+                                                            Ok(false) => {
+                                                                ui.invoke_show_toast("项目不存在".into());
+                                                            }
+                                                            Err(e) => {
+                                                                ui.invoke_show_toast(format!("重命名项目失败: {}", e).into());
+                                                            }
+                                                        }
+                                                    } else {
+                                                        ui.invoke_show_toast("项目不存在".into());
+                                                    }
+                                                }
+                                                Err(e) => {
+                                                    ui.invoke_show_toast(format!("获取项目列表失败: {}", e).into());
+                                                }
+                                            }
+                                        }
+                                    }
+                                    Ok(None) => eprintln!("No archive selected"),
+                                    Err(e) => eprintln!("Failed to get database path: {}", e),
+                                }
+                            }
+                        });
+                        
+                        let dialog_weak = dialog.as_weak();
+                        dialog.on_cancel_input(move || {
+                            println!("Rename item cancelled");
+                            if let Some(d) = dialog_weak.upgrade() {
+                                let _ = d.hide();
+                            }
+                        });
+                        
+                        // Show the dialog
+                        if let Err(e) = dialog.show() {
+                            eprintln!("Failed to show rename dialog: {}", e);
+                        }
+                    }
+                    Err(e) => eprintln!("Failed to create rename dialog: {}", e),
+                }
+            }
+        });
+    }
+    
     fn setup_delete_selected_items(&self, ui: &AppWindow) {
         let ui_weak = ui.as_weak();
         let archive_service = self.archive_service.clone();
@@ -2980,6 +3162,31 @@ impl<CR: ConfigRepository + 'static> FondsHandler<CR> {
                 clear_files(ui);
                 ui.set_selected_file(-1);
                 // Clear items
+                clear_items(ui);
+                ui.set_selected_item(-1);
+            }
+        }
+    }
+    
+    fn reload_items_for_file(db_path: &std::path::PathBuf, file_no: &str, ui: &AppWindow) {
+        match FileService::list_items_by_file(db_path, file_no) {
+            Ok(items) => {
+                let item_items: Vec<crate::ItemItem> = items.into_iter()
+                    .map(|i| {
+                        crate::ItemItem {
+                            item_no: i.item_no.into(),
+                            name: i.name.into(),
+                            path: i.path.unwrap_or_default().into(),
+                        }
+                    })
+                    .collect();
+                set_items_with_crud_items(item_items, ui);
+                
+                // Reset item selection
+                ui.set_selected_item(0);
+            }
+            Err(e) => {
+                eprintln!("Failed to load items for file {}: {}", file_no, e);
                 clear_items(ui);
                 ui.set_selected_item(-1);
             }

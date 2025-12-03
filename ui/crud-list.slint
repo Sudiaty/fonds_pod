@@ -126,11 +126,15 @@ export component CrudList inherits VerticalBox {
     // Context menu callbacks
     callback delete-clicked();
     callback delete-selected-clicked();
+    callback rename-clicked(int, string);  // index, new-name
     callback activate-clicked();      // Built-in activate action
     callback deactivate-clicked();    // Built-in deactivate action
     
     // Whether to show activate/deactivate menu items
     in property <bool> show-activate-menu: false;
+    
+    // Whether to show rename menu item
+    in property <bool> show-rename-menu: false;
     
     // Lifecycle callbacks
     callback on-render();  // Called when component is rendered, before data is loaded
@@ -295,6 +299,19 @@ export component CrudList inherits VerticalBox {
                         
                         VerticalBox {
                             spacing: 0px;
+                            
+                            // Rename action
+                            if root.show-rename-menu : MenuRow {
+                                text: @tr("menu_rename");
+                                icon: "✏️";
+                                text-color: Theme.text_primary;
+                                on-clicked => {
+                                    root.rename-clicked(item_idx, item.title);
+                                    item_context_menu.close();
+                                }
+                            }
+                            
+                            if root.show-rename-menu : MenuDivider { }
                             
                             // Default delete action
                             MenuRow {

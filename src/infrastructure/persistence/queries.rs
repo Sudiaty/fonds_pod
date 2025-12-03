@@ -301,6 +301,20 @@ pub fn delete_file(
     Ok(true)
 }
 
+pub fn rename_file(
+    conn: &mut SqliteConnection,
+    file_number: &str,
+    new_name: &str,
+) -> Result<bool, Box<dyn std::error::Error>> {
+    use crate::infrastructure::persistence::schema::files::dsl::*;
+    
+    diesel::update(files.filter(file_no.eq(file_number)))
+        .set(name.eq(new_name))
+        .execute(conn)?;
+    
+    Ok(true)
+}
+
 pub fn list_items_by_file(
     conn: &mut SqliteConnection,
     file_number: &str,
@@ -363,6 +377,20 @@ pub fn delete_item(
     use crate::infrastructure::persistence::schema::items::dsl::*;
     
     diesel::delete(items.filter(item_no.eq(item_number)))
+        .execute(conn)?;
+    
+    Ok(true)
+}
+
+pub fn rename_item(
+    conn: &mut SqliteConnection,
+    item_number: &str,
+    new_name: &str,
+) -> Result<bool, Box<dyn std::error::Error>> {
+    use crate::infrastructure::persistence::schema::items::dsl::*;
+    
+    diesel::update(items.filter(item_no.eq(item_number)))
+        .set(name.eq(new_name))
         .execute(conn)?;
     
     Ok(true)

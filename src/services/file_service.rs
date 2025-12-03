@@ -76,6 +76,12 @@ impl FileService {
         queries::delete_file(&mut conn, file_no)
     }
 
+    /// Rename a file
+    pub fn rename_file(db_path: &Path, file_no: &str, new_name: &str) -> Result<bool, Box<dyn Error>> {
+        let mut conn = establish_connection(db_path)?;
+        queries::rename_file(&mut conn, file_no, new_name)
+    }
+
     /// Create a new item
     pub fn create_item(
         db_path: &Path,
@@ -116,5 +122,11 @@ impl FileService {
     pub fn delete_item(db_path: &Path, item_no: &str) -> Result<bool, Box<dyn Error>> {
         let mut conn = establish_connection(db_path)?;
         queries::delete_item(&mut conn, item_no)
+    }
+
+    /// Rename an item
+    pub fn rename_item(db_path: &Path, item_no: &str, new_name: &str) -> Result<bool, Box<dyn Error>> {
+        let mut conn = establish_connection(db_path)?;
+        queries::rename_item(&mut conn, item_no, new_name)
     }
 }

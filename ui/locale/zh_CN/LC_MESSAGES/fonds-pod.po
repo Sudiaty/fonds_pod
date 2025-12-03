@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "POT-Creation-Date: 2025-11-27 06:27+0000\n"
-"PO-Revision-Date: 2025-12-02 16:39+0800\n"
+"PO-Revision-Date: 2025-12-03 10:02+0800\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: zh_CN\n"
@@ -456,6 +456,11 @@ msgstr "暂无件"
 msgctxt "CrudList"
 msgid "empty_list"
 msgstr "暂无数据"
+
+#: ui/crud-list.slint
+msgctxt "CrudList"
+msgid "menu_rename"
+msgstr "重命名"
 
 #: ui/crud-list.slint
 msgctxt "CrudList"

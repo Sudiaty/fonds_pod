@@ -51,6 +51,7 @@ export component FondsPage inherits VerticalBox {
     callback add_file();
     callback delete_file();
     callback delete_selected_files();
+    callback rename_file(int, string);
     callback file_clicked(int, bool, bool);
     callback file_activated(int);
     callback open_file();
@@ -60,6 +61,7 @@ export component FondsPage inherits VerticalBox {
     callback add_item();
     callback delete_item();
     callback delete_selected_items();
+    callback rename_item(int, string);
     callback item_clicked(int, bool, bool);
     callback item_activated(int);
     callback open_item();
@@ -166,6 +168,7 @@ export component FondsPage inherits VerticalBox {
                 items: root.files_list_items;
                 active-index <=> root.selected_file;
                 selected-indices: root.selected_files;
+                show-rename-menu: true;
                 quick-actions: [
                     { icon: "🔗", tooltip: "Open" }
                 ];
@@ -187,6 +190,7 @@ export component FondsPage inherits VerticalBox {
                     }
                 }
                 
+                rename-clicked(index, old_name) => { root.rename_file(index, old_name); }
                 delete-clicked => { root.delete_file(); }
                 delete-selected-clicked => { root.delete_selected_files(); }
             }
@@ -202,6 +206,7 @@ export component FondsPage inherits VerticalBox {
                 active-index <=> root.selected_item;
                 selected-indices: root.selected_items;
                 activate-first-on-load: false;
+                show-rename-menu: true;
                 quick-actions: [
                     { icon: "🔗", tooltip: "Open" }
                 ];
@@ -223,6 +228,7 @@ export component FondsPage inherits VerticalBox {
                     }
                 }
                 
+                rename-clicked(index, old_name) => { root.rename_item(index, old_name); }
                 delete-clicked => { root.delete_item(); }
                 delete-selected-clicked => { root.delete_selected_items(); }
             }
