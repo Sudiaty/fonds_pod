@@ -110,6 +110,7 @@ export component AppWindow inherits Window {
     in-out property <[int]> selected_files: [];
     in-out property <[string]> archive_libraries: ["Default Archive"];
     in-out property <[ArchiveLibraryItem]> archive_library_items: [];
+    in-out property <[CrudListItem]> archive_library_crud_items: [];
     in-out property <int> selected_archive: 0;
     changed selected_archive => { archive_selected(selected_archive); }
     in-out property <int> selected_language: 0;
@@ -427,6 +428,7 @@ export component AppWindow inherits Window {
                 width: parent.width;
                 height: parent.height;
                 archive_library_items <=> root.archive_library_items;
+                archive_library_crud_items <=> root.archive_library_crud_items;
                 selected_archive <=> root.selected_archive;
                 selected_language <=> root.selected_language;
                 add_archive_library => { root.add_archive_library(); }

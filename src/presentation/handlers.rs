@@ -1049,6 +1049,17 @@ impl<CR: ConfigRepository + 'static> ArchiveHandler<CR> {
                 let items_model = slint::ModelRc::new(slint::VecModel::from(items));
                 ui.set_archive_library_items(items_model);
                 
+                // Load CrudList format data for settings page
+                let crud_items: Vec<crate::CrudListItem> = libraries
+                    .iter()
+                    .map(|lib| crate::CrudListItem {
+                        title: lib.name.as_str().into(),
+                        subtitle: lib.path.as_str().into(),
+                    })
+                    .collect();
+                let crud_model = slint::ModelRc::new(slint::VecModel::from(crud_items));
+                ui.set_archive_library_crud_items(crud_model);
+                
                 // Adjust selection
                 let current = ui.get_selected_archive() as usize;
                 if current >= new_len && new_len > 0 {
@@ -1085,6 +1096,18 @@ impl<CR: ConfigRepository + 'static> ArchiveHandler<CR> {
             .collect();
         let items_model = slint::ModelRc::new(slint::VecModel::from(items));
         ui.set_archive_library_items(items_model);
+        
+        // Load CrudList format data for settings page
+        let crud_items: Vec<crate::CrudListItem> = settings
+            .archive_libraries
+            .iter()
+            .map(|lib| crate::CrudListItem {
+                title: lib.name.as_str().into(),
+                subtitle: lib.path.as_str().into(),
+            })
+            .collect();
+        let crud_model = slint::ModelRc::new(slint::VecModel::from(crud_items));
+        ui.set_archive_library_crud_items(crud_model);
         
         // Set selected archive from last opened
         if let Some(index) = self.archive_service.get_last_opened_index()? {
