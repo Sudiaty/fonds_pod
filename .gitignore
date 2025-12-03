@@ -35,3 +35,4 @@ Desktop.ini
 # Logs
 *.log
 ui/test.slint
+convert_png_to_ico.py
