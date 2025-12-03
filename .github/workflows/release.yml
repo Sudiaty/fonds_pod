@@ -50,7 +50,7 @@ jobs:
         uses: orhun/git-cliff-action@v4
         with:
           # 从最新标签到上一个标签的变更（无上个标签则显示所有历史）
-          args: --rev ${{ steps.changelog-range.outputs.range }} --output -
+          args: --output - ${{ steps.changelog-range.outputs.range }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
