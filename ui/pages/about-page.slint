@@ -1,11 +1,14 @@
-import { VerticalBox, HorizontalBox, ScrollView, Button } from "std-widgets.slint";
+import { VerticalBox, HorizontalBox, Button } from "std-widgets.slint";
 import { Theme, Layout } from "../theme.slint";
 
 export component AboutPage inherits VerticalBox {
-    in property <string> app_version;
+    in property <string> app_version: "1.0.0";
     callback check_update();
+    
     spacing: 16px;
     padding: 24px;
+    
+    // Logo section
     HorizontalBox {
         alignment: center;
         Image {
@@ -15,59 +18,73 @@ export component AboutPage inherits VerticalBox {
         }
     }
 
+    // App title
     Text {
-        text: @tr("about_title");
+        text: @tr("" => "about_title");
         font-size: 24px;
         font-weight: 600;
         color: Theme.text_primary;
         horizontal-alignment: center;
     }
 
+    // Check update button
     HorizontalBox {
         alignment: center;
         spacing: 8px;
         Button {
-            text: "🔄";
-            clicked => { check_update(); }
+            text: @tr("" => "check_update");
+            clicked => { root.check_update(); }
         }
     }
 
+    // App information panel
     Rectangle {
         background: Theme.bg_alt;
         border-radius: 8px;
+        border-width: 1px;
+        border-color: Theme.nav_border;
+        
         VerticalBox {
             spacing: 12px;
             padding: 16px;
+            
             Text {
-                text: @tr("about_description");
+                text: @tr("" => "about_description");
                 font-size: 14px;
                 color: Theme.text_secondary;
                 wrap: word-wrap;
             }
 
             Text {
-                text: @tr("about_version") + " " + root.app_version;
+                text: @tr("" => "about_version") + " " + root.app_version;
                 font-size: 14px;
                 color: Theme.text_primary;
             }
 
             Text {
-                text: @tr("about_author") + " Sudiaty";
+                text: @tr("" => "about_author") + " Sudiaty";
                 font-size: 14px;
                 color: Theme.text_primary;
             }
 
             Text {
-                text: @tr("about_license") + " MIT";
+                text: @tr("" => "about_license") + " MIT";
                 font-size: 14px;
                 color: Theme.text_primary;
             }
 
             Text {
-                text: @tr("about_website") + " https://github.com/Sudiaty/fonds_pod";
+                text: @tr("" => "about_website") + " https://github.com/Sudiaty/fonds_pod";
                 font-size: 14px;
                 color: Theme.text_primary;
+                wrap: word-wrap;
             }
         }
+    }
+    
+    // Footer spacer
+    Rectangle {
+        height: 24px;
+        background: transparent;
     }
 }

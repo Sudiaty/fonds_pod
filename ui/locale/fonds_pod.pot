@@ -1,0 +1,111 @@
+# POT Template for FondsPod
+# Copyright (C) 2025 Sudiaty
+# This file is distributed under the MIT License.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: FondsPod 1.0\n"
+"Report-Msgid-Bugs-To: https://github.com/Sudiaty/fonds_pod/issues\n"
+"POT-Creation-Date: 2025-12-08 12:00+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# Navigation
+msgid "nav_home"
+msgstr ""
+
+msgid "nav_fonds"
+msgstr ""
+
+msgid "nav_schema"
+msgstr ""
+
+msgid "nav_classification"
+msgstr ""
+
+msgid "nav_settings"
+msgstr ""
+
+msgid "nav_about"
+msgstr ""
+
+# Home page
+msgid "home_welcome"
+msgstr ""
+
+msgid "home_description"
+msgstr ""
+
+# About page
+msgid "about_title"
+msgstr ""
+
+msgid "about_description"
+msgstr ""
+
+msgid "about_version"
+msgstr ""
+
+msgid "about_author"
+msgstr ""
+
+msgid "about_license"
+msgstr ""
+
+msgid "about_website"
+msgstr ""
+
+msgid "check_update"
+msgstr ""
+
+# Common UI messages
+msgid "language_applied"
+msgstr ""
+
+msgid "code_exists"
+msgstr ""
+
+msgid "create_failed"
+msgstr ""
+
+msgid "tray_show_window"
+msgstr ""
+
+msgid "tray_quit"
+msgstr ""
+
+msgid "delete_failed"
+msgstr ""
+
+msgid "cannot_delete"
+msgstr ""
+
+msgid "activate_failed"
+msgstr ""
+
+msgid "deactivate_failed"
+msgstr ""
+
+msgid "export_failed"
+msgstr ""
+
+msgid "import_failed"
+msgstr ""
+
+msgid "no_archive_selected"
+msgstr ""
+
+msgid "import_success"
+msgstr ""
+
+msgid "export_success"
+msgstr ""
+
+msgid "read_file_failed"
+msgstr ""

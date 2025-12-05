@@ -1,10 +1,10 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: \n"
-"POT-Creation-Date: 2025-11-27 06:27+0000\n"
-"PO-Revision-Date: 2025-12-03 10:01+0800\n"
-"Last-Translator: \n"
-"Language-Team: \n"
+"Project-Id-Version: FondsPod 1.0\n"
+"POT-Creation-Date: 2025-12-09 12:00+0800\n"
+"PO-Revision-Date: 2025-12-09 12:01+0800\n"
+"Last-Translator: Sudiaty\n"
+"Language-Team: English\n"
 "Language: en_US\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -12,497 +12,240 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 3.8\n"
 
-#. Tooltips for navigation (positioned to the right of nav buttons)
-#: ui/app-window.slint:344
+# ============================================================================
+# Empty context translations (used with @tr("" => "key"))
+# ============================================================================
+
+# Navigation
+msgctxt ""
+msgid "nav_home"
+msgstr "Home"
+
+msgctxt ""
+msgid "nav_fonds"
+msgstr "Fonds Management"
+
+msgctxt ""
+msgid "nav_schema"
+msgstr "Schema Management"
+
+msgctxt ""
+msgid "nav_classification"
+msgstr "Classification Management"
+
+msgctxt ""
+msgid "nav_settings"
+msgstr "Settings"
+
+msgctxt ""
+msgid "nav_about"
+msgstr "About"
+
+# Home page
+msgctxt ""
+msgid "home_welcome"
+msgstr "Welcome to FondsPod"
+
+msgctxt ""
+msgid "home_description"
+msgstr "Your modern archive management system. Choose from the navigation on the left to start managing your archival materials."
+
+# About page
+msgctxt ""
+msgid "about_title"
+msgstr "FondsPod Archive Management System"
+
+msgctxt ""
+msgid "about_description"
+msgstr "FondsPod is a modern archive management system built with Rust and Slint. It provides comprehensive archive classification, schema management, and fonds management features to help you efficiently organize and manage archival materials."
+
+msgctxt ""
+msgid "about_version"
+msgstr "Version:"
+
+msgctxt ""
+msgid "about_author"
+msgstr "Author:"
+
+msgctxt ""
+msgid "about_license"
+msgstr "License:"
+
+msgctxt ""
+msgid "about_website"
+msgstr "Website:"
+
+msgctxt ""
+msgid "check_update"
+msgstr "Check Update"
+
+# Common UI messages
+msgctxt ""
+msgid "language_applied"
+msgstr "Language Applied"
+
+msgctxt ""
+msgid "code_exists"
+msgstr "Code Already Exists"
+
+msgctxt ""
+msgid "create_failed"
+msgstr "Create Failed"
+
+msgctxt ""
+msgid "tray_show_window"
+msgstr "Show Window"
+
+msgctxt ""
+msgid "tray_quit"
+msgstr "Quit"
+
+msgctxt ""
+msgid "delete_failed"
+msgstr "Delete Failed"
+
+msgctxt ""
+msgid "cannot_delete"
+msgstr "Cannot Delete"
+
+msgctxt ""
+msgid "activate_failed"
+msgstr "Activate Failed"
+
+msgctxt ""
+msgid "deactivate_failed"
+msgstr "Deactivate Failed"
+
+msgctxt ""
+msgid "export_failed"
+msgstr "Export Failed"
+
+msgctxt ""
+msgid "import_failed"
+msgstr "Import Failed"
+
+msgctxt ""
+msgid "no_archive_selected"
+msgstr "No Archive Selected"
+
+msgctxt ""
+msgid "import_success"
+msgstr "Import Success"
+
+msgctxt ""
+msgid "export_success"
+msgstr "Export Success"
+
+msgctxt ""
+msgid "read_file_failed"
+msgstr "Read File Failed"
+
+# Settings page
+msgctxt ""
+msgid "label_language"
+msgstr "Language"
+
+msgctxt ""
+msgid "label_archive_libraries"
+msgstr "Archive Libraries"
+
+msgctxt ""
+msgid "label_name"
+msgstr "Name"
+
+msgctxt ""
+msgid "label_path"
+msgstr "Path"
+
+msgctxt ""
+msgid "btn_cancel"
+msgstr "Cancel"
+
+msgctxt ""
+msgid "btn_apply"
+msgstr "Apply"
+
+msgctxt ""
+msgid "dialog_add_archive_title"
+msgstr "Add Archive Library"
+
+msgctxt ""
+msgid "dialog_rename_archive_title"
+msgstr "Rename Archive Library"
+
+# ============================================================================
+# AppWindow context translations (used with @tr("key") in AppWindow)
+# ============================================================================
+
 msgctxt "AppWindow"
 msgid "nav_fonds"
-msgstr "📁 Fonds"
+msgstr "Fonds Management"
 
-#: ui/app-window.slint:345
 msgctxt "AppWindow"
 msgid "nav_schema"
-msgstr "⚙️ Schema"
+msgstr "Schema Management"
 
-#: ui/app-window.slint:346
 msgctxt "AppWindow"
 msgid "nav_classification"
-msgstr "🗂 Classification"
+msgstr "Classification Management"
 
-#: ui/app-window.slint:347
 msgctxt "AppWindow"
 msgid "nav_settings"
-msgstr "🔧 Settings"
+msgstr "Settings"
 
-#: ui/app-window.slint:348
 msgctxt "AppWindow"
 msgid "nav_about"
-msgstr "ℹ️ About"
+msgstr "About"
 
-#: ui/app-window.slint:349
-msgctxt "AppWindow"
-msgid "nav_files"
-msgstr "📂 Files"
+# ============================================================================
+# DialogButtons context translations
+# ============================================================================
 
-#: ui/dialogs.slint:61
 msgctxt "DialogButtons"
 msgid "btn_cancel"
 msgstr "Cancel"
 
-#: ui/dialogs.slint:69
 msgctxt "DialogButtons"
 msgid "btn_confirm"
-msgstr "OK"
+msgstr "Confirm"
 
-#: ui/dialogs.slint:86
-msgctxt "SchemaInputDialog"
-msgid "dialog_add_schema_title"
-msgstr "Add Schema"
+# ============================================================================
+# FormDialog context translations
+# ============================================================================
 
-#: ui/dialogs.slint:124
-msgctxt "SchemaInputDialog"
-msgid "label_code"
-msgstr "Code"
+msgctxt "FormDialog"
+msgid "btn_browse"
+msgstr "Browse"
 
-#: ui/dialogs.slint:154
-msgctxt "SchemaInputDialog"
-msgid "label_name"
-msgstr "Name"
+# ============================================================================
+# ConfirmDialog context translations
+# ============================================================================
 
-#: ui/dialogs.slint:202
-msgctxt "FileInputDialog"
-msgid "dialog_add_file_title"
-msgstr "Add File"
-
-#: ui/dialogs.slint:306
-msgctxt "FileInputDialog"
-msgid "label_name"
-msgstr "Name"
-
-#: ui/dialogs.slint:239
-msgctxt "RenameArchiveDialog"
-msgid "dialog_rename_archive_title"
-msgstr "Rename Archive Library"
-
-#: ui/dialogs.slint:239
-msgctxt "RenameArchiveDialog"
-msgid "label_name"
-msgstr "Name"
-
-#: ui/dialogs.slint:287
-msgctxt "SchemaItemInputDialog"
-msgid "dialog_add_schema_item_title"
-msgstr "Add Schema Item"
-
-#: ui/dialogs.slint:325
-msgctxt "SchemaItemInputDialog"
-msgid "label_code"
-msgstr "Code"
-
-#: ui/dialogs.slint:355
-msgctxt "SchemaItemInputDialog"
-msgid "label_name"
-msgstr "Name"
-
-#: ui/dialogs.slint:404
 msgctxt "ConfirmDialog"
 msgid "dialog_confirm_title"
 msgstr "Confirm"
 
-#: ui/dialogs.slint:466
-msgctxt "ClassificationInputDialog"
-msgid "dialog_add_classification_title"
-msgstr "Add Classification"
+# ============================================================================
+# CrudList context translations
+# ============================================================================
 
-#: ui/dialogs.slint:498
-msgctxt "ClassificationInputDialog"
-msgid "label_code"
-msgstr "Code"
-
-#: ui/dialogs.slint:504
-msgctxt "ClassificationInputDialog"
-msgid "label_name"
-msgstr "Name"
-
-#. e.g., parent code-name for context
-#: ui/dialogs.slint:531
-msgctxt "ClassificationChildInputDialog"
-msgid "dialog_add_child_classification_title"
-msgstr "Add Child Classification"
-
-#: ui/dialogs.slint:563
-msgctxt "ClassificationChildInputDialog"
-msgid "label_parent"
-msgstr "Parent"
-
-#: ui/dialogs.slint:568
-msgctxt "ClassificationChildInputDialog"
-msgid "label_code"
-msgstr "Code"
-
-#: ui/dialogs.slint:574
-msgctxt "ClassificationChildInputDialog"
-msgid "label_name"
-msgstr "Name"
-
-#: ui/dialogs.slint:600
-msgctxt "AddFondsDialog"
-msgid "dialog_add_fonds_title"
-msgstr "Add Fonds"
-
-#: ui/dialogs.slint:664
-msgctxt "AddFondsDialog"
-msgid "label_fonds_name"
-msgstr "Fonds Name"
-
-#: ui/dialogs.slint:691
-msgctxt "AddFondsDialog"
-msgid "label_primary_classification"
-msgstr "Primary Classification"
-
-#: ui/dialogs.slint:717
-msgctxt "AddFondsDialog"
-msgid "label_secondary_classification"
-msgstr "Secondary Classification"
-
-#: ui/dialogs.slint:746
-msgctxt "AddFondsDialog"
-msgid "label_select_schemas"
-msgstr "Select Schemas"
-
-#: ui/dialogs.slint:770
-msgctxt "AddFondsDialog"
-msgid "label_available_schemas"
-msgstr "Available Schemas"
-
-#: ui/dialogs.slint:853
-msgctxt "AddFondsDialog"
-msgid "label_selected_schemas"
-msgstr "Selected Schemas"
-
-#: ui/layout/navigation.slint:27
-msgctxt "NavigationPanel"
-msgid "nav_fonds"
-msgstr "📁 Fonds"
-
-#: ui/layout/navigation.slint:34
-msgctxt "NavigationPanel"
-msgid "nav_schema"
-msgstr "⚙️ Schema"
-
-#: ui/layout/navigation.slint:41
-msgctxt "NavigationPanel"
-msgid "nav_classification"
-msgstr "🗂 Classification"
-
-#: ui/layout/navigation.slint:48
-msgctxt "NavigationPanel"
-msgid "nav_settings"
-msgstr "🔧 Settings"
-
-#: ui/layout/navigation.slint:55
-msgctxt "NavigationPanel"
-msgid "nav_files"
-msgstr "📂 Files"
-
-#: ui/pages/classification-page.slint:86
-msgctxt "ClassificationPage"
-msgid "label_top_classifications"
-msgstr "Top Classifications"
-
-#: ui/pages/classification-page.slint:152
-#: ui/pages/classification-page.slint:266
-msgctxt "ClassificationPage"
-msgid "menu_delete"
-msgstr "Delete"
-
-#: ui/pages/classification-page.slint:167
-#: ui/pages/classification-page.slint:281
-msgctxt "ClassificationPage"
-msgid "menu_activate"
-msgstr "Activate"
-
-#: ui/pages/classification-page.slint:175
-#: ui/pages/classification-page.slint:289
-msgctxt "ClassificationPage"
-msgid "menu_deactivate"
-msgstr "Deactivate"
-
-#: ui/pages/classification-page.slint:202
-msgctxt "ClassificationPage"
-msgid "label_child_classifications"
-msgstr "Child Classifications"
-
-#: ui/pages/settings-page.slint:151
-msgctxt "SettingsPage"
-msgid "menu_delete"
-msgstr "Delete"
-
-#: ui/pages/files-page.slint:32
-msgctxt "FilesPage"
-msgid "label_series"
-msgstr "Series"
-
-#: ui/pages/files-page.slint:33
-msgctxt "FilesPage"
-msgid "btn_refresh"
-msgstr "Refresh"
-
-#: ui/pages/files-page.slint:66
-msgctxt "FilesPage"
-msgid "label_files"
-msgstr "Files"
-
-#: ui/pages/files-page.slint:67
-msgctxt "FilesPage"
-msgid "btn_add"
-msgstr "Add"
-
-#: ui/pages/files-page.slint:68
-msgctxt "FilesPage"
-msgid "btn_delete"
-msgstr "Delete"
-
-#: ui/pages/files-page.slint:69
-msgctxt "FilesPage"
-msgid "btn_open"
-msgstr "Open"
-
-#: ui/pages/fonds-page.slint:120
-msgctxt "FondsPage"
-msgid "label_files"
-msgstr "Files"
-
-#: ui/pages/fonds-page.slint:154
-msgctxt "FondsPage"
-msgid "label_items"
-msgstr "Items"
-
-#: ui/pages/schema-page.slint:37
-msgctxt "SchemaPage"
-msgid "label_schema"
-msgstr "Schema"
-
-#: ui/pages/schema-page.slint:124 ui/pages/schema-page.slint:246
-msgctxt "SchemaPage"
-msgid "menu_delete"
-msgstr "Delete"
-
-#: ui/pages/schema-page.slint:159
-msgctxt "SchemaPage"
-msgid "label_items"
-msgstr "Items"
-
-#: ui/pages/settings-page.slint:64 ui/pages/settings-page.slint:69
-msgctxt "SettingsPage"
-msgid "label_language"
-msgstr "Language"
-
-#: ui/pages/settings-page.slint:79
-msgctxt "SettingsPage"
-msgid "label_archive_libraries"
-msgstr "Archive Libraries"
-
-#: ui/pages/settings-page.slint:141
-msgctxt "SettingsPage"
+msgctxt "CrudList"
 msgid "menu_rename"
 msgstr "Rename"
 
-#: ui/pages/settings-page.slint:173
-msgctxt "SettingsPage"
-msgid "btn_cancel"
-msgstr "Cancel"
+msgctxt "CrudList"
+msgid "menu_delete"
+msgstr "Delete"
 
-#: ui/pages/settings-page.slint:174
-msgctxt "SettingsPage"
-msgid "btn_apply"
-msgstr "Apply"
+msgctxt "CrudList"
+msgid "menu_activate"
+msgstr "Activate"
 
-#: ui/pages/about-page.slint:7
-msgctxt "AboutPage"
-msgid "about_title"
-msgstr "About FondsPod"
+msgctxt "CrudList"
+msgid "menu_deactivate"
+msgstr "Deactivate"
 
-#: ui/pages/about-page.slint:13
-msgctxt "AboutPage"
-msgid "about_description"
-msgstr "FondsPod is a modern archival management system designed to help organizations efficiently manage and organize their fonds, schemas, and classifications."
-
-#: ui/pages/about-page.slint:18
-msgctxt "AboutPage"
-msgid "about_version"
-msgstr "Version: "
-
-#: ui/pages/about-page.slint:23
-msgctxt "AboutPage"
-msgid "about_author"
-msgstr "Author: "
-
-#: ui/pages/about-page.slint:28
-msgctxt "AboutPage"
-msgid "about_license"
-msgstr "License: "
-
-#: ui/pages/about-page.slint:33
-msgctxt "AboutPage"
-msgid "about_website"
-msgstr "Website: "
-
-#: ui/app-window.slint:53
-msgctxt "AppWindow"
-msgid "language_applied"
-msgstr "Language settings applied"
-
-#: ui/app-window.slint:54
-msgctxt "AppWindow"
-msgid "code_exists"
-msgstr "Classification code '{}' already exists"
-
-#: ui/app-window.slint:55
-msgctxt "AppWindow"
-msgid "create_failed"
-msgstr "Creation failed: {}"
-
-#: ui/app-window.slint:56
-msgctxt "AppWindow"
-msgid "delete_failed"
-msgstr "Deletion failed: {}"
-
-#: ui/app-window.slint:57
-msgctxt "AppWindow"
-msgid "cannot_delete"
-msgstr "Cannot delete '{}', may be in use or protected"
-
-#: ui/app-window.slint:58
-msgctxt "AppWindow"
-msgid "activate_failed"
-msgstr "Failed to activate '{}': {}"
-
-#: ui/app-window.slint:59
-msgctxt "AppWindow"
-msgid "deactivate_failed"
-msgstr "Failed to deactivate '{}': {}"
-
-#: ui/app-window.slint:60
-msgctxt "AppWindow"
-msgid "export_failed"
-msgstr "Export failed: {}"
-
-#: ui/app-window.slint:61
-msgctxt "AppWindow"
-msgid "import_failed"
-msgstr "Import failed: {}"
-
-#: ui/app-window.slint:62
-msgctxt "AppWindow"
-msgid "no_archive_selected"
-msgstr "No archive library selected"
-
-#: ui/app-window.slint:63
-msgctxt "AppWindow"
-msgid "import_success"
-msgstr "Import successful"
-
-#: ui/app-window.slint:64
-msgctxt "AppWindow"
-msgid "export_success"
-msgstr "Export successful"
-
-#: ui/app-window.slint:65
-msgctxt "AppWindow"
-msgid "read_file_failed"
-msgstr "Failed to read file: {}"
-
-#: ui/app-window.slint:66
-msgctxt "AppWindow"
-msgid "confirm_delete"
-msgstr "Confirm Delete"
-
-#: ui/app-window.slint:67
-msgctxt "AppWindow"
-msgid "confirm_delete_classification"
-msgstr "Are you sure you want to delete classification '{}'?"
-
-#: ui/app-window.slint:68
-msgctxt "AppWindow"
-msgid "confirm_delete_selected_classifications"
-msgstr "Are you sure to delete the selected {} classifications?"
-
-#: ui/app-window.slint:69
-msgctxt "AppWindow"
-msgid "confirm_delete_child_classification"
-msgstr "Are you sure you want to delete child classification '{}'?"
-
-#: ui/app-window.slint:70
-msgctxt "AppWindow"
-msgid "confirm_delete_selected_children"
-msgstr "Are you sure to delete the selected {} child classifications?"
-
-#: ui/app-window.slint:71
-msgctxt "AppWindow"
-msgid "confirm_delete_series"
-msgstr "Are you sure you want to delete series '{}'?\n\nThis will delete all files and items under this series."
-
-#: ui/app-window.slint:72
-msgctxt "AppWindow"
-msgid "cannot_delete_series_has_files"
-msgstr "Cannot delete series: series contains files, please delete all files first"
-
-#: ui/crud-list.slint
 msgctxt "CrudList"
 msgid "empty_list"
-msgstr "No data"
+msgstr "Empty List"
 
-#: ui/crud-list.slint
-msgctxt "CrudList"
-msgid "menu_rename"
-msgstr "Rename"
-
-#: ui/crud-list.slint
-msgctxt "CrudList"
-msgid "menu_delete"
-msgstr "Delete"
-
-#: ui/crud-list.slint
-msgctxt "CrudList"
-msgid "menu_activate"
-msgstr "Activate"
-
-#: ui/crud-list.slint
-msgctxt "CrudList"
-msgid "menu_deactivate"
-msgstr "Deactivate"
-
-#: ui/pages/fonds-page.slint
-msgctxt "FondsPage"
-msgid "label_series"
-msgstr "Series"
-
-#: ui/app-window.slint
-msgctxt "AppWindow"
-msgid "tray_show_window"
-msgstr "Show Window"
-
-#: ui/app-window.slint
-msgctxt "AppWindow"
-msgid "tray_quit"
-msgstr "Quit"
-
-#: ui/dialogs.slint:953
-msgctxt "AddItemDialog"
-msgid "add_item"
-msgstr "Add Item"
-
-#: ui/dialogs.slint:988
-msgctxt "AddItemDialog"
-msgid "label_name"
-msgstr "Name"
-
-#: ui/dialogs.slint:1020
-msgctxt "AddItemDialog"
-msgid "label_path"
-msgstr "Path"
-
-#: ui/dialogs.slint:1034
-msgctxt "AddItemDialog"
-msgid "no_file_selected"
-msgstr "No file selected"

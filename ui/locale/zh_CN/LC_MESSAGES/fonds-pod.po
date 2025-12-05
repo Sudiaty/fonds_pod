@@ -1,10 +1,10 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: \n"
-"POT-Creation-Date: 2025-11-27 06:27+0000\n"
-"PO-Revision-Date: 2025-12-03 10:02+0800\n"
-"Last-Translator: \n"
-"Language-Team: \n"
+"Project-Id-Version: FondsPod 1.0\n"
+"POT-Creation-Date: 2025-12-09 12:00+0800\n"
+"PO-Revision-Date: 2025-12-09 12:02+0800\n"
+"Last-Translator: Sudiaty\n"
+"Language-Team: Chinese (Simplified)\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -12,512 +12,239 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 3.8\n"
 
-#. Tooltips for navigation (positioned to the right of nav buttons)
-#: ui/app-window.slint:344
+# ============================================================================
+# Empty context translations (used with @tr("" => "key"))
+# ============================================================================
+
+# Navigation
+msgctxt ""
+msgid "nav_home"
+msgstr "首页"
+
+msgctxt ""
+msgid "nav_fonds"
+msgstr "全宗管理"
+
+msgctxt ""
+msgid "nav_schema"
+msgstr "方案管理"
+
+msgctxt ""
+msgid "nav_classification"
+msgstr "分类管理"
+
+msgctxt ""
+msgid "nav_settings"
+msgstr "系统设置"
+
+msgctxt ""
+msgid "nav_about"
+msgstr "关于"
+
+# Home page
+msgctxt ""
+msgid "home_welcome"
+msgstr "欢迎使用 FondsPod"
+
+msgctxt ""
+msgid "home_description"
+msgstr "您的现代化档案管理系统。选择左侧导航开始管理您的档案资料。"
+
+# About page
+msgctxt ""
+msgid "about_title"
+msgstr "FondsPod 档案管理系统"
+
+msgctxt ""
+msgid "about_description"
+msgstr "FondsPod 是一个现代化的档案管理系统，采用 Rust 和 Slint 构建。它提供了完整的档案分类、方案管理和全宗管理功能，帮助您高效地组织和管理档案资料。"
+
+msgctxt ""
+msgid "about_version"
+msgstr "版本:"
+
+msgctxt ""
+msgid "about_author"
+msgstr "作者:"
+
+msgctxt ""
+msgid "about_license"
+msgstr "许可证:"
+
+msgctxt ""
+msgid "about_website"
+msgstr "项目地址:"
+
+msgctxt ""
+msgid "check_update"
+msgstr "检查更新"
+
+# Common UI messages
+msgctxt ""
+msgid "language_applied"
+msgstr "语言已应用"
+
+msgctxt ""
+msgid "code_exists"
+msgstr "代码已存在"
+
+msgctxt ""
+msgid "create_failed"
+msgstr "创建失败"
+
+msgctxt ""
+msgid "tray_show_window"
+msgstr "显示窗口"
+
+msgctxt ""
+msgid "tray_quit"
+msgstr "退出"
+
+msgctxt ""
+msgid "delete_failed"
+msgstr "删除失败"
+
+msgctxt ""
+msgid "cannot_delete"
+msgstr "无法删除"
+
+msgctxt ""
+msgid "activate_failed"
+msgstr "激活失败"
+
+msgctxt ""
+msgid "deactivate_failed"
+msgstr "停用失败"
+
+msgctxt ""
+msgid "export_failed"
+msgstr "导出失败"
+
+msgctxt ""
+msgid "import_failed"
+msgstr "导入失败"
+
+msgctxt ""
+msgid "no_archive_selected"
+msgstr "未选择档案库"
+
+msgctxt ""
+msgid "import_success"
+msgstr "导入成功"
+
+msgctxt ""
+msgid "export_success"
+msgstr "导出成功"
+
+msgctxt ""
+msgid "read_file_failed"
+msgstr "读取文件失败"
+
+# Settings page
+msgctxt ""
+msgid "label_language"
+msgstr "语言"
+
+msgctxt ""
+msgid "label_archive_libraries"
+msgstr "档案库"
+
+msgctxt ""
+msgid "label_name"
+msgstr "名称"
+
+msgctxt ""
+msgid "label_path"
+msgstr "路径"
+
+msgctxt ""
+msgid "btn_cancel"
+msgstr "取消"
+
+msgctxt ""
+msgid "btn_apply"
+msgstr "应用"
+
+msgctxt ""
+msgid "dialog_add_archive_title"
+msgstr "添加档案库"
+
+msgctxt ""
+msgid "dialog_rename_archive_title"
+msgstr "重命名档案库"
+
+# ============================================================================
+# AppWindow context translations (used with @tr("key") in AppWindow)
+# ============================================================================
+
 msgctxt "AppWindow"
 msgid "nav_fonds"
-msgstr "📁全宗"
+msgstr "全宗管理"
 
-#: ui/app-window.slint:345
 msgctxt "AppWindow"
 msgid "nav_schema"
-msgstr "⚙️ 分类方案"
+msgstr "方案管理"
 
-#: ui/app-window.slint:346
 msgctxt "AppWindow"
 msgid "nav_classification"
-msgstr "🗂 分类体系"
+msgstr "分类管理"
 
-#: ui/app-window.slint:347
 msgctxt "AppWindow"
 msgid "nav_settings"
-msgstr "🔧 设置"
+msgstr "系统设置"
 
-#: ui/app-window.slint:348
 msgctxt "AppWindow"
 msgid "nav_about"
-msgstr "ℹ️ 关于"
+msgstr "关于"
 
-#: ui/app-window.slint:349
-msgctxt "AppWindow"
-msgid "nav_files"
-msgstr "📂 文件"
+# ============================================================================
+# DialogButtons context translations
+# ============================================================================
 
-#: ui/dialogs.slint:61
 msgctxt "DialogButtons"
 msgid "btn_cancel"
 msgstr "取消"
 
-#: ui/dialogs.slint:69
 msgctxt "DialogButtons"
 msgid "btn_confirm"
 msgstr "确定"
 
-#: ui/dialogs.slint:86
-msgctxt "SchemaInputDialog"
-msgid "dialog_add_schema_title"
-msgstr "添加分类方案"
+# ============================================================================
+# FormDialog context translations
+# ============================================================================
 
-#: ui/dialogs.slint:124
-msgctxt "SchemaInputDialog"
-msgid "label_code"
-msgstr "代码"
+msgctxt "FormDialog"
+msgid "btn_browse"
+msgstr "浏览"
 
-#: ui/dialogs.slint:154
-msgctxt "SchemaInputDialog"
-msgid "label_name"
-msgstr "名称"
+# ============================================================================
+# ConfirmDialog context translations
+# ============================================================================
 
-#: ui/dialogs.slint:202
-msgctxt "FileInputDialog"
-msgid "dialog_add_file_title"
-msgstr "添加文件"
-
-#: ui/dialogs.slint:306
-msgctxt "FileInputDialog"
-msgid "label_name"
-msgstr "名称"
-
-#: ui/dialogs.slint:239
-msgctxt "RenameArchiveDialog"
-msgid "label_name"
-msgstr "名称"
-
-#: ui/dialogs.slint:287
-msgctxt "SchemaItemInputDialog"
-msgid "dialog_add_schema_item_title"
-msgstr "添加分类方案项目"
-
-#: ui/dialogs.slint:325
-msgctxt "SchemaItemInputDialog"
-msgid "label_code"
-msgstr "代码"
-
-#: ui/dialogs.slint:355
-msgctxt "SchemaItemInputDialog"
-msgid "label_name"
-msgstr "名称"
-
-#: ui/dialogs.slint:404
 msgctxt "ConfirmDialog"
 msgid "dialog_confirm_title"
 msgstr "确认"
 
-#: ui/dialogs.slint:466
-msgctxt "ClassificationInputDialog"
-msgid "dialog_add_classification_title"
-msgstr "添加分类"
+# ============================================================================
+# CrudList context translations
+# ============================================================================
 
-#: ui/dialogs.slint:498
-msgctxt "ClassificationInputDialog"
-msgid "label_code"
-msgstr "代码"
-
-#: ui/dialogs.slint:504
-msgctxt "ClassificationInputDialog"
-msgid "label_name"
-msgstr "名称"
-
-#. e.g., parent code-name for context
-#: ui/dialogs.slint:531
-msgctxt "ClassificationChildInputDialog"
-msgid "dialog_add_child_classification_title"
-msgstr "添加子分类"
-
-#: ui/dialogs.slint:563
-msgctxt "ClassificationChildInputDialog"
-msgid "label_parent"
-msgstr "父级"
-
-#: ui/dialogs.slint:568
-msgctxt "ClassificationChildInputDialog"
-msgid "label_code"
-msgstr "代码"
-
-#: ui/dialogs.slint:574
-msgctxt "ClassificationChildInputDialog"
-msgid "label_name"
-msgstr "名称"
-
-#: ui/dialogs.slint:600
-msgctxt "AddFondsDialog"
-msgid "dialog_add_fonds_title"
-msgstr "添加全宗"
-
-#: ui/dialogs.slint:664
-msgctxt "AddFondsDialog"
-msgid "label_fonds_name"
-msgstr "全宗名称"
-
-#: ui/dialogs.slint:691
-msgctxt "AddFondsDialog"
-msgid "label_primary_classification"
-msgstr "主要分类"
-
-#: ui/dialogs.slint:717
-msgctxt "AddFondsDialog"
-msgid "label_secondary_classification"
-msgstr "次要分类"
-
-#: ui/dialogs.slint:746
-msgctxt "AddFondsDialog"
-msgid "label_select_schemas"
-msgstr "选择分类方案"
-
-#: ui/dialogs.slint:770
-msgctxt "AddFondsDialog"
-msgid "label_available_schemas"
-msgstr "可用分类方案"
-
-#: ui/dialogs.slint:853
-msgctxt "AddFondsDialog"
-msgid "label_selected_schemas"
-msgstr "已选分类方案"
-
-#: ui/layout/navigation.slint:27
-msgctxt "NavigationPanel"
-msgid "nav_fonds"
-msgstr "全宗"
-
-#: ui/layout/navigation.slint:34
-msgctxt "NavigationPanel"
-msgid "nav_schema"
-msgstr "⚙️ 分类方案"
-
-#: ui/layout/navigation.slint:41
-msgctxt "NavigationPanel"
-msgid "nav_classification"
-msgstr "🗂 分类体系"
-
-#: ui/layout/navigation.slint:48
-msgctxt "NavigationPanel"
-msgid "nav_settings"
-msgstr "🔧 设置"
-
-#: ui/layout/navigation.slint:55
-msgctxt "NavigationPanel"
-msgid "nav_files"
-msgstr "📂 文件"
-
-#: ui/pages/classification-page.slint:86
-msgctxt "ClassificationPage"
-msgid "label_top_classifications"
-msgstr "顶级分类"
-
-#: ui/pages/classification-page.slint:152
-#: ui/pages/classification-page.slint:266
-msgctxt "ClassificationPage"
-msgid "menu_delete"
-msgstr "删除"
-
-#: ui/pages/classification-page.slint:167
-#: ui/pages/classification-page.slint:281
-msgctxt "ClassificationPage"
-msgid "menu_activate"
-msgstr "激活"
-
-#: ui/pages/classification-page.slint:175
-#: ui/pages/classification-page.slint:289
-msgctxt "ClassificationPage"
-msgid "menu_deactivate"
-msgstr "停用"
-
-#: ui/pages/classification-page.slint:202
-msgctxt "ClassificationPage"
-msgid "label_child_classifications"
-msgstr "子分类"
-
-#: ui/pages/files-page.slint:32
-msgctxt "FilesPage"
-msgid "label_series"
-msgstr "案卷"
-
-#: ui/pages/files-page.slint:33
-msgctxt "FilesPage"
-msgid "btn_refresh"
-msgstr "刷新"
-
-#: ui/pages/files-page.slint:66
-msgctxt "FilesPage"
-msgid "label_files"
-msgstr "文件"
-
-#: ui/pages/files-page.slint:67
-msgctxt "FilesPage"
-msgid "btn_add"
-msgstr "添加"
-
-#: ui/pages/files-page.slint:68
-msgctxt "FilesPage"
-msgid "btn_delete"
-msgstr "删除"
-
-#: ui/pages/files-page.slint:69
-msgctxt "FilesPage"
-msgid "btn_open"
-msgstr "打开"
-
-#: ui/pages/fonds-page.slint:120
-msgctxt "FondsPage"
-msgid "label_files"
-msgstr "文件"
-
-#: ui/pages/fonds-page.slint:154
-msgctxt "FondsPage"
-msgid "label_items"
-msgstr "项目"
-
-#: ui/pages/schema-page.slint:37
-msgctxt "SchemaPage"
-msgid "label_schema"
-msgstr "分类方案"
-
-#: ui/pages/schema-page.slint:124 ui/pages/schema-page.slint:246
-msgctxt "SchemaPage"
-msgid "menu_delete"
-msgstr "删除"
-
-#: ui/pages/schema-page.slint:159
-msgctxt "SchemaPage"
-msgid "label_items"
-msgstr "项目"
-
-#: ui/pages/settings-page.slint:64 ui/pages/settings-page.slint:69
-msgctxt "SettingsPage"
-msgid "label_language"
-msgstr "语言"
-
-#: ui/pages/settings-page.slint:79
-msgctxt "SettingsPage"
-msgid "label_archive_libraries"
-msgstr "档案库"
-
-#: ui/pages/settings-page.slint:141
-msgctxt "SettingsPage"
+msgctxt "CrudList"
 msgid "menu_rename"
 msgstr "重命名"
 
-#: ui/pages/settings-page.slint:151
-msgctxt "SettingsPage"
+msgctxt "CrudList"
 msgid "menu_delete"
 msgstr "删除"
 
-#: ui/pages/settings-page.slint:173
-msgctxt "SettingsPage"
-msgid "btn_cancel"
-msgstr "取消"
+msgctxt "CrudList"
+msgid "menu_activate"
+msgstr "激活"
 
-#: ui/pages/settings-page.slint:174
-msgctxt "SettingsPage"
-msgid "btn_apply"
-msgstr "应用"
+msgctxt "CrudList"
+msgid "menu_deactivate"
+msgstr "停用"
 
-#: ui/pages/about-page.slint:7
-msgctxt "AboutPage"
-msgid "about_title"
-msgstr "关于 FondsPod"
-
-#: ui/pages/about-page.slint:13
-msgctxt "AboutPage"
-msgid "about_description"
-msgstr "FondsPod 是一个现代化的档案管理系统，旨在帮助组织高效管理和组织其全宗、分类方案和分类体系。"
-
-#: ui/pages/about-page.slint:18
-msgctxt "AboutPage"
-msgid "about_version"
-msgstr "版本："
-
-#: ui/pages/about-page.slint:23
-msgctxt "AboutPage"
-msgid "about_author"
-msgstr "作者："
-
-#: ui/pages/about-page.slint:28
-msgctxt "AboutPage"
-msgid "about_license"
-msgstr "许可证："
-
-#: ui/pages/about-page.slint:33
-msgctxt "AboutPage"
-msgid "about_website"
-msgstr "网站："
-
-#: ui/app-window.slint:53
-msgctxt "AppWindow"
-msgid "language_applied"
-msgstr "语言设置已应用"
-
-#: ui/app-window.slint:54
-msgctxt "AppWindow"
-msgid "code_exists"
-msgstr "分类代码 '{}' 已存在"
-
-#: ui/app-window.slint:55
-msgctxt "AppWindow"
-msgid "create_failed"
-msgstr "创建失败: {}"
-
-#: ui/app-window.slint:56
-msgctxt "AppWindow"
-msgid "delete_failed"
-msgstr "删除失败: {}"
-
-#: ui/app-window.slint:57
-msgctxt "AppWindow"
-msgid "cannot_delete"
-msgstr "无法删除 '{}'，可能已被使用或受保护"
-
-#: ui/app-window.slint:58
-msgctxt "AppWindow"
-msgid "activate_failed"
-msgstr "激活 '{}' 失败: {}"
-
-#: ui/app-window.slint:59
-msgctxt "AppWindow"
-msgid "deactivate_failed"
-msgstr "停用 '{}' 失败: {}"
-
-#: ui/app-window.slint:60
-msgctxt "AppWindow"
-msgid "export_failed"
-msgstr "导出失败: {}"
-
-#: ui/app-window.slint:61
-msgctxt "AppWindow"
-msgid "import_failed"
-msgstr "导入失败: {}"
-
-#: ui/app-window.slint:62
-msgctxt "AppWindow"
-msgid "no_archive_selected"
-msgstr "未选择档案库"
-
-#: ui/app-window.slint:63
-msgctxt "AppWindow"
-msgid "import_success"
-msgstr "导入成功"
-
-#: ui/app-window.slint:64
-msgctxt "AppWindow"
-msgid "export_success"
-msgstr "导出成功"
-
-#: ui/app-window.slint:65
-msgctxt "AppWindow"
-msgid "read_file_failed"
-msgstr "读取文件失败: {}"
-
-#: ui/app-window.slint:66
-msgctxt "AppWindow"
-msgid "confirm_delete"
-msgstr "确认删除"
-
-#: ui/app-window.slint:67
-msgctxt "AppWindow"
-msgid "confirm_delete_classification"
-msgstr "确定要删除分类 '{}' 吗？"
-
-#: ui/app-window.slint:68
-msgctxt "AppWindow"
-msgid "confirm_delete_selected_classifications"
-msgstr "确定删除选中的 {} 个分类?"
-
-#: ui/app-window.slint:69
-msgctxt "AppWindow"
-msgid "confirm_delete_child_classification"
-msgstr "确定要删除二级分类 '{}' 吗？"
-
-#: ui/app-window.slint:70
-msgctxt "AppWindow"
-msgid "confirm_delete_selected_children"
-msgstr "确定删除选中的 {} 个二级分类?"
-
-#: ui/app-window.slint:71
-msgctxt "AppWindow"
-msgid "confirm_delete_series"
-msgstr "确定要删除系列 \"{}\" 吗？\n\n这将删除该系列下的所有文件和项目。"
-
-#: ui/app-window.slint:72
-msgctxt "AppWindow"
-msgid "cannot_delete_series_has_files"
-msgstr "无法删除系列：系列包含文件，请先删除所有文件"
-
-#: ui/pages/fonds-page.slint
-msgctxt "FondsPage"
-msgid "empty_fonds_list"
-msgstr "暂无全宗，点击 ➕ 添加"
-
-#: ui/pages/fonds-page.slint
-msgctxt "FondsPage"
-msgid "select_series_hint"
-msgstr "请选择一个案卷"
-
-#: ui/pages/fonds-page.slint
-msgctxt "FondsPage"
-msgid "no_files"
-msgstr "暂无文件"
-
-#: ui/pages/fonds-page.slint
-msgctxt "FondsPage"
-msgid "no_items"
-msgstr "暂无件"
-
-#: ui/crud-list.slint
 msgctxt "CrudList"
 msgid "empty_list"
-msgstr "暂无数据"
-
-#: ui/crud-list.slint
-msgctxt "CrudList"
-msgid "menu_rename"
-msgstr "重命名"
-
-#: ui/crud-list.slint
-msgctxt "CrudList"
-msgid "menu_delete"
-msgstr "删除"
-
-#: ui/crud-list.slint
-msgctxt "CrudList"
-msgid "menu_activate"
-msgstr "激活"
-
-#: ui/crud-list.slint
-msgctxt "CrudList"
-msgid "menu_deactivate"
-msgstr "停用"
-
-#: ui/pages/fonds-page.slint
-msgctxt "FondsPage"
-msgid "label_series"
-msgstr "案卷"
-
-#: ui/app-window.slint
-msgctxt "AppWindow"
-msgid "tray_show_window"
-msgstr "显示窗口"
-
-#: ui/app-window.slint
-msgctxt "AppWindow"
-msgid "tray_quit"
-msgstr "退出"
-
-#: ui/dialogs.slint:953
-msgctxt "AddItemDialog"
-msgid "add_item"
-msgstr "添加项目"
-
-#: ui/dialogs.slint:988
-msgctxt "AddItemDialog"
-msgid "label_name"
-msgstr "名称"
-
-#: ui/dialogs.slint:1020
-msgctxt "AddItemDialog"
-msgid "label_path"
-msgstr "路径"
-
-#: ui/dialogs.slint:1034
-msgctxt "AddItemDialog"
-msgid "no_file_selected"
-msgstr "未选择文件"
+msgstr "列表为空"

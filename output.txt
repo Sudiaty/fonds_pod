@@ -1,0 +1,7 @@
+2025-12-08T09:16:03.749Z INFO  [fonds_pod] Starting application version dev
+2025-12-08T09:16:03.752Z INFO  [fonds_pod_lib::services::runtime_translations] Translation system initialized
+2025-12-08T09:16:03.764Z INFO  [fonds_pod_lib::services::runtime_translations] Loaded 27 translations for language: zh_CN
+2025-12-08T09:16:03.767Z INFO  [fonds_pod] Application language set to: zh_CN
+2025-12-08T09:16:06.970Z INFO  [fonds_pod::app] Navigated to page: about
+2025-12-08T09:16:07.538Z INFO  [fonds_pod::app] Navigated to page: settings
+2025-12-08T09:16:11.938Z INFO  [fonds_pod::app] Toast message: Settings cancelled

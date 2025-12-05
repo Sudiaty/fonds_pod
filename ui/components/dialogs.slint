@@ -1,0 +1,307 @@
+import { Button, VerticalBox, HorizontalBox, ComboBox, ScrollView } from "std-widgets.slint";
+import { Theme } from "../theme.slint";
+import { DialogField, DialogFieldType } from "../models.slint";
+
+// ============================================================================
+// Custom Button Component with Theme Colors
+// ============================================================================
+
+export component ThemedButton inherits Rectangle {
+    in property <string> text: "";
+    in property <bool> is_primary: false;
+    in property <bool> enabled: true;
+
+    callback clicked <=> touch.clicked;
+
+    width: 80px;
+    height: 32px;
+    border-radius: 4px;
+    opacity: enabled ? 1.0 : 0.5;
+    background: enabled ? (
+        is_primary ?
+            (touch.has-hover ? Theme.brand_secondary : Theme.brand_primary) :
+            (touch.has-hover ? Theme.bg_elevated : Theme.bg_alt)
+    ) : Theme.bg_alt;
+
+    Text {
+        text: root.text;
+        color: root.enabled ?
+            (is_primary ? Theme.text_on_brand : Theme.brand_primary) :
+            #666;
+        font-size: 13px;
+        font-family: "Microsoft YaHei";
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+
+    touch := TouchArea {
+        enabled: root.enabled;
+    }
+}
+
+// ============================================================================
+// Unified Dialog Buttons Component
+// ============================================================================
+
+export component DialogButtons inherits HorizontalBox {
+    in property <int> current_language: 0;
+    in property <bool> confirm_enabled: true;
+
+    callback confirm();
+    callback cancel();
+
+    spacing: 10px;
+    alignment: center;
+
+    ThemedButton {
+        text: @tr("btn_cancel");
+        is_primary: false;
+        clicked => {
+            root.cancel();
+        }
+    }
+
+    ThemedButton {
+        text: @tr("btn_confirm");
+        is_primary: true;
+        enabled: root.confirm_enabled;
+        clicked => {
+            root.confirm();
+        }
+    }
+}
+
+// ============================================================================
+// Generic Form Dialog Component (Array-based)
+// ============================================================================
+
+export component FormDialog inherits Rectangle {
+    in property <string> title: "";
+    in property <int> current_language: 0;
+    in-out property <[DialogField]> fields: [];
+    
+    callback confirm([DialogField]);
+    callback cancel();
+    callback browse_folder(int); // field index
+
+    // Calculate dialog height based on field count
+    // Base: 140px (title + padding + buttons)
+    // Per field: 60px (spacing + input + label)
+    property <length> dialog_height: 140px + fields.length * 60px;
+
+    // Full-screen modal overlay
+    width: 100%;
+    height: 100%;
+    background: #00000080;
+
+    // Block clicks on background
+    TouchArea {
+        width: 100%;
+        height: 100%;
+        clicked => { /* Block background clicks */ }
+    }
+
+    // Center the dialog
+    Rectangle {
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        width: 500px;
+        height: root.dialog_height;
+        background: Theme.bg_primary;
+        border-radius: 8px;
+        border-width: 1px;
+        border-color: Theme.nav_border;
+        drop-shadow-blur: 20px;
+        drop-shadow-color: #00000040;
+
+        // Prevent clicks from going through
+        TouchArea {
+            width: 100%;
+            height: 100%;
+        }
+
+        focus-scope := FocusScope {
+            width: 100%;
+            height: 100%;
+            enabled: true;
+            
+            // Auto-focus when dialog is shown
+            init => {
+                self.focus();
+            }
+            
+            key-pressed(event) => {
+                if event.text == Key.Escape {
+                    root.cancel();
+                    return EventResult.accept;
+                }
+                if event.text == Key.Return {
+                    root.confirm(root.fields);
+                    return EventResult.accept;
+                }
+                return EventResult.reject;
+            }
+
+            VerticalBox {
+                padding: 20px;
+                spacing: 15px;
+
+                // Title
+                Text {
+                    text: root.title;
+                    font-size: 16px;
+                    font-weight: 600;
+                    font-family: "Microsoft YaHei";
+                    color: Theme.text_primary;
+                }
+
+                // Dynamic fields
+                for field[index] in root.fields: HorizontalBox {
+                    spacing: 8px;
+
+                    Text {
+                        text: field.label;
+                        font-size: 13px;
+                        font-family: "Microsoft YaHei";
+                        width: 45px;
+                        vertical-alignment: center;
+                    }
+
+                    Rectangle {
+                        border-color: Theme.nav_border;
+                        border-width: 1px;
+                        border-radius: 3px;
+                        background: white;
+                        height: 32px;
+                        horizontal-stretch: 1;
+
+                        TextInput {
+                            text: field.value;
+                            font-family: "Microsoft YaHei";
+                            font-size: 13px;
+                            vertical-alignment: center;
+                            width: 100%;
+                            height: 100%;
+                            
+                            edited() => {
+                                root.fields[index].value = self.text;
+                            }
+                            
+                            key-pressed(event) => {
+                                if event.text == Key.Escape {
+                                    root.cancel();
+                                    return EventResult.accept;
+                                }
+                                if event.text == Key.Return {
+                                    root.confirm(root.fields);
+                                    return EventResult.accept;
+                                }
+                                return EventResult.reject;
+                            }
+                        }
+                    }
+
+                    if field.field_type == DialogFieldType.path: ThemedButton {
+                        text: @tr("btn_browse");
+                        width: 80px;
+                        clicked => {
+                            root.browse_folder(index);
+                        }
+                    }
+                }
+
+                // Spacer
+                Rectangle { vertical-stretch: 1; }
+
+                // Buttons
+                DialogButtons {
+                    current_language: root.current_language;
+                    confirm_enabled: true;
+                    confirm => {
+                        root.confirm(root.fields);
+                    }
+                    cancel => {
+                        root.cancel();
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ============================================================================
+// Confirmation Dialog Component
+// ============================================================================
+
+export component ConfirmDialog inherits Window {
+    // Language property (0: Chinese, 1: English)
+    in property <int> current_language: 0;
+    in property <string> message: "";
+
+    title: @tr("dialog_confirm_title");
+    width: 400px;
+    height: 180px;
+    default-font-family: "Microsoft YaHei";
+    default-font-size: 14px;
+
+    callback confirm();
+    callback cancel();
+
+    FocusScope {
+        enabled: true;
+        
+        // Auto-focus when dialog is shown
+        init => {
+            self.focus();
+        }
+        
+        key-pressed(event) => {
+            if event.text == Key.Escape {
+                root.cancel();
+                return EventResult.accept;
+            }
+            if event.text == Key.Return {
+                root.confirm();
+                return EventResult.accept;
+            }
+            return EventResult.reject;
+        }
+
+        VerticalBox {
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-top: 20px;
+            padding-bottom: 30px;
+            spacing: 15px;
+
+            VerticalBox {
+                // Message text
+                Text {
+                    text: root.message;
+                    font-size: 14px;
+                    font-family: "Microsoft YaHei";
+                    color: Theme.text_primary;
+                    wrap: word-wrap;
+                    horizontal-alignment: center;
+                }
+            }
+
+            // Buttons
+            HorizontalBox {
+                spacing: 10px;
+                alignment: center;
+
+                DialogButtons {
+                    current_language: root.current_language;
+                    confirm => {
+                        root.confirm();
+                    }
+                    cancel => {
+                        root.cancel();
+                    }
+                }
+            }
+        }
+    }
+}
+

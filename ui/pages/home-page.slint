@@ -1,0 +1,29 @@
+import { VerticalBox, HorizontalBox } from "std-widgets.slint";
+import { Theme } from "../theme.slint";
+
+export component HomePage inherits Rectangle {
+    background: Theme.bg_primary;
+
+    VerticalBox {
+        width: parent.width;
+        height: parent.height;
+        alignment: center;
+        spacing: 20px;
+
+        Text {
+            text: @tr("home_welcome");
+            font-size: 24px;
+            font-weight: 600;
+            color: Theme.text_primary;
+            horizontal-alignment: center;
+        }
+
+        Text {
+            text: @tr("home_description");
+            font-size: 16px;
+            color: Theme.text_secondary;
+            horizontal-alignment: center;
+            wrap: word-wrap;
+        }
+    }
+}

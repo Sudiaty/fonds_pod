@@ -1,63 +1,60 @@
-import { VerticalBox } from "std-widgets.slint";
-import { SidebarButtonWithTooltip } from "../components.slint";
+﻿import { VerticalBox } from "std-widgets.slint";
+import { SidebarButtonWithTooltip } from "../components/sidebar-button.slint";
 import { Theme, Layout } from "../theme.slint";
-
 export component NavigationPanel inherits Rectangle {
     in-out property <string> current_page: "fonds";
     callback navigate(string);
-
+    out property <bool> home_hovered: btn_home.is_hovered;
     out property <bool> fonds_hovered: btn_fonds.is_hovered;
     out property <bool> schema_hovered: btn_schema.is_hovered;
     out property <bool> classification_hovered: btn_classification.is_hovered;
     out property <bool> settings_hovered: btn_settings.is_hovered;
     out property <bool> about_hovered: btn_about.is_hovered;
-
     width: Layout.nav_width;
     background: Theme.nav_background;
-
     VerticalBox {
         width: parent.width;
         height: parent.height;
         spacing: 0px;
         padding: 0px;
         alignment: start;
-
+        btn_home := SidebarButtonWithTooltip {
+            icon: "🏠";
+            tooltip: @tr("" => "nav_home");
+            is_active: root.current_page == "home";
+            clicked => { root.select_page("home"); }
+        }
         btn_fonds := SidebarButtonWithTooltip {
             icon: "📁";
-            tooltip: @tr("nav_fonds");
+            tooltip: @tr("" => "nav_fonds");
             is_active: root.current_page == "fonds";
             clicked => { root.select_page("fonds"); }
         }
-
         btn_schema := SidebarButtonWithTooltip {
             icon: "⚙️";
-            tooltip: @tr("nav_schema");
+            tooltip: @tr("" => "nav_schema");
             is_active: root.current_page == "schema";
             clicked => { root.select_page("schema"); }
         }
-
         btn_classification := SidebarButtonWithTooltip {
             icon: "🗂";
-            tooltip: @tr("nav_classification");
+            tooltip: @tr("" => "nav_classification");
             is_active: root.current_page == "classification";
             clicked => { root.select_page("classification"); }
         }
-
         btn_settings := SidebarButtonWithTooltip {
             icon: "🔧";
-            tooltip: @tr("nav_settings");
+            tooltip: @tr("" => "nav_settings");
             is_active: root.current_page == "settings";
             clicked => { root.select_page("settings"); }
         }
-
         btn_about := SidebarButtonWithTooltip {
             icon: "ℹ️";
-            tooltip: @tr("nav_about");
+            tooltip: @tr("" => "nav_about");
             is_active: root.current_page == "about";
             clicked => { root.select_page("about"); }
         }
     }
-
     function select_page(page_id: string) {
         if root.current_page != page_id {
             root.current_page = page_id;
@@ -65,4 +62,3 @@ export component NavigationPanel inherits Rectangle {
         root.navigate(page_id);
     }
 }
-

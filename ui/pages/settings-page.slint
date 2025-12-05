@@ -1,91 +1,189 @@
-import {
-    VerticalBox,
-    HorizontalBox,
-    ComboBox,
-    ScrollView,
-    GroupBox,
-} from "std-widgets.slint";
+import { VerticalBox, HorizontalBox, ComboBox, ScrollView, GroupBox, Button } from "std-widgets.slint";
 import { Theme, Layout } from "../theme.slint";
-import { ArchiveLibraryItem, CrudListItem } from "../models.slint";
-import { ThemedButton } from "../dialogs.slint";
-import { CrudList } from "../crud-list.slint";
+import { CrudList } from "../components/crud-list.slint";
+import { CrudListItem, DialogField, DialogFieldType } from "../models.slint";
+import { ThemedButton, FormDialog } from "../components/dialogs.slint";
 
-export component SettingsPage inherits VerticalBox {
-    in property <[ArchiveLibraryItem]> archive_library_items: [];
-    in property <[CrudListItem]> archive_library_crud_items: [];
-    in-out property <int> selected_archive: 0;
-    in-out property <int> selected_language: 0; // 0: Chinese, 1: English
+// ============================================================================
+// Settings Page Component - MVVM Architecture
+// ============================================================================
+export component SettingsPage inherits Rectangle {
+    // Language selection
+    in-out property <int> selected_language: 0;
 
+    // Archive libraries management (using CrudListItem from models)
+    in-out property <[CrudListItem]> archive_libraries: [];
+    in-out property <int> selected_archive: -1;
+    in-out property <[int]> selected-indices: [];  // Multi-selection mask (1 = selected, 0 = not selected)
+
+    // Dialog states
+    in-out property <bool> show_add_archive_dialog: false;
+    in-out property <bool> show_rename_archive_dialog: false;
+    in-out property <[DialogField]> add_archive_fields: [];
+    in-out property <[DialogField]> rename_archive_fields: [];
+
+    // Callbacks
     callback add_archive_library();
     callback remove_archive_library();
+    callback delete_selected_archive_libraries();  // Delete multiple selected archives
     callback rename_archive_library(int, string);
+    callback item_clicked(int, bool, bool);  // index, ctrl, shift - for multi-select
     callback apply_settings();
     callback cancel_settings();
-    alignment: start;
-    padding: Layout.standard_padding;
-    spacing: Layout.standard_spacing;
-    vertical-stretch: 1;
-    GroupBox {
-        title: @tr("label_language");
-        HorizontalBox {
-            padding: Layout.standard_padding;
-            spacing: Layout.standard_spacing;
-            height: Layout.row_height;
-            Text {
-                text: @tr("label_language");
-                width: 120px;
-                vertical-alignment: center;
+    callback browse_folder();
+
+    background: transparent;
+
+    // Main content layout
+    VerticalBox {
+        width: 100%;
+        height: 100%;
+        alignment: start;
+        padding: Layout.standard_padding;
+        spacing: Layout.standard_spacing;
+
+        GroupBox {
+            title: @tr("" => "label_language");
+
+            HorizontalBox {
+                padding: Layout.standard_padding;
+                spacing: Layout.standard_spacing;
+                height: Layout.row_height;
+
+                Text {
+                    text: @tr("" => "label_language");
+                    width: 120px;
+                    vertical-alignment: center;
+                    color: Theme.text_primary;
+                }
+
+                ComboBox {
+                    model: ["中文", "English"];
+                    current-index <=> root.selected_language;
+                    horizontal-stretch: 1;
+                }
+            }
+        }
+
+        GroupBox {
+            height: 400px;
+
+            CrudList {
+                vertical-stretch: 1;
+                title: @tr("" => "label_archive_libraries");
+                items: root.archive_libraries;
+                active-index <=> root.selected_archive;
+                selected-indices: root.selected-indices;
+                show-add-button: true;
+                show-rename-menu: true;
+
+            add-clicked => {
+                root.add_archive_fields = [
+                    { label: @tr("" => "label_name"), field_type: DialogFieldType.text, value: "", placeholder: "" },
+                    { label: @tr("" => "label_path"), field_type: DialogFieldType.path, value: "", placeholder: "" },
+                ];
+                root.show_add_archive_dialog = true;
             }
 
-            ComboBox {
-                model: ["中文 (Chinese)", "English (英文)"];
-                current-index <=> root.selected_language;
-                horizontal-stretch: 1;
+            item-clicked(index, ctrl, shift) => {
+                // Forward to parent callback for Rust backend to handle multi-selection logic
+                root.item_clicked(index, ctrl, shift);
+                // Backend will update selected_archive and selected-indices
+            }
+
+            rename-clicked(index, new_name) => {
+                if index >= 0 && index < root.archive_libraries.length {
+                    root.rename_archive_fields = [
+                        { label: @tr("" => "label_name"), field_type: DialogFieldType.text, value: root.archive_libraries[index].title, placeholder: "" },
+                    ];
+                    root.show_rename_archive_dialog = true;
+                }
+            }
+
+            delete-clicked => {
+                if root.selected_archive >= 0 {
+                    root.remove_archive_library();
+                }
+            }
+
+            delete-selected-clicked => {
+                root.delete_selected_archive_libraries();
+            }
+            }
+        }
+
+        HorizontalBox {
+            alignment: end;
+            spacing: Layout.standard_spacing;
+
+            ThemedButton {
+                text: @tr("" => "btn_cancel");
+                is_primary: false;
+                clicked => {
+                    root.cancel_settings();
+                }
+            }
+
+            ThemedButton {
+                text: @tr("" => "btn_apply");
+                is_primary: true;
+                clicked => {
+                    root.apply_settings();
+                }
             }
         }
     }
 
-    GroupBox {
-        height: 400px;
-        CrudList {
-            vertical-stretch: 1;
-            title: @tr("label_archive_libraries");
-            items: root.archive_library_crud_items;
-            active-index <=> root.selected_archive;
-            show-add-button: true;
-            show-rename-menu: true;
-            add-clicked => {
+    // Add Archive Dialog (Modal Overlay - covers entire page, positioned on top)
+    if root.show_add_archive_dialog : FormDialog {
+        x: 0;
+        y: 0;
+        width: 100%;
+        height: 100%;
+        title: @tr("" => "dialog_add_archive_title");
+        current_language: root.selected_language;
+        fields <=> root.add_archive_fields;
+        
+        confirm(fields) => {
+            if fields.length >= 2 {
+                root.rename_archive_library(root.selected_archive, fields[0].value);
                 root.add_archive_library();
             }
-            item-clicked(index, ctrl, shift) => {
-                root.selected_archive = index;
-            }
-            rename-clicked(index, old_name) => {
-                root.rename_archive_library(index, old_name);
-            }
-            delete-clicked => {
-                root.remove_archive_library();
-            }
+            root.show_add_archive_dialog = false;
+        }
+        
+        cancel() => {
+            root.show_add_archive_dialog = false;
+        }
+        
+        browse_folder(index) => {
+            root.browse_folder();
         }
     }
-
-    HorizontalBox {
-        alignment: end;
-        spacing: Layout.standard_spacing;
-        ThemedButton {
-            text: @tr("btn_cancel");
-            is_primary: false;
-            clicked => {
-                root.cancel_settings();
+    
+    // Rename Archive Dialog (Modal Overlay - covers entire page, positioned on top)
+    if root.show_rename_archive_dialog : FormDialog {
+        x: 0;
+        y: 0;
+        width: 100%;
+        height: 100%;
+        title: @tr("" => "dialog_rename_archive_title");
+        current_language: root.selected_language;
+        fields <=> root.rename_archive_fields;
+        
+        confirm(fields) => {
+            if root.selected_archive >= 0 && fields.length >= 1 {
+                root.rename_archive_library(root.selected_archive, fields[0].value);
             }
+            root.show_rename_archive_dialog = false;
         }
-
-        ThemedButton {
-            text: @tr("btn_apply");
-            is_primary: true;
-            clicked => {
-                root.apply_settings();
-            }
+        
+        cancel() => {
+            root.show_rename_archive_dialog = false;
+        }
+        
+        browse_folder(index) => {
+            // Not used for rename dialog
         }
     }
 }

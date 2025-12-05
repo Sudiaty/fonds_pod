@@ -1,61 +1,11 @@
+// ============================================================================
+// UI Data Models for FondsPod
+// ============================================================================
+
+// Archive library item
 export struct ArchiveLibraryItem {
     name: string,
     path: string,
-}
-
-export struct SchemaItem {
-    code: string,
-    name: string,
-}
-
-export struct SchemaItemDetail {
-    code: string,
-    name: string,
-}
-
-export struct ClassificationItem {
-    code: string,
-    name: string,
-    is_active: bool,
-}
-
-export struct FondsItem {
-    fond_no: string,
-    name: string,
-    classification_code: string,
-    created_at: string,
-    path: string,
-}
-
-// File item for file list
-export struct FileItem {
-    file_no: string,
-    name: string,
-    path: string,
-}
-
-// Series item for tree view
-export struct SeriesItem {
-    series_no: string,
-    name: string,
-    fond_no: string,
-}
-
-// Item for item list
-export struct ItemItem {
-    item_no: string,
-    name: string,
-    path: string,
-}
-
-// Tree node for fonds-series tree view
-export struct FondsTreeNode {
-    fond_no: string,
-    fond_name: string,
-    classification_code: string,
-    created_at: string,
-    is_expanded: bool,
-    series_count: int,
 }
 
 // ============================================================================
@@ -88,4 +38,23 @@ export struct ContextMenuItem {
     icon: string,
     is_danger: bool,
     show_separator_before: bool,
+}
+
+// ============================================================================
+// Dialog Field Configuration
+// ============================================================================
+
+// Dialog field types
+export enum DialogFieldType {
+    text,
+    path,
+    select,
+}
+
+// Dialog field definition
+export struct DialogField {
+    label: string,
+    field_type: DialogFieldType,
+    value: string,
+    placeholder: string,
 }

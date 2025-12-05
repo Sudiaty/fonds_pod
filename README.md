@@ -39,19 +39,7 @@ FondsPod is an open-source document management tool based on archival management
 
 ## Architecture
 
-FondsPod uses a layered architecture with the following layers:
-
-- **Presentation Layer**: Handles UI events and callbacks.
-- **Application Layer**: Coordinates business logic.
-- **Domain Layer**: Defines core business rules and abstractions.
-- **Infrastructure Layer**: Manages database and external dependencies.
-
-### Layer Responsibilities
-
-1. **Presentation Layer**: Handles UI events and updates UI state.
-2. **Application Layer**: Orchestrates business logic and validates rules.
-3. **Domain Layer**: Defines core entities and business rules.
-4. **Infrastructure Layer**: Implements repositories and manages external dependencies.
+FondsPod uses MVVM architecture
 
 ## Development Plan
 

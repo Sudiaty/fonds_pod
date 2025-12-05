@@ -1,45 +1,11 @@
 import { HorizontalBox } from "std-widgets.slint";
 import { Theme, Layout } from "theme.slint";
-import { SchemaInputDialog, RenameArchiveDialog, SchemaItemInputDialog, ClassificationInputDialog, ClassificationChildInputDialog, ConfirmDialog, AddFondsDialog, FileInputDialog, AddItemDialog, FondsSchemaOption } from "dialogs.slint";
 import { NavigationPanel } from "layout/navigation.slint";
-
-export { SchemaInputDialog, RenameArchiveDialog, SchemaItemInputDialog, ClassificationInputDialog, ClassificationChildInputDialog, ConfirmDialog, AddFondsDialog, FileInputDialog, AddItemDialog, FondsItem, FondsTreeNode, SeriesItem, FileItem, ItemItem, CrudListItem, CrudListRowStyle }
-import { FondsPage } from "pages/fonds-page.slint";
-import { SchemaPage } from "pages/schema-page.slint";
-import { ClassificationPage } from "pages/classification-page.slint";
-import { SettingsPage } from "pages/settings-page.slint";
+import { TooltipLayer } from "components/tooltip.slint";
 import { AboutPage } from "pages/about-page.slint";
-import { ArchiveLibraryItem, SchemaItem, SchemaItemDetail, ClassificationItem, FondsItem, FondsTreeNode, SeriesItem, FileItem, ItemItem, CrudListItem, CrudListRowStyle } from "models.slint";
-
-component TooltipLayer inherits Rectangle {
-    in property <bool> is_hovered: false;
-    in property <length> offset_y: 0px;
-    in property <length> offset_x: 55px;
-    in property <string> text: "";
-    in property <length> tooltip_width: 100px;
-
-    x: offset_x;
-    y: offset_y;
-    width: tooltip_width;
-    height: 32px;
-    visible: is_hovered;
-    background: #333;
-    border-radius: 4px;
-    border-width: 1px;
-    border-color: #555;
-
-    Text {
-        x: 0px;
-        y: 0px;
-        width: 100%;
-        height: 100%;
-        text: root.text;
-        font-size: 12px;
-        color: white;
-        horizontal-alignment: center;
-        vertical-alignment: center;
-    }
-}
+import { SettingsPage } from "pages/settings-page.slint";
+import { HomePage } from "pages/home-page.slint";
+import { CrudListItem, DialogField, DialogFieldType } from "models.slint";
 
 export component AppWindow inherits Window {
     title: "FondsPod";
@@ -50,256 +16,61 @@ export component AppWindow inherits Window {
     default-font-family: "Microsoft YaHei";
     default-font-size: 14px;
     
-    // Translation properties
-    out property <string> language_applied: @tr("language_applied");
-    out property <string> code_exists: @tr("code_exists");
-    out property <string> create_failed: @tr("create_failed");
-    out property <string> tray_show_window: @tr("tray_show_window");
-    out property <string> tray_quit: @tr("tray_quit");
-    out property <string> delete_failed: @tr("delete_failed");
-    out property <string> cannot_delete: @tr("cannot_delete");
-    out property <string> activate_failed: @tr("activate_failed");
-    out property <string> deactivate_failed: @tr("deactivate_failed");
-    out property <string> export_failed: @tr("export_failed");
-    out property <string> import_failed: @tr("import_failed");
-    out property <string> no_archive_selected: @tr("no_archive_selected");
-    out property <string> import_success: @tr("import_success");
-    out property <string> export_success: @tr("export_success");
-    out property <string> read_file_failed: @tr("read_file_failed");
-    out property <string> confirm_delete: @tr("confirm_delete");
-    out property <string> confirm_delete_classification: @tr("confirm_delete_classification");
-    out property <string> confirm_delete_selected_classifications: @tr("confirm_delete_selected_classifications");
-    out property <string> confirm_delete_child_classification: @tr("confirm_delete_child_classification");
-    out property <string> confirm_delete_selected_children: @tr("confirm_delete_selected_children");
-    out property <string> confirm_delete_series: @tr("confirm_delete_series");
-    out property <string> cannot_delete_series_has_files: @tr("cannot_delete_series_has_files");
+    // Translation properties for common UI messages using gettext
+    out property <string> language_applied: @tr("" => "language_applied");
+    out property <string> code_exists: @tr("" => "code_exists");
+    out property <string> create_failed: @tr("" => "create_failed");
+    out property <string> tray_show_window: @tr("" => "tray_show_window");
+    out property <string> tray_quit: @tr("" => "tray_quit");
+    out property <string> delete_failed: @tr("" => "delete_failed");
+    out property <string> cannot_delete: @tr("" => "cannot_delete");
+    out property <string> activate_failed: @tr("" => "activate_failed");
+    out property <string> deactivate_failed: @tr("" => "deactivate_failed");
+    out property <string> export_failed: @tr("" => "export_failed");
+    out property <string> import_failed: @tr("" => "import_failed");
+    out property <string> no_archive_selected: @tr("" => "no_archive_selected");
+    out property <string> import_success: @tr("" => "import_success");
+    out property <string> export_success: @tr("" => "export_success");
+    out property <string> read_file_failed: @tr("" => "read_file_failed");
     
     // Application version
-    in property <string> app_version;
+    in property <string> app_version: "1.0.0";
     
-    property <string> current_page: "fonds";
-    property <[string]> fonds_list: ["2020-HR", "2020-IT", "2021-HR", "2021-IT"];
-    in-out property <int> selected_fonds: 0;
-    changed selected_fonds => { fonds_selected(selected_fonds); }
-    in-out property <[FondsItem]> fonds_items: [];
-    // Series list properties
-    in-out property <[SeriesItem]> series_list: [];
-    in-out property <[CrudListItem]> series_list_items: [];  // CrudList format for series
-    in-out property <int> selected_series_index: -1;
-    in-out property <string> selected_series_no: "";
-    in-out property <[string]> fonds_names: [];
-    property <[string]> schema_list: ["Year", "Department", "Category"];
-    in-out property <[SchemaItem]> schema_items: [];
-    in-out property <[CrudListItem]> schema_list_items: [];  // CrudList format for schemas
-    in-out property <[string]> item_list: [];
-    in-out property <[ItemItem]> file_item_list: [];
-    in-out property <[CrudListItem]> items_list_items: [];  // CrudList format for items
-    in-out property <[SchemaItemDetail]> item_details: [];
-    in-out property <[CrudListItem]> detail_list_items: [];  // CrudList format for schema items
-    in-out property <int> selected_schema: 0;
-    in-out property <[int]> selected_schemas: [];
-    in-out property <int> selected_item: 0;
-    in-out property <[int]> selected_items: [];
-    in-out property <string> open_file_path: "";
-    in-out property <string> open_item_path: "";
-    property <[string]> series: ["2020-HR", "2020-IT", "2021-HR", "2021-IT"];
-    in-out property <[FileItem]> files: [];
-    in-out property <[CrudListItem]> files_list_items: [];  // CrudList format for files
-    property <int> selected_series: 0;
-    in-out property <int> selected_file: 0;
-    in-out property <[int]> selected_files: [];
-    in-out property <[string]> archive_libraries: ["Default Archive"];
-    in-out property <[ArchiveLibraryItem]> archive_library_items: [];
-    in-out property <[CrudListItem]> archive_library_crud_items: [];
-    in-out property <int> selected_archive: 0;
-    changed selected_archive => { archive_selected(selected_archive); }
+    // Current page state
+    property <string> current_page: "home";
+    
+    // Settings page properties
     in-out property <int> selected_language: 0;
-    // Classification management properties
-    in-out property <[ClassificationItem]> classification_items: []; // reuse struct: code/name
-    in-out property <[ClassificationItem]> classification_children: [];
-    in-out property <[CrudListItem]> classification_crud_items: []; // CrudList format for top classifications
-    in-out property <[CrudListItem]> child_crud_items: []; // CrudList format for child classifications
-    in-out property <[CrudListRowStyle]> classification_row_styles: []; // Row styles for top classifications
-    in-out property <[CrudListRowStyle]> child_row_styles: []; // Row styles for child classifications
-    in-out property <int> selected_classification: 0;
-    in-out property <[int]> selected_classifications: [];
-    in-out property <int> selected_child: 0;
-    in-out property <[int]> selected_children: [];
-    // Add fonds dialog properties
-    in-out property <bool> show_add_fonds_dialog: false;
-    in-out property <string> add_fonds_name_input: "";
-    in-out property <[string]> add_fonds_primary_categories: ["行政管理类", "业务管理类", "综合类"];
-    in-out property <[[string]]> add_fonds_secondary_categories: [
-        ["人事管理", "综合治理", "后勤保障"],
-        ["财务会计", "审计监督", "业务指导"],
-        ["项目管理", "成果汇编"]
-    ];
-    in-out property <int> add_fonds_primary_index: 0;
-    in-out property <int> add_fonds_secondary_index: 0;
-    in-out property <[FondsSchemaOption]> add_fonds_available_schemas: [
-        { code: "YEAR", name: "年度" },
-        { code: "DEPT", name: "部门" },
-        { code: "TYPE", name: "类别" },
-        { code: "MEDIA", name: "载体" },
-        { code: "LEVEL", name: "密级" },
-        { code: "RETENTION", name: "保管期限" }
-    ];
-    in-out property <[FondsSchemaOption]> add_fonds_selected_schemas: [
-        { code: "SERIES", name: "系列" }
-    ];
-    in-out property <int> add_fonds_highlight_available: -1;
-    in-out property <int> add_fonds_highlight_selected: -1;
+    in-out property <[CrudListItem]> archive_libraries: [];
+    in-out property <int> selected_archive: -1;
+    in-out property <[int]> selected_indices: [];  // Multi-selection mask for archive libraries
+    in-out property <bool> show_add_archive_dialog: false;
+    in-out property <bool> show_rename_archive_dialog: false;
+    in-out property <[DialogField]> add_archive_fields: [];
+    in-out property <[DialogField]> rename_archive_fields: [];
     
     // Toast notification properties
     in-out property <string> toast_message: "";
     in-out property <bool> toast_visible: false;
     
-    // Callbacks
+    // Main navigation callback
+    callback page_changed(string);
+    callback set_selected_path(string);
     callback show_toast(string);
     callback check_update();
-    callback add_fonds();
-    callback page_changed(string);
-    callback archive_selected(int);
-    callback delete_fonds();
-    callback open_fonds(string);
-    callback open_add_fonds_dialog();
-    callback toggle_fonds_expand(int);
-    callback select_fonds(int, string);
-    callback select_series(int, string);
-    callback file_selected(int);
-    callback fonds_selected(int);
-    callback add_schema();
-    callback delete_schema();
-    callback delete_selected_schemas();
-    callback schema_item_clicked(int, bool, bool);
-    callback schema_activated(int);  // Called when schema is activated (single click without modifiers)
-    callback add_schema_item();
-    callback delete_schema_item();
-    callback delete_selected_items();
-    callback schema_item_item_clicked(int, bool, bool);
-    callback schema_item_activated(int);  // Called when schema item is activated
-    callback schema_selected(int);
-    callback load_schemas([string]);
-    callback load_schema_items([string]);
-    callback get_current_schema_index() -> int;
-    callback get_current_item_index() -> int;
-    callback get_current_schema_name() -> string;
-    callback get_current_item_name() -> string;
-    // Classification callbacks
-    callback add_classification();
-    callback delete_classification();
-    callback delete_selected_classifications();
-    callback classification_item_clicked(int, bool, bool);
-    callback classification_selected(int);
-    callback add_child_classification();
-    callback delete_child_classification();
-    callback delete_selected_children();
-    callback child_classification_clicked(int, bool, bool);
-    callback load_classifications([string]);
-    callback load_classification_children([string]);
-    callback get_current_classification_index() -> int;
-    callback get_current_child_index() -> int;
-    callback get_current_classification_name() -> string;
-    callback get_current_child_name() -> string;
-    callback activate_classification();
-    callback deactivate_classification();
-    callback activate_child_classification();
-    callback deactivate_child_classification();
-    callback export_classifications();
-    callback import_classifications();
-    
-    load_schemas(schemas) => {
-        root.schema_list = schemas;
-        root.selected_schema = 0;
-    }
-    load_schema_items(items) => {
-        root.item_list = items;
-        root.selected_item = 0;
-    }
-    get_current_schema_index => {
-        return root.selected_schema;
-    }
-    get_current_item_index => {
-        return root.selected_item;
-    }
-    get_current_schema_name => {
-        if root.selected_schema >= 0 && root.selected_schema < root.schema_list.length {
-            return root.schema_list[root.selected_schema];
-        }
-        return "";
-    }
-    get_current_item_name => {
-        if root.selected_item >= 0 && root.selected_item < root.item_list.length {
-            return root.item_list[root.selected_item];
-        }
-        return "";
-    }
-    // Classification helper invocations
-    load_classifications(classifications) => {
-        // Backward compatibility string list not used yet
-        // Set structured model externally via set_classification_items
-        root.selected_classification = 0;
-    }
-    load_classification_children(children) => {
-        root.selected_child = 0;
-    }
-    get_current_classification_index => { return root.selected_classification; }
-    get_current_child_index => { return root.selected_child; }
-    get_current_classification_name => {
-        if root.selected_classification >= 0 && root.selected_classification < root.classification_items.length {
-            return root.classification_items[root.selected_classification].name;
-        }
-        return "";
-    }
-    get_current_child_name => {
-        if root.selected_child >= 0 && root.selected_child < root.classification_children.length {
-            return root.classification_children[root.selected_child].name;
-        }
-        return "";
-    }
-    callback add_file();
-    callback delete_file();
-    callback delete_selected_files();
-    callback rename_file(int, string);
-    callback file_clicked(int, bool, bool);
-    callback file_activated(int);
-    callback open_file_at(int);
-    callback add_item();
-    callback delete_item();
-    callback rename_item(int, string);
-    callback item_clicked(int, bool, bool);
-    callback item_activated(int);
-    callback open_file();
-    callback open_item();
-    callback open_item_at(int);
-    callback series_activated(int);
-    callback rebuild_series();
-    callback delete_series();
-    callback update_series();
     callback add_archive_library();
     callback remove_archive_library();
+    callback delete_selected_archive_libraries();  // Delete multiple selected archives
     callback rename_archive_library(int, string);
+    callback item_clicked(int, bool, bool);  // index, ctrl, shift - for multi-select
     callback apply_settings();
     callback cancel_settings();
+    callback browse_folder();
     
-    // Helper functions for accessing global Translations
-    public function reset_add_fonds_dialog_state() {
-        root.add_fonds_name_input = "";
-        root.add_fonds_primary_index = 0;
-        root.add_fonds_secondary_index = 0;
-        root.add_fonds_highlight_available = -1;
-        root.add_fonds_highlight_selected = -1;
-        root.add_fonds_available_schemas = [
-            { code: "YEAR", name: "年度" },
-            { code: "DEPT", name: "部门" },
-            { code: "TYPE", name: "类别" },
-            { code: "MEDIA", name: "载体" },
-            { code: "LEVEL", name: "密级" },
-            { code: "RETENTION", name: "保管期限" }
-        ];
-        root.add_fonds_selected_schemas = [
-            { code: "SERIES", name: "系列" }
-        ];
+    show_toast(message) => {
+        root.toast_message = message;
+        root.toast_visible = true;
+        // Toast will be managed by external logic
     }
     
     HorizontalBox {
@@ -327,133 +98,96 @@ export component AppWindow inherits Window {
             height: 100%;
             background: Theme.bg_primary;
 
-            if root.current_page == "fonds" : FondsPage {
+            // Main content area
+            Rectangle {
                 width: parent.width;
                 height: parent.height;
-                archive_libraries <=> root.archive_libraries;
-                selected_archive <=> root.selected_archive;
-                fonds_names <=> root.fonds_names;
-                selected_fonds <=> root.selected_fonds;
-                series_list <=> root.series_list;
-                series_list_items <=> root.series_list_items;
-                selected_series_index <=> root.selected_series_index;
-                selected_series_no <=> root.selected_series_no;
-                files <=> root.files;
-                files_list_items <=> root.files_list_items;
-                selected_file <=> root.selected_file;
-                selected_files <=> root.selected_files;
-                item_list <=> root.file_item_list;
-                items_list_items <=> root.items_list_items;
-                selected_item <=> root.selected_item;
-                selected_items <=> root.selected_items;
-                open_file_path <=> root.open_file_path;
-                open_item_path <=> root.open_item_path;
-                add_file => { root.add_file(); }
-                delete_file => { root.delete_file(); }
-                delete_selected_files => { root.delete_selected_files(); }
-                rename_file(index, old_name) => { root.rename_file(index, old_name); }
-                file_clicked(index, ctrl, shift) => { root.file_clicked(index, ctrl, shift); }
-                file_activated(index) => { root.file_activated(index); }
-                add_item => { root.add_item(); }
-                delete_item => { root.delete_item(); }
-                delete_selected_items => { root.delete_selected_items(); }
-                rename_item(index, old_name) => { root.rename_item(index, old_name); }
-                open_file => { root.open_file(); }
-                open_file_at(index) => { root.open_file_at(index); }
-                open_item => { root.open_item(); }
-                open_item_at(index) => { root.open_item_at(index); }
-                item_clicked(index, ctrl, shift) => { root.item_clicked(index, ctrl, shift); }
-                item_activated(index) => { root.item_activated(index); }
-                series_activated(index) => { root.series_activated(index); }
-                rebuild_series => { root.rebuild_series(); }
-                delete_series => { root.delete_series(); }
-                request_add_fonds_dialog => { root.open_add_fonds_dialog(); }
-                archive_selected(index) => { root.archive_selected(index); }
-                select_series(index, series_no) => { root.select_series(index, series_no); }
-                file_selected(index) => { root.file_selected(index); }
-            }
-
-            if root.current_page == "schema" : SchemaPage {
-                width: parent.width;
-                height: parent.height;
-                schema_items <=> root.schema_items;
-                schema_list_items <=> root.schema_list_items;
-                selected_schema <=> root.selected_schema;
-                selected_schemas <=> root.selected_schemas;
-                item_details <=> root.item_details;
-                detail_list_items <=> root.detail_list_items;
-                selected_item <=> root.selected_item;
-                selected_items <=> root.selected_items;
-                add_schema => { root.add_schema(); }
-                delete_schema => { root.delete_schema(); }
-                delete_selected_schemas => { root.delete_selected_schemas(); }
-                schema_item_clicked(index, ctrl, shift) => { root.schema_item_clicked(index, ctrl, shift); }
-                schema_activated(index) => { root.schema_activated(index); }
-                add_schema_item => { root.add_schema_item(); }
-                delete_schema_item => { root.delete_schema_item(); }
-                delete_selected_items => { root.delete_selected_items(); }
-                schema_item_item_clicked(index, ctrl, shift) => { root.schema_item_item_clicked(index, ctrl, shift); }
-                schema_item_activated(index) => { root.schema_item_activated(index); }
-            }
-
-            if root.current_page == "classification" : ClassificationPage {
-                width: parent.width;
-                height: parent.height;
-                classification_items <=> root.classification_items;
-                classification_crud_items <=> root.classification_crud_items;
-                classification_row_styles <=> root.classification_row_styles;
-                selected_classification <=> root.selected_classification;
-                selected_classifications <=> root.selected_classifications;
-                classification_children <=> root.classification_children;
-                child_crud_items <=> root.child_crud_items;
-                child_row_styles <=> root.child_row_styles;
-                selected_child <=> root.selected_child;
-                selected_children <=> root.selected_children;
-                add_classification => { root.add_classification(); }
-                delete_classification => { root.delete_classification(); }
-                delete_selected_classifications => { root.delete_selected_classifications(); }
-                classification_item_clicked(index, ctrl, shift) => { root.classification_item_clicked(index, ctrl, shift); }
-                activate_classification => { root.activate_classification(); }
-                deactivate_classification => { root.deactivate_classification(); }
-                export_classifications => { root.export_classifications(); }
-                import_classifications => { root.import_classifications(); }
-                add_child_classification => { root.add_child_classification(); }
-                delete_child_classification => { root.delete_child_classification(); }
-                delete_selected_children => { root.delete_selected_children(); }
-                child_classification_clicked(index, ctrl, shift) => { root.child_classification_clicked(index, ctrl, shift); }
-                activate_child_classification => { root.activate_child_classification(); }
-                deactivate_child_classification => { root.deactivate_child_classification(); }
-            }
-
-            if root.current_page == "settings" : SettingsPage {
-                width: parent.width;
-                height: parent.height;
-                archive_library_items <=> root.archive_library_items;
-                archive_library_crud_items <=> root.archive_library_crud_items;
-                selected_archive <=> root.selected_archive;
-                selected_language <=> root.selected_language;
-                add_archive_library => { root.add_archive_library(); }
-                remove_archive_library => { root.remove_archive_library(); }
-                rename_archive_library(index, name) => { root.rename_archive_library(index, name); }
-                apply_settings => { root.apply_settings(); }
-                cancel_settings => { root.cancel_settings(); }
-            }
-
-            if root.current_page == "about" : AboutPage {
-                width: parent.width;
-                height: parent.height;
-                app_version: root.app_version;
-                check_update => { root.check_update(); }
+                background: transparent;
+                
+                if root.current_page == "home" : HomePage {
+                    width: parent.width;
+                    height: parent.height;
+                }
+                
+                if root.current_page == "about" : AboutPage {
+                    width: parent.width;
+                    height: parent.height;
+                    app_version: root.app_version;
+                    check_update => { root.check_update(); }
+                }
+                
+                if root.current_page == "settings" : SettingsPage {
+                    width: parent.width;
+                    height: parent.height;
+                    selected_language <=> root.selected_language;
+                    archive_libraries <=> root.archive_libraries;
+                    selected_archive <=> root.selected_archive;
+                    selected-indices <=> root.selected_indices;
+                    show_add_archive_dialog <=> root.show_add_archive_dialog;
+                    show_rename_archive_dialog <=> root.show_rename_archive_dialog;
+                    add_archive_fields <=> root.add_archive_fields;
+                    rename_archive_fields <=> root.rename_archive_fields;
+                    add_archive_library => { root.add_archive_library(); }
+                    remove_archive_library => { root.remove_archive_library(); }
+                    delete_selected_archive_libraries => { root.delete_selected_archive_libraries(); }
+                    rename_archive_library(index, name) => { root.rename_archive_library(index, name); }
+                    item_clicked(index, ctrl, shift) => { root.item_clicked(index, ctrl, shift); }
+                    apply_settings => { root.apply_settings(); }
+                    cancel_settings => { root.cancel_settings(); }
+                    browse_folder => { root.browse_folder(); }
+                }
+                
+                if root.current_page != "about" && root.current_page != "settings" && root.current_page != "home" : Text {
+                    x: parent.width / 2 - self.width / 2;
+                    y: parent.height / 2 - self.height / 2;
+                    text: "Current Page: " + root.current_page;
+                    font-size: 18px;
+                    color: Theme.text_secondary;
+                }
             }
         }
     }
     
-    // Tooltips for navigation (positioned to the right of nav buttons)
-    TooltipLayer { is_hovered: nav_panel.fonds_hovered; offset_y: 9px; offset_x: 65px; text: @tr("nav_fonds"); }
-    TooltipLayer { is_hovered: nav_panel.schema_hovered; offset_y: 59px; offset_x: 65px; text: @tr("nav_schema"); }
-    TooltipLayer { is_hovered: nav_panel.classification_hovered; offset_y: 109px; offset_x: 65px; tooltip_width: 120px; text: @tr("nav_classification"); }
-    TooltipLayer { is_hovered: nav_panel.settings_hovered; offset_y: 159px; offset_x: 65px; text: @tr("nav_settings"); }
-    TooltipLayer { is_hovered: nav_panel.about_hovered; offset_y: 209px; offset_x: 65px; text: @tr("nav_about"); }
+    // Navigation tooltips (positioned to the right of nav buttons)
+    TooltipLayer { 
+        is_hovered: nav_panel.home_hovered; 
+        offset_y: 9px; 
+        offset_x: 65px; 
+        text: @tr("nav_home"); 
+    }
+    TooltipLayer { 
+        is_hovered: nav_panel.fonds_hovered; 
+        offset_y: 59px; 
+        offset_x: 65px; 
+        text: @tr("nav_fonds"); 
+    }
+    TooltipLayer { 
+        is_hovered: nav_panel.schema_hovered; 
+        offset_y: 109px; 
+        offset_x: 65px; 
+        text: @tr("nav_schema"); 
+    }
+    TooltipLayer { 
+        is_hovered: nav_panel.classification_hovered; 
+        offset_y: 159px; 
+        offset_x: 65px; 
+        tooltip_width: 120px; 
+        text: @tr("nav_classification"); 
+    }
+    TooltipLayer { 
+        is_hovered: nav_panel.settings_hovered; 
+        offset_y: 209px; 
+        offset_x: 65px; 
+        text: @tr("nav_settings"); 
+    }
+    TooltipLayer { 
+        is_hovered: nav_panel.about_hovered; 
+        offset_y: 259px; 
+        offset_x: 65px; 
+        text: @tr("nav_about"); 
+    }
+    
+    // Toast notification overlay
     if root.toast_visible : Rectangle {
         x: parent.width / 2 - self.width / 2;
         y: parent.height - 100px;
@@ -479,26 +213,6 @@ export component AppWindow inherits Window {
         // Auto-hide animation
         animate opacity {
             duration: 300ms;
-        }
-    }
-    
-    if root.show_add_fonds_dialog : AddFondsDialog {
-        current_language: 0;
-        fonds_name_input <=> root.add_fonds_name_input;
-        primary_classifications <=> root.add_fonds_primary_categories;
-        secondary_classifications <=> root.add_fonds_secondary_categories;
-        selected_primary_classification <=> root.add_fonds_primary_index;
-        selected_secondary_classification <=> root.add_fonds_secondary_index;
-        available_schema_items <=> root.add_fonds_available_schemas;
-        chosen_schema_items <=> root.add_fonds_selected_schemas;
-        highlighted_available_schema <=> root.add_fonds_highlight_available;
-        highlighted_chosen_schema <=> root.add_fonds_highlight_selected;
-        cancel => {
-            root.show_add_fonds_dialog = false;
-        }
-        confirm => {
-            root.show_add_fonds_dialog = false;
-            root.add_fonds();
         }
     }
 }
