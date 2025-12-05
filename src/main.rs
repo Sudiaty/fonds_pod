@@ -1,45 +1,32 @@
 // Prevent console window in addition to Slint window in Windows release builds when, e.g., starting the app via file manager. Ignored on other platforms.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+extern crate fonds_pod_lib;
+mod app;
+
+use std::error::Error;
 
 // 从环境变量读取版本号（由GitHub Actions注入）
 pub const APP_VERSION: &str = env!("APP_VERSION");
 
 slint::include_modules!();
 
-// New layered architecture
-mod domain;
-mod infrastructure;
-mod services;
-mod presentation;
-mod app_init;
-mod ui_callbacks;
-mod tray_init;
-
-use std::error::Error;
-use std::rc::Rc;
-use app_init::initialize_app;
-use ui_callbacks::setup_ui_callbacks;
-use tray_init::initialize_tray;
-use presentation::FondsHandler;
-use services::FileService;
-
 fn main() -> Result<(), Box<dyn Error>> {
-    // Initialize application (UI + services + handlers)
-    let (ui, archive_service, _handlers) = initialize_app()?;
+    // 初始化日志记录
+    simple_logger::init_with_level(log::Level::Info)?;
+
+    log::info!("Starting application version {}", APP_VERSION);
+
+    // 1. 启动Slint应用程序
+    let main_window = MainWindow::new()?;
+
+    // 2. 初始化应用程序协调器
+    let app_coordinator = app::App::initialize(&main_window);
     
-    // Create fonds handler for callbacks (stored in _handlers, kept alive)
-    let fonds_handler = Rc::new(
-        FondsHandler::new(archive_service.clone(), Rc::new(FileService))
-    );
+    // 3. 设置所有 UI 回调
+    app_coordinator.setup_ui_callbacks(&main_window);
     
-    // Initialize system tray
-    initialize_tray(&ui);
-    
-    // Setup all UI event callbacks
-    setup_ui_callbacks(&ui, archive_service, fonds_handler);
-    
-    // Run the UI event loop
-    ui.run()?;
-    
+    // 4. 运行主事件循环
+    main_window.run()?;
+
     Ok(())
 }
