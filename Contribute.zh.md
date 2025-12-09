@@ -1,3 +1,39 @@
+# 项目架构概述
+
+FondsPod 项目采用 MVVM (Model-View-ViewModel) 架构模式，该模式将应用程序分为三个主要层次：
+
+- **Model**: 数据模型和业务逻辑层，负责数据存储、验证和业务规则
+- **View**: 用户界面层，使用 Slint 框架构建，专注于展示和用户交互
+- **ViewModel**: 视图模型层，连接 Model 和 View，处理用户输入和数据绑定
+
+项目的目录结构层次划分：
+
+- **`src/models/`**: Model 层，包含数据模型定义
+  - `fond.rs`, `schema.rs`, `item.rs` 等实体模型
+
+- **`src/persistence/`**: 数据访问层，实现仓储模式
+  - `fond_repository.rs`, `schema_repository.rs` 等仓储实现
+  - `schema.rs` 数据库连接和配置
+
+- **`src/core/`**: 核心抽象层，提供通用功能
+  - `generic_repository.rs`等通用仓储接口
+
+- **`src/viewmodels/`**: ViewModel 层，处理 UI 逻辑
+  - 连接 Model 和 View，管理数据绑定和用户交互
+
+- **`src/services/`**: 服务层，提供业务逻辑和配置
+  - `settings_service.rs` 配置管理
+  - `runtime_translations.rs` 国际化服务
+
+- **`ui/`**: View 层，用户界面实现
+  - `app-window.slint` 主窗口
+  - `components/`, `pages/`, `layout/` 等 UI 组件
+  - `locale/` 国际化资源
+
+- **`migrations/`**: 数据库迁移脚本，确保数据结构一致性
+
+这种目录结构确保了代码的模块化，便于维护和扩展。
+
 # Core 包使用说明
 
 Core 包提供了 FondsPod 项目的核心抽象和通用功能，主要包括：

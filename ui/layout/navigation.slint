@@ -19,13 +19,13 @@ export component NavigationPanel inherits Rectangle {
         padding: 0px;
         alignment: start;
         btn_home := SidebarButtonWithTooltip {
-            icon: "🏠";
+            icon: "📁";
             tooltip: @tr("" => "nav_home");
             is_active: root.current_page == "home";
             clicked => { root.select_page("home"); }
         }
         btn_fonds := SidebarButtonWithTooltip {
-            icon: "📁";
+            icon: "🪪";
             tooltip: @tr("" => "nav_fonds");
             is_active: root.current_page == "fonds";
             clicked => { root.select_page("fonds"); }

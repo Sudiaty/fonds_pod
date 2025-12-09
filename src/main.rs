@@ -25,7 +25,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // 1. 初始化应用服务
     let settings_service = SettingsService::new();
     let language = settings_service.get_language()?;
-    
+
     // 2. 启动Slint应用程序
     let main_window = AppWindow::new()?;
 

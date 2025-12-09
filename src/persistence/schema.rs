@@ -4,6 +4,25 @@ use std::error::Error;
 
 /// Initialize the database schema by creating all necessary tables
 pub fn init_schema(conn: &mut SqliteConnection) -> Result<(), Box<dyn Error>> {
+    // Create fond_classifications table
+    sql_query(
+        r#"
+        CREATE TABLE IF NOT EXISTS fond_classifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT NOT NULL UNIQUE,
+            name TEXT NOT NULL,
+            parent_id INTEGER,
+            active BOOLEAN NOT NULL DEFAULT 1,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            created_by TEXT NOT NULL,
+            created_machine TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (parent_id) REFERENCES fond_classifications(id)
+        )
+        "#,
+    )
+    .execute(conn)?;
+
     // Create schemas table (id 自增主键)
     sql_query(
         r#"
@@ -33,25 +52,6 @@ pub fn init_schema(conn: &mut SqliteConnection) -> Result<(), Box<dyn Error>> {
             created_at TEXT NOT NULL,
             UNIQUE (schema_id, item_no),
             FOREIGN KEY (schema_id) REFERENCES schemas(id)
-        )
-        "#,
-    )
-    .execute(conn)?;
-
-    // Create fond_classifications table
-    sql_query(
-        r#"
-        CREATE TABLE IF NOT EXISTS fond_classifications (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            code TEXT NOT NULL UNIQUE,
-            name TEXT NOT NULL,
-            parent_id INTEGER,
-            active BOOLEAN NOT NULL DEFAULT 1,
-            sort_order INTEGER NOT NULL DEFAULT 0,
-            created_by TEXT NOT NULL,
-            created_machine TEXT NOT NULL,
-            created_at TEXT NOT NULL,
-            FOREIGN KEY (parent_id) REFERENCES fond_classifications(id)
         )
         "#,
     )

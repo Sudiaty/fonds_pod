@@ -155,11 +155,17 @@ impl SettingsService {
 
         Ok(())
     }
-}
+    pub fn get_last_opened_library(&self) -> Result<Option<String>, Box<dyn Error>> {
+        let settings = self.config_repo.load()?;
+        Ok(settings.last_opened_library)
+    }
 
-impl Default for SettingsService {
-    fn default() -> Self {
-        Self::new()
+    /// Set the last opened library
+    pub fn set_last_opened_library(&self, path: Option<String>) -> Result<(), Box<dyn Error>> {
+        let mut settings = self.config_repo.load()?;
+        settings.set_last_opened_library(path);
+        self.config_repo.save(&settings)?;
+        Ok(())
     }
 }
 

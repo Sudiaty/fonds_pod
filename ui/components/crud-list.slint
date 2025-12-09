@@ -90,7 +90,6 @@ export component CrudList inherits VerticalBox {
 
     // Selection state
     in-out property <int> active-index: -1;
-    in property <[int]> selected-indices: [];  // Multi-selection mask (1 = selected, 0 = not selected)
 
     // Quick actions for each item (right side buttons)
     in property <[QuickAction]> quick-actions: [];
@@ -109,6 +108,14 @@ export component CrudList inherits VerticalBox {
         opacity: 1.0,
     };
 
+    // Inactive row style (for deactivated items)
+    in property <CrudListRowStyle> inactive-row-style: {
+        title_color: Theme.text_secondary,
+        subtitle_color: Theme.text_secondary,
+        background_color: Theme.bg_soft,
+        opacity: 0.6,
+    };
+
     // Row styles array - one for each item, provided by parent
     in property <[CrudListRowStyle]> row-styles: [];
 
@@ -119,18 +126,19 @@ export component CrudList inherits VerticalBox {
     callback toolbar-action-clicked(int);
 
     // Item callbacks
-    callback item-clicked(int, bool, bool);  // index, ctrl, shift
+    callback item-clicked(int);  // index
     callback item-activated(int);  // Triggered when item is activated (single click without ctrl/shift)
     callback quick-action-clicked(int, int);  // item-index, action-index
 
     // Context menu callbacks
     callback delete-clicked();
-    callback delete-selected-clicked();
     callback rename-clicked(int, string);  // index, new-name
-    callback activate-clicked();      // Built-in activate action
-    callback deactivate-clicked();    // Built-in deactivate action
+    
+    // Activate/Deactivate callbacks (returns item id for backend processing)
+    callback activate-item(int);      // Activate item by id
+    callback deactivate-item(int);    // Deactivate item by id
 
-    // Whether to show activate/deactivate menu items
+    // Whether to show activate/deactivate menu items (default: false)
     in property <bool> show-activate-menu: false;
 
     // Whether to show rename menu item
@@ -210,14 +218,13 @@ export component CrudList inherits VerticalBox {
                 border-color: Theme.nav_border;
                 border-radius: 4px;
 
-                // Touch area for item interaction
                 item_touch := TouchArea {
                     height: 50px;
                     mouse-cursor: MouseCursor.default;
                     visible: true;
                     pointer-event(event) => {
                         if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
-                            root.handle-item-click(item_idx, event.modifiers.control, event.modifiers.shift);
+                            root.handle-item-click(item_idx);
                         }
                         if event.kind == PointerEventKind.up && event.button == PointerEventButton.right {
                             root.ensure-item-selection(item_idx);
@@ -320,11 +327,7 @@ export component CrudList inherits VerticalBox {
                                 icon: "🗑️";
                                 text-color: Theme.brand_primary;
                                 on-clicked => {
-                                    if root.selected-indices.length > 0 {
-                                        root.delete-selected-clicked();
-                                    } else {
-                                        root.delete-clicked();
-                                    }
+                                    root.delete-clicked();
                                     item_context_menu.close();
                                 }
                             }
@@ -332,20 +335,22 @@ export component CrudList inherits VerticalBox {
                             // Built-in activate/deactivate menu items
                             if root.show-activate-menu : MenuDivider { }
 
-                            if root.show-activate-menu : MenuRow {
+                            if root.show-activate-menu && !item.active : MenuRow {
                                 text: @tr("menu_activate");
+                                icon: "✅";
                                 text-color: Theme.text_primary;
                                 on-clicked => {
-                                    root.activate-clicked();
+                                    root.activate-item(item.id);
                                     item_context_menu.close();
                                 }
                             }
 
-                            if root.show-activate-menu : MenuRow {
+                            if root.show-activate-menu && item.active : MenuRow {
                                 text: @tr("menu_deactivate");
-                                text-color: Theme.text_primary;
+                                icon: "⏸️";
+                                text-color: Theme.text_secondary;
                                 on-clicked => {
-                                    root.deactivate-clicked();
+                                    root.deactivate-item(item.id);
                                     item_context_menu.close();
                                 }
                             }
@@ -386,38 +391,60 @@ export component CrudList inherits VerticalBox {
 
     // ========== Helper Functions ==========
 
-    // Get row style for a specific index
+    // Get the currently active item (returns null CrudListItem if no selection)
+    public pure function get-active-item() -> CrudListItem {
+        if root.active-index >= 0 && root.active-index < root.items.length {
+            return root.items[root.active-index];
+        }
+        return { title: "", subtitle: "" };
+    }
+
+    // Get all items
+    public pure function get-all-items() -> [CrudListItem] {
+        return root.items;
+    }
+
+    // Get the active index
+    public pure function get-active-index() -> int {
+        return root.active-index;
+    }
+
+    // Get row style for a specific index (auto-applies inactive style if item is not active)
     pure function get-row-style(idx: int) -> CrudListRowStyle {
+        // First check if item is inactive and should use inactive style
+        if idx < root.items.length && !root.items[idx].active {
+            return root.inactive-row-style;
+        }
+        // Then check for custom row style
         if idx < root.row-styles.length {
             return root.row-styles[idx];
         }
         return root.default-row-style;
     }
 
-    // Check if item is selected (either active or in multi-selection)
+    // Check if item is selected (only active item is selected now)
     pure function is-item-selected(idx: int) -> bool {
-        if root.selected-indices.length == 0 {
-            return root.active-index == idx;
-        }
-        return idx < root.selected-indices.length && root.selected-indices[idx] == 1;
+        return root.active-index == idx;
     }
 
-    // Handle item click with modifier keys
-    function handle-item-click(idx: int, ctrl: bool, shift: bool) {
-        root.item-clicked(idx, ctrl, shift);
-        // Backend will manage active-index and selected-indices
-        // Notify activation on simple click
-        if !ctrl && !shift {
-            root.item-activated(idx);
-        }
+    // Handle item click
+    function handle-item-click(idx: int) {
+        // For simple click, immediately update active-index for visual feedback
+        root.active-index = idx;
+        
+        // Notify backend about the click
+        root.item-clicked(idx);
+        
+        // Trigger activation callback
+        root.item-activated(idx);
     }
 
     // Ensure item is selected when right-clicking
     function ensure-item-selection(index: int) {
-        if root.selected-indices.length == 0 || !root.is-item-selected(index) {
+        if !root.is-item-selected(index) {
             root.active-index = index;
-            // Also notify the callback to clear multi-selection state on single item right-click
-            root.item-clicked(index, false, false);
+            // Notify the callback
+            root.item-clicked(index);
         }
     }
 }

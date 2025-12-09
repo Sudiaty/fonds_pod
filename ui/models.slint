@@ -14,8 +14,10 @@ export struct ArchiveLibraryItem {
 
 // Generic list item for CrudList component
 export struct CrudListItem {
+    id: int,            // Database ID for backend operations
     title: string,
     subtitle: string,
+    active: bool,       // Whether item is active/enabled
 }
 
 // Row style for CrudList item formatting
