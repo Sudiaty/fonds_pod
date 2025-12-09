@@ -5,7 +5,8 @@ import { TooltipLayer } from "components/tooltip.slint";
 import { AboutPage } from "pages/about-page.slint";
 import { SettingsPage } from "pages/settings-page.slint";
 import { HomePage } from "pages/home-page.slint";
-import { CrudListItem, DialogField, DialogFieldType } from "models.slint";
+import { FondClassificationPage } from "pages/fond-classification-page.slint";
+import { CrudListItem, CrudListRowStyle, DialogField, DialogFieldType } from "models.slint";
 
 export component AppWindow inherits Window {
     title: "FondsPod";
@@ -43,11 +44,34 @@ export component AppWindow inherits Window {
     in-out property <int> selected_language: 0;
     in-out property <[CrudListItem]> archive_libraries: [];
     in-out property <int> selected_archive: -1;
-    in-out property <[int]> selected_indices: [];  // Multi-selection mask for archive libraries
     in-out property <bool> show_add_archive_dialog: false;
     in-out property <bool> show_rename_archive_dialog: false;
     in-out property <[DialogField]> add_archive_fields: [];
     in-out property <[DialogField]> rename_archive_fields: [];
+    in-out property <string> last_opened_library: "";
+    in-out property <[string]> library_names: [];
+    
+    // Fond Classification page properties
+    in property <[CrudListItem]> classification_crud_items: [];
+    in-out property <int> selected_classification: 0;
+
+    in property <[CrudListItem]> child_crud_items: [];
+    in-out property <int> selected_child: 0;
+
+    in property <[CrudListRowStyle]> classification_row_styles: [];
+    in property <[CrudListRowStyle]> child_row_styles: [];
+    
+    // Dialog states for fond classifications
+    in-out property <bool> show_add_top_classification_dialog: false;
+    in-out property <bool> show_add_child_classification_dialog: false;
+    in-out property <[DialogField]> add_top_classification_fields: [
+        { label: "label_code", field_type: DialogFieldType.text, value: "", placeholder: @tr("" => "placeholder_code") },
+        { label: "label_name", field_type: DialogFieldType.text, value: "", placeholder: @tr("" => "placeholder_name") },
+    ];
+    in-out property <[DialogField]> add_child_classification_fields: [
+        { label: "label_code", field_type: DialogFieldType.text, value: "", placeholder: @tr("" => "placeholder_child_code") },
+        { label: "label_name", field_type: DialogFieldType.text, value: "", placeholder: @tr("" => "placeholder_child_name") },
+    ];
     
     // Toast notification properties
     in-out property <string> toast_message: "";
@@ -60,12 +84,57 @@ export component AppWindow inherits Window {
     callback check_update();
     callback add_archive_library();
     callback remove_archive_library();
-    callback delete_selected_archive_libraries();  // Delete multiple selected archives
     callback rename_archive_library(int, string);
-    callback item_clicked(int, bool, bool);  // index, ctrl, shift - for multi-select
+    callback archive_selected(int);
     callback apply_settings();
     callback cancel_settings();
     callback browse_folder();
+    callback load_fond_classifications();
+    callback select_fond_classification(int);
+    callback delete_fond_classification();
+    callback add_classification();
+    callback classification_item_clicked(int);
+    callback classification_item_activated(int);  // Callback for item activation
+    callback activate_top_classification(int);    // Activate by id
+    callback deactivate_top_classification(int);  // Deactivate by id
+    callback export_classifications();
+    callback import_classifications();
+    callback add_child_classification();
+    callback delete_child_classification();
+    callback child_classification_clicked(int);
+    callback child_classification_activated(int);  // Callback for child item activation
+    callback activate_child_classification(int);   // Activate by id
+    callback deactivate_child_classification(int); // Deactivate by id
+    
+    // Dialog callbacks for fond classifications
+    callback confirm_add_top_classification([DialogField]);
+    callback cancel_add_top_classification();
+    callback confirm_add_child_classification([DialogField]);
+    callback cancel_add_child_classification();
+    
+    // Home page callbacks
+    callback initialize_home_page();
+    callback request_add_fonds_dialog();
+    callback open_fonds(string);
+    callback select_series(int, string);
+    callback series_activated(int);
+    callback rebuild_series();
+    callback delete_series();
+    callback add_file();
+    callback delete_file();
+    callback rename_file(int, string);
+    callback file_clicked(int);
+    callback file_activated(int);
+    callback open_file();
+    callback open_file_at(int);
+    callback add_item();
+    callback delete_item();
+    callback rename_item(int, string);
+    callback item_clicked(int);
+    callback item_activated(int);
+    callback open_item();
+    callback open_item_at(int);
+    callback file_selected(int);
     
     show_toast(message) => {
         root.toast_message = message;
@@ -107,6 +176,10 @@ export component AppWindow inherits Window {
                 if root.current_page == "home" : HomePage {
                     width: parent.width;
                     height: parent.height;
+                    library_names <=> root.library_names;
+                    selected_archive <=> root.selected_archive;
+                    last_opened_library <=> root.last_opened_library;
+                    initialize => { root.initialize_home_page(); }
                 }
                 
                 if root.current_page == "about" : AboutPage {
@@ -122,19 +195,50 @@ export component AppWindow inherits Window {
                     selected_language <=> root.selected_language;
                     archive_libraries <=> root.archive_libraries;
                     selected_archive <=> root.selected_archive;
-                    selected-indices <=> root.selected_indices;
                     show_add_archive_dialog <=> root.show_add_archive_dialog;
                     show_rename_archive_dialog <=> root.show_rename_archive_dialog;
                     add_archive_fields <=> root.add_archive_fields;
                     rename_archive_fields <=> root.rename_archive_fields;
                     add_archive_library => { root.add_archive_library(); }
                     remove_archive_library => { root.remove_archive_library(); }
-                    delete_selected_archive_libraries => { root.delete_selected_archive_libraries(); }
                     rename_archive_library(index, name) => { root.rename_archive_library(index, name); }
-                    item_clicked(index, ctrl, shift) => { root.item_clicked(index, ctrl, shift); }
+                    archive_selected(index) => { root.archive_selected(index); }
                     apply_settings => { root.apply_settings(); }
                     cancel_settings => { root.cancel_settings(); }
                     browse_folder => { root.browse_folder(); }
+                }
+                
+                if root.current_page == "classification" : FondClassificationPage {
+                    width: parent.width;
+                    height: parent.height;
+                    classification_crud_items <=> root.classification_crud_items;
+                    selected_classification <=> root.selected_classification;
+                    child_crud_items <=> root.child_crud_items;
+                    selected_child <=> root.selected_child;
+                    classification_row_styles <=> root.classification_row_styles;
+                    child_row_styles <=> root.child_row_styles;
+                    show_add_top_classification_dialog <=> root.show_add_top_classification_dialog;
+                    show_add_child_classification_dialog <=> root.show_add_child_classification_dialog;
+                    add_top_classification_fields <=> root.add_top_classification_fields;
+                    add_child_classification_fields <=> root.add_child_classification_fields;
+                    confirm_add_top_classification(fields) => { root.confirm_add_top_classification(fields); }
+                    cancel_add_top_classification => { root.cancel_add_top_classification(); }
+                    confirm_add_child_classification(fields) => { root.confirm_add_child_classification(fields); }
+                    cancel_add_child_classification => { root.cancel_add_child_classification(); }
+                    add_classification => { root.add_classification(); }
+                    delete_classification => { root.delete_fond_classification(); }
+                    classification_item_clicked(index) => { root.classification_item_clicked(index); }
+                    classification_item_activated(index) => { root.classification_item_activated(index); }
+                    activate_top_classification(id) => { root.activate_top_classification(id); }
+                    deactivate_top_classification(id) => { root.deactivate_top_classification(id); }
+                    export_classifications => { root.export_classifications(); }
+                    import_classifications => { root.import_classifications(); }
+                    add_child_classification => { root.add_child_classification(); }
+                    delete_child_classification => { root.delete_child_classification(); }
+                    child_classification_clicked(index) => { root.child_classification_clicked(index); }
+                    child_classification_activated(index) => { root.child_classification_activated(index); }
+                    activate_child_classification(id) => { root.activate_child_classification(id); }
+                    deactivate_child_classification(id) => { root.deactivate_child_classification(id); }
                 }
                 
                 if root.current_page != "about" && root.current_page != "settings" && root.current_page != "home" : Text {

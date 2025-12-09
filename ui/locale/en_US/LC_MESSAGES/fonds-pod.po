@@ -137,8 +137,24 @@ msgid "export_success"
 msgstr "Export Success"
 
 msgctxt ""
-msgid "read_file_failed"
-msgstr "Read File Failed"
+msgid "dialog_add_classification"
+msgstr "Add Classification"
+
+msgctxt ""
+msgid "tooltip_export"
+msgstr "Export Classifications"
+
+msgctxt ""
+msgid "tooltip_import"
+msgstr "Import Classifications"
+
+msgctxt ""
+msgid "label_top_classifications"
+msgstr "Top Classifications"
+
+msgctxt ""
+msgid "label_child_classifications"
+msgstr "Child Classifications"
 
 # Settings page
 msgctxt ""
@@ -152,6 +168,26 @@ msgstr "Archive Libraries"
 msgctxt ""
 msgid "label_name"
 msgstr "Name"
+
+msgctxt ""
+msgid "label_code"
+msgstr "Code"
+
+msgctxt ""
+msgid "placeholder_code"
+msgstr "Enter classification code"
+
+msgctxt ""
+msgid "placeholder_name"
+msgstr "Enter classification name"
+
+msgctxt ""
+msgid "placeholder_child_code"
+msgstr "Enter child classification code"
+
+msgctxt ""
+msgid "placeholder_child_name"
+msgstr "Enter child classification name"
 
 msgctxt ""
 msgid "label_path"

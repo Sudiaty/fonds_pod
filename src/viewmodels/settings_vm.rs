@@ -29,8 +29,6 @@ pub struct SettingsViewModel {
     pub selected_language: i32,
     pub archive_libraries: Vec<ArchiveLibraryUIItem>,
     pub selected_archive_index: i32,
-    pub selected_indices: Vec<i32>,  // Multi-selection mask (1 = selected, 0 = not selected)
-    pub last_selected_index: i32,     // For Shift+Click range selection
     pub new_archive_name: String,
     pub new_archive_path: String,
     pub show_add_archive_dialog: bool,
@@ -45,8 +43,6 @@ impl Default for SettingsViewModel {
             selected_language: 0,
             archive_libraries: Vec::new(),
             selected_archive_index: -1,
-            selected_indices: Vec::new(),
-            last_selected_index: -1,
             new_archive_name: String::new(),
             new_archive_path: String::new(),
             show_add_archive_dialog: false,
@@ -64,8 +60,6 @@ impl SettingsViewModel {
             selected_language: 0,
             archive_libraries: Vec::new(),
             selected_archive_index: -1,
-            selected_indices: Vec::new(),
-            last_selected_index: -1,
             new_archive_name: String::new(),
             new_archive_path: String::new(),
             show_add_archive_dialog: false,
@@ -172,75 +166,6 @@ impl SettingsViewModel {
         }
     }
 
-    /// Handle item click with modifier keys for multi-selection
-    pub fn handle_item_click(&mut self, index: i32, ctrl: bool, shift: bool) {
-        let index = index as usize;
-        
-        if !ctrl && !shift {
-            // Normal click: select single item
-            for i in 0..self.selected_indices.len() {
-                self.selected_indices[i] = 0;
-            }
-            if index < self.selected_indices.len() {
-                self.selected_indices[index] = 1;
-            }
-            self.selected_archive_index = index as i32;
-            self.last_selected_index = index as i32;
-        } else if ctrl {
-            // Ctrl click: toggle item selection
-            self.toggle_selection(index);
-            self.selected_archive_index = index as i32;
-            self.last_selected_index = index as i32;
-        } else if shift && self.last_selected_index >= 0 {
-            // Shift click: range select
-            self.range_select(self.last_selected_index as usize, index);
-            self.selected_archive_index = index as i32;
-        } else {
-            // Shift click without previous selection
-            for i in 0..self.selected_indices.len() {
-                self.selected_indices[i] = 0;
-            }
-            if index < self.selected_indices.len() {
-                self.selected_indices[index] = 1;
-            }
-            self.selected_archive_index = index as i32;
-            self.last_selected_index = index as i32;
-        }
-    }
-
-    /// Toggle selection for a specific index
-    fn toggle_selection(&mut self, index: usize) {
-        if self.selected_indices.is_empty() {
-            self.selected_indices = vec![0; self.archive_libraries.len()];
-        }
-        
-        if index < self.selected_indices.len() {
-            self.selected_indices[index] = if self.selected_indices[index] == 0 { 1 } else { 0 };
-        }
-    }
-
-    /// Range select from start to end
-    fn range_select(&mut self, start: usize, end: usize) {
-        if self.selected_indices.is_empty() {
-            self.selected_indices = vec![0; self.archive_libraries.len()];
-        }
-        
-        let range_start = std::cmp::min(start, end);
-        let range_end = std::cmp::max(start, end);
-        
-        // Clear all first
-        for i in 0..self.selected_indices.len() {
-            self.selected_indices[i] = 0;
-        }
-        
-        // Select range
-        for i in range_start..=range_end {
-            if i < self.selected_indices.len() {
-                self.selected_indices[i] = 1;
-            }
-        }
-    }
-
     /// Get language setting for service
     pub fn get_language_for_service(&self) -> String {
         if self.selected_language == 1 {
@@ -305,46 +230,6 @@ impl SettingsViewModel {
         Ok(())
     }
 
-    /// Remove multiple selected archive libraries
-    pub fn remove_selected_archive_libraries(&mut self) -> Result<usize, Box<dyn Error>> {
-        // Get selected indices (from high to low for correct deletion)
-        let mut selected_indices: Vec<usize> = self.selected_indices
-            .iter()
-            .enumerate()
-            .filter(|(_, &val)| val == 1)
-            .map(|(idx, _)| idx)
-            .collect();
-
-        if selected_indices.is_empty() {
-            return Err("No archives selected".into());
-        }
-
-        // Sort from high to low
-        selected_indices.sort_by(|a, b| b.cmp(a));
-
-        let mut delete_count = 0;
-        for index in selected_indices {
-            if index < self.archive_libraries.len() {
-                // Remove from service
-                if let Err(e) = self.settings_service.remove_archive_library(index) {
-                    log::warn!("Failed to remove archive at index {}: {}", index, e);
-                    continue;
-                }
-
-                // Remove from VM
-                self.archive_libraries.remove(index);
-                delete_count += 1;
-            }
-        }
-
-        // Clear selection state
-        self.selected_indices.clear();
-        self.selected_archive_index = if self.archive_libraries.len() > 0 { 0 } else { -1 };
-        self.last_selected_index = -1;
-
-        Ok(delete_count)
-    }
-
     /// Rename archive library
     pub fn rename_archive_library(&mut self, index: usize, new_name: String) -> Result<(), Box<dyn Error>> {
         if index >= self.archive_libraries.len() {
@@ -404,10 +289,12 @@ impl SettingsViewModel {
 
     /// Helper function to convert archive libraries to UI format
     fn to_ui_items(libraries: &[ArchiveLibraryUIItem]) -> ModelRc<CrudListItem> {
-        let ui_items: Vec<CrudListItem> = libraries.iter().map(|lib| {
+        let ui_items: Vec<CrudListItem> = libraries.iter().enumerate().map(|(idx, lib)| {
             CrudListItem {
+                id: idx as i32,
                 title: lib.name.clone().into(),
                 subtitle: lib.path.clone().into(),
+                active: true,
             }
         }).collect();
         ModelRc::new(VecModel::from(ui_items))
@@ -423,9 +310,6 @@ impl SettingsViewModel {
         
         // 设置选中的档案库
         ui_handle.set_selected_archive(self.selected_archive_index);
-        
-        // 初始化多选状态
-        ui_handle.set_selected_indices(ModelRc::new(VecModel::from(self.selected_indices.clone())));
         
         log::info!("Initialized UI with {} archive libraries", self.archive_libraries.len());
     }
@@ -503,35 +387,6 @@ impl SettingsViewModel {
             }
         });
         
-        // 删除多个选中的档案库
-        ui_handle.on_delete_selected_archive_libraries({
-            let vm = Rc::clone(&vm);
-            let ui_weak = ui_handle.as_weak();
-            
-            move || {
-                if let Some(ui) = ui_weak.upgrade() {
-                    let mut vm = vm.borrow_mut();
-                    
-                    match vm.remove_selected_archive_libraries() {
-                        Ok(delete_count) => {
-                            if delete_count == 0 {
-                                ui.invoke_show_toast("Failed to remove archives".into());
-                                return;
-                            }
-                            
-                            ui.set_archive_libraries(Self::to_ui_items(&vm.archive_libraries));
-                            ui.set_selected_archive(vm.selected_archive_index);
-                            ui.set_selected_indices(ModelRc::new(VecModel::from(Vec::<i32>::new())));
-                            ui.invoke_show_toast(format!("{} archive libraries removed successfully", delete_count).into());
-                        }
-                        Err(e) => {
-                            ui.invoke_show_toast(format!("Failed to remove archives: {}", e).into());
-                        }
-                    }
-                }
-            }
-        });
-        
         // 重命名档案库
         ui_handle.on_rename_archive_library({
             let vm = Rc::clone(&vm);
@@ -557,23 +412,13 @@ impl SettingsViewModel {
             }
         });
         
-        // 处理多选
-        ui_handle.on_item_clicked({
+        // 选择档案库
+        ui_handle.on_archive_selected({
             let vm = Rc::clone(&vm);
-            let ui_weak = ui_handle.as_weak();
-            
-            move |index: i32, ctrl: bool, shift: bool| {
-                if let Some(ui) = ui_weak.upgrade() {
-                    let mut vm = vm.borrow_mut();
-                    
-                    vm.handle_item_click(index, ctrl, shift);
-                    
-                    ui.set_selected_indices(ModelRc::new(VecModel::from(vm.selected_indices.clone())));
-                    ui.set_selected_archive(vm.selected_archive_index);
-                    
-                    log::debug!("Item clicked: index={}, ctrl={}, shift={}, selected_count={}", 
-                        index, ctrl, shift, vm.selected_indices.iter().sum::<i32>());
-                }
+            move |index: i32| {
+                let mut vm = vm.borrow_mut();
+                vm.selected_archive_index = index;
+                log::debug!("Archive selected: index={}", index);
             }
         });
         

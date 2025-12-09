@@ -12,8 +12,6 @@ pub struct AppSettings {
     pub language: String,
     pub theme: String,
     pub archive_libraries: Vec<ArchiveLibrary>,
-    #[serde(default)]
-    #[allow(dead_code)]
     pub last_opened_library: Option<String>,
 }
 
@@ -52,5 +50,10 @@ impl AppSettings {
         } else {
             Err("Library index out of bounds")
         }
+    }
+
+    /// Set the last opened library
+    pub fn set_last_opened_library(&mut self, path: Option<String>) {
+        self.last_opened_library = path;
     }
 }

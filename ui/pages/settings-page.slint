@@ -14,7 +14,6 @@ export component SettingsPage inherits Rectangle {
     // Archive libraries management (using CrudListItem from models)
     in-out property <[CrudListItem]> archive_libraries: [];
     in-out property <int> selected_archive: -1;
-    in-out property <[int]> selected-indices: [];  // Multi-selection mask (1 = selected, 0 = not selected)
 
     // Dialog states
     in-out property <bool> show_add_archive_dialog: false;
@@ -25,9 +24,8 @@ export component SettingsPage inherits Rectangle {
     // Callbacks
     callback add_archive_library();
     callback remove_archive_library();
-    callback delete_selected_archive_libraries();  // Delete multiple selected archives
     callback rename_archive_library(int, string);
-    callback item_clicked(int, bool, bool);  // index, ctrl, shift - for multi-select
+    callback archive_selected(int);
     callback apply_settings();
     callback cancel_settings();
     callback browse_folder();
@@ -73,7 +71,6 @@ export component SettingsPage inherits Rectangle {
                 title: @tr("" => "label_archive_libraries");
                 items: root.archive_libraries;
                 active-index <=> root.selected_archive;
-                selected-indices: root.selected-indices;
                 show-add-button: true;
                 show-rename-menu: true;
 
@@ -85,10 +82,9 @@ export component SettingsPage inherits Rectangle {
                 root.show_add_archive_dialog = true;
             }
 
-            item-clicked(index, ctrl, shift) => {
-                // Forward to parent callback for Rust backend to handle multi-selection logic
-                root.item_clicked(index, ctrl, shift);
-                // Backend will update selected_archive and selected-indices
+            item-clicked(index) => {
+                // Forward to parent callback for Rust backend to handle selection logic
+                root.archive_selected(index);
             }
 
             rename-clicked(index, new_name) => {
@@ -104,10 +100,6 @@ export component SettingsPage inherits Rectangle {
                 if root.selected_archive >= 0 {
                     root.remove_archive_library();
                 }
-            }
-
-            delete-selected-clicked => {
-                root.delete_selected_archive_libraries();
             }
             }
         }
@@ -146,7 +138,6 @@ export component SettingsPage inherits Rectangle {
         
         confirm(fields) => {
             if fields.length >= 2 {
-                root.rename_archive_library(root.selected_archive, fields[0].value);
                 root.add_archive_library();
             }
             root.show_add_archive_dialog = false;

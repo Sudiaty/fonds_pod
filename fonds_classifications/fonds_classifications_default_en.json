@@ -2,48 +2,48 @@
   {
     "code": "G",
     "name": "Culture, Education, Health, and Sports",
-    "is_active": true,
+    "active": true,
     "children": [
       {
         "code": "GA",
         "name": "Culture",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "GB",
         "name": "News and Communications",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "GC",
         "name": "Publishing",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "GD",
         "name": "Broadcasting, Film, and Television",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "GE",
         "name": "Education",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "GF",
         "name": "Healthcare",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "GG",
         "name": "Sports",
-        "is_active": true,
+        "active": true,
         "children": []
       }
     ]
@@ -51,42 +51,42 @@
   {
     "code": "H",
     "name": "Scientific Research",
-    "is_active": true,
+    "active": true,
     "children": [
       {
         "code": "HA",
         "name": "Scientific Research Management",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "HB",
         "name": "Natural Sciences (Basic Sciences)",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "HE",
         "name": "Engineering and Technological Sciences",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "HK",
         "name": "Medical Sciences",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "HL",
         "name": "Agricultural Sciences",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "HP",
         "name": "Humanities and Social Sciences",
-        "is_active": true,
+        "active": true,
         "children": []
       }
     ]
@@ -94,42 +94,42 @@
   {
     "code": "J",
     "name": "Planning and Economic Management",
-    "is_active": true,
+    "active": true,
     "children": [
       {
         "code": "JA",
         "name": "Planning",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "JB",
         "name": "Economic System Reform",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "JC",
         "name": "Economic and Trade Management",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "JD",
         "name": "Statistics",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "JE",
         "name": "Industry and Commerce Administration",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "JF",
         "name": "Price Management",
-        "is_active": true,
+        "active": true,
         "children": []
       }
     ]
@@ -137,30 +137,30 @@
   {
     "code": "K",
     "name": "Finance and Banking",
-    "is_active": true,
+    "active": true,
     "children": [
       {
         "code": "KA",
         "name": "Public Finance",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "KB",
         "name": "Banking and Finance",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "KC",
         "name": "Taxation",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "KD",
         "name": "Audit",
-        "is_active": true,
+        "active": true,
         "children": []
       }
     ]
@@ -168,36 +168,36 @@
   {
     "code": "L",
     "name": "Trade and Tourism",
-    "is_active": true,
+    "active": true,
     "children": [
       {
         "code": "LA",
         "name": "Domestic Trade",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "LB",
         "name": "Foreign Economic and Trade",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "LC",
         "name": "Customs",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "LD",
         "name": "Commodity Inspection",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "LE",
         "name": "Tourism",
-        "is_active": true,
+        "active": true,
         "children": []
       }
     ]
@@ -205,24 +205,24 @@
   {
     "code": "M",
     "name": "Agriculture, Forestry, and Water Conservancy",
-    "is_active": true,
+    "active": true,
     "children": [
       {
         "code": "MA",
         "name": "Agriculture",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "MB",
         "name": "Forestry",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "MC",
         "name": "Water Conservancy",
-        "is_active": true,
+        "active": true,
         "children": []
       }
     ]
@@ -230,126 +230,126 @@
   {
     "code": "N",
     "name": "Industry",
-    "is_active": true,
+    "active": true,
     "children": [
       {
         "code": "NA",
         "name": "Geological and Mineral Industry",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "NB",
         "name": "Oil and Gas Industry",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "NC",
         "name": "Coal Industry",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "NE",
         "name": "Electric Power Industry",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "NF",
         "name": "Nuclear Industry",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "NG",
         "name": "Metallurgical Industry",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "NH",
         "name": "Nonferrous Metals Industry",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "NJ",
         "name": "Machinery Industry",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "NK",
         "name": "Electronics Industry",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "NL",
         "name": "Aviation Industry",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "NM",
         "name": "Aerospace Industry",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "NO",
         "name": "Automotive Industry",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "NP",
         "name": "Shipbuilding Industry",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "NQ",
         "name": "Chemical Industry",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "NR",
         "name": "Petrochemical Industry",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "NS",
         "name": "Pharmaceutical Industry",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "NT",
         "name": "Light Industry",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "NV",
         "name": "Textile Industry",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "NW",
         "name": "Building Materials Industry",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "NY",
         "name": "Nonmetallic Mineral Industry",
-        "is_active": true,
+        "active": true,
         "children": []
       }
     ]
@@ -357,36 +357,36 @@
   {
     "code": "P",
     "name": "Transportation",
-    "is_active": true,
+    "active": true,
     "children": [
       {
         "code": "PA",
         "name": "Railway",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "PB",
         "name": "Highway",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "PC",
         "name": "Waterway",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "PD",
         "name": "Civil Aviation",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "PE",
         "name": "Urban Rapid Rail Transit",
-        "is_active": true,
+        "active": true,
         "children": []
       }
     ]
@@ -394,30 +394,30 @@
   {
     "code": "Q",
     "name": "Postal and Telecommunications",
-    "is_active": true,
+    "active": true,
     "children": []
   },
   {
     "code": "R",
     "name": "Urban-Rural Construction and Construction Industry",
-    "is_active": true,
+    "active": true,
     "children": []
   },
   {
     "code": "S",
     "name": "Environmental Protection and Land Management",
-    "is_active": true,
+    "active": true,
     "children": [
       {
         "code": "SA",
         "name": "Environmental Protection",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "SB",
         "name": "Land Management",
-        "is_active": true,
+        "active": true,
         "children": []
       }
     ]
@@ -425,30 +425,30 @@
   {
     "code": "T",
     "name": "Marine, Meteorological, Seismological, and Surveying Mapping",
-    "is_active": true,
+    "active": true,
     "children": [
       {
         "code": "TA",
         "name": "Marine",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "TB",
         "name": "Meteorology",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "TC",
         "name": "Seismology",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "TD",
         "name": "Surveying and Mapping",
-        "is_active": true,
+        "active": true,
         "children": []
       }
     ]
@@ -456,24 +456,24 @@
   {
     "code": "U",
     "name": "Standards, Metrology, and Patents",
-    "is_active": true,
+    "active": true,
     "children": [
       {
         "code": "UA",
         "name": "Standards",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "UB",
         "name": "Metrology",
-        "is_active": true,
+        "active": true,
         "children": []
       },
       {
         "code": "UC",
         "name": "Patents",
-        "is_active": true,
+        "active": true,
         "children": []
       }
     ]
