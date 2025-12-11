@@ -335,3 +335,549 @@ Text { text: @tr("count: {0}", number); }
 - 运行时翻译: `src/services/runtime_translations.rs`
 - 构建配置: `build.rs`
 - UI 组件: `ui/` 目录下所有 `.slint` 文件
+---
+
+# 新增模块开发指南 - 以Fonds（全宗）为例
+
+本章节以 Fonds 模块的开发为例，详细讲解如何在 FondsPod 项目中遵循 MVVM 架构和最佳实践，快速开发新的数据管理模块。
+
+## 📋 概述
+
+Fonds（全宗）是档案学中的核心概念，代表由某个机构或个人积累的档案集合。本章通过开发 Fonds 管理模块，展示了：
+
+- ✅ 如何复用 `CrudViewModel` 和 `GenericRepository` 框架
+- ✅ 如何正确处理数据库约束和外键关系
+- ✅ 如何分离关注点，保持 App 结构简洁
+- ✅ 如何使用日志进行调试和问题诊断
+
+## 🏗️ 架构设计
+
+### 分层设计
+
+```
+┌─────────────────────────────────────────┐
+│          UI Layer (Slint)               │
+│  FondPage (fond-page.slint)             │
+│  - 显示全宗列表                         │
+│  - 处理用户交互事件                     │
+└────────────┬────────────────────────────┘
+             │
+┌────────────▼────────────────────────────┐
+│      ViewModel Layer (Rust)             │
+│  FondViewModel                          │
+│  - 管理业务逻辑                         │
+│  - 处理UI回调                           │
+│  - 数据绑定                             │
+└────────────┬────────────────────────────┘
+             │
+┌────────────▼────────────────────────────┐
+│       Repository Layer                  │
+│  FondsRepository (GenericRepository)    │
+│  - 数据持久化                           │
+│  - 数据库操作 CRUD                      │
+└────────────┬────────────────────────────┘
+             │
+┌────────────▼────────────────────────────┐
+│       Model Layer                       │
+│  Fond (数据模型)                        │
+│  - 实现 Creatable Trait                 │
+│  - 实现 ToCrudListItem Trait            │
+└─────────────────────────────────────────┘
+```
+
+## 📝 Step-by-Step 开发指南
+
+### Step 1: 定义数据模型 (Model)
+
+**文件**: `src/models/fond.rs`
+
+```rust
+use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
+use chrono::NaiveDateTime;
+use crate::{impl_creatable};
+
+// 定义数据库表
+table! {
+    fonds (id) {
+        id -> Integer,
+        fond_no -> Text,                    // 全宗号
+        fond_classification_code -> Text,   // 分类代码
+        name -> Text,                        // 名称
+        created_by -> Text,
+        created_machine -> Text,
+        created_at -> Timestamp,
+    }
+}
+
+/// Fond 实体定义
+#[derive(Debug, Clone, Serialize, Deserialize, Queryable, Default)]
+#[diesel(table_name = fonds)]
+pub struct Fond {
+    pub id: i32,
+    pub fond_no: String,
+    pub fond_classification_code: String,
+    pub name: String,
+    pub created_by: String,
+    pub created_machine: String,
+    pub created_at: NaiveDateTime,
+}
+
+// 自动实现 Creatable trait
+impl_creatable!(Fond);
+
+// 实现 ToCrudListItem 以支持列表展示
+impl ToCrudListItem for Fond {
+    fn to_crud_list_item(&self) -> CrudListItem {
+        CrudListItem {
+            id: self.id,
+            title: self.name.clone().into(),
+            subtitle: self.fond_no.clone().into(),
+            active: true,
+        }
+    }
+}
+```
+
+**关键点**:
+- ✅ 定义表结构，包含审计字段（`created_by`, `created_machine`, `created_at`）
+- ✅ 使用 `#[diesel(table_name)]` 映射到表
+- ✅ 实现 `Creatable` trait（通过宏）
+- ✅ 实现 `ToCrudListItem` trait 用于UI展示
+
+---
+
+### Step 2: 创建数据仓储 (Repository)
+
+**文件**: `src/persistence/fond_repository.rs`
+
+```rust
+use crate::models::fond::{fonds, Fond};
+use crate::impl_repository;
+
+// 使用宏自动生成仓储
+impl_repository!(
+    FondsRepository,                  // 仓储类名
+    Fond,                             // 实体类型
+    fonds,                            // 表模块
+    { fond_no, fond_classification_code, name, created_at, created_by, created_machine },
+    { fond_no, fond_classification_code, name }
+);
+```
+
+**说明**:
+- ✅ 使用 `impl_repository!` 宏自动生成CRUD操作
+- ✅ 指定插入列（排除自增ID）
+- ✅ 指定更新列（仅可修改的字段）
+
+**在 `src/persistence/mod.rs` 中导出**:
+
+```rust
+pub mod fond_repository;
+pub use fond_repository::FondsRepository;
+```
+
+---
+
+### Step 3: 初始化数据库架构 (Database Schema)
+
+**文件**: `src/persistence/schema.rs`
+
+在 `init_schema()` 函数中添加表创建SQL：
+
+```rust
+pub fn init_schema(conn: &mut SqliteConnection) -> Result<(), Box<dyn Error>> {
+    // ... 其他表 ...
+
+    // Create fonds table
+    sql_query(
+        r#"
+        CREATE TABLE IF NOT EXISTS fonds (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            fond_no TEXT NOT NULL UNIQUE,
+            fond_classification_code TEXT NOT NULL DEFAULT '',
+            name TEXT NOT NULL,
+            created_by TEXT NOT NULL,
+            created_machine TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+        "#,
+    )
+    .execute(conn)?;
+
+    Ok(())
+}
+```
+
+**⚠️ 注意事项**:
+- ❌ **不要添加外键约束**到空值字段（会导致插入失败）
+- ✅ 使用 `DEFAULT ''` 提供默认值
+- ✅ 确保审计字段存在
+
+---
+
+### Step 4: 创建 ViewModel
+
+**文件**: `src/viewmodels/fond_vm.rs`
+
+```rust
+use crate::core::CrudViewModel;
+use crate::models::Fond;
+use crate::persistence::FondsRepository;
+use std::rc::Rc;
+use std::cell::RefCell;
+use slint::{Model, ComponentHandle};
+use crate::{CrudListItem, AppWindow};
+
+/// Fond（全宗）管理ViewModel
+/// 
+/// 此ViewModel通过复用CrudViewModelBase trait和宏，提供了极简的实现。
+/// 只需实现 `create_default()` 方法来定义新项的默认值。
+pub struct FondViewModel {
+    inner: CrudViewModel<Fond, FondsRepository>,
+}
+
+impl FondViewModel {
+    /// 创建新的 FondViewModel 实例
+    pub fn new(repo: Rc<RefCell<FondsRepository>>) -> Self {
+        let inner = CrudViewModel::new(repo);
+        Self { inner }
+    }
+
+    /// 创建默认的Fond实例 - 由 `impl_crud_vm_base!` 宏使用
+    fn create_default() -> Fond {
+        use std::sync::atomic::{AtomicU32, Ordering};
+        static COUNTER: AtomicU32 = AtomicU32::new(1);
+        
+        let count = COUNTER.fetch_add(1, Ordering::SeqCst);
+        Fond {
+            id: 0,
+            fond_no: format!("F{:03}", count),
+            fond_classification_code: String::new(),
+            name: "新全宗".to_string(),
+            ..Default::default()
+        }
+    }
+
+    /// 根据索引获取全宗项
+    pub fn get_by_index(&self, index: usize) -> Option<CrudListItem> {
+        self.inner.items.row_data(index)
+    }
+
+    /// 为UI设置CRUD回调 - 标准实现在这里
+    pub fn setup_callbacks(
+        vm: Rc<RefCell<Self>>,
+        ui_handle: &AppWindow,
+    ) {
+        use crate::core::CrudViewModelBase;
+        
+        // Add callback
+        let vm_clone = vm.clone();
+        let ui_weak = ui_handle.as_weak();
+        ui_handle.on_fond_add(move || {
+            log::info!("FondViewModel::setup_callbacks: add triggered");
+            if let Some(ui) = ui_weak.upgrade() {
+                vm_clone.borrow().add();
+                let items = vm_clone.borrow().get_items();
+                log::info!(
+                    "FondViewModel::setup_callbacks: Setting {} items to UI",
+                    items.row_count()
+                );
+                ui.set_fond_items(items);
+            }
+        });
+
+        // Delete callback
+        let vm_clone = vm.clone();
+        let ui_weak = ui_handle.as_weak();
+        ui_handle.on_fond_delete(move |idx| {
+            log::info!("FondViewModel::setup_callbacks: delete triggered for index {}", idx);
+            if let Some(ui) = ui_weak.upgrade() {
+                vm_clone.borrow().delete(idx);
+                let items = vm_clone.borrow().get_items();
+                log::info!(
+                    "FondViewModel::setup_callbacks: Setting {} items to UI",
+                    items.row_count()
+                );
+                ui.set_fond_items(items);
+            }
+        });
+    }
+}
+
+// 使用宏自动生成 CrudViewModelBase trait 实现
+crate::impl_crud_vm_base!(FondViewModel, "FondViewModel", Fond);
+```
+
+**关键设计**:
+- ✅ 包装 `CrudViewModel` 获得通用CRUD逻辑
+- ✅ 只需实现 `create_default()` 方法定义新实体
+- ✅ 使用 `impl_crud_vm_base!` 宏自动生成所有CRUD方法
+- ✅ 添加详细的日志用于调试
+- ✅ `setup_callbacks()` 处理所有UI交互
+- ✅ 各个方法专注单一职责
+
+**宏自动生成的CRUD方法**:
+- ✅ `vm_name()` - 返回 "FondViewModel"
+- ✅ `load()` - 加载数据并记录日志
+- ✅ `get_items()` - 返回UI模型
+- ✅ `add()` - 创建新项并添加到数据库/UI
+- ✅ `delete()` - 删除指定索引的项
+- ✅ `refresh()` - 默认实现调用load()
+
+**在 `src/viewmodels/mod.rs` 中导出**:
+
+```rust
+mod fond_vm;
+pub use fond_vm::FondViewModel;
+```
+
+---
+
+### Step 5: 创建UI界面
+
+**文件**: `ui/pages/fond-page.slint`
+
+```slint
+import { CrudList, CrudListItem } from "../components/crud-list.slint";
+
+export component FondPage inherits Rectangle {
+    in property <[CrudListItem]> items: [];
+    callback add-clicked();
+    callback delete-clicked(int);
+
+    CrudList {
+        title: @tr("fond_page_title");
+        items: root.items;
+        add-clicked => { root.add-clicked(); }
+        delete-clicked => { root.delete-clicked(self.active-index); }
+    }
+}
+```
+
+**说明**:
+- ✅ 复用 `CrudList` 组件
+- ✅ 暴露数据绑定属性 `items`
+- ✅ 暴露回调 `add-clicked`, `delete-clicked`
+- ✅ 使用 `@tr()` 进行国际化
+
+**在主窗口中集成 (`ui/app-window.slint`)**:
+
+```slint
+if root.current_page == "fonds" : FondPage {
+    width: parent.width;
+    height: parent.height;
+    items: root.fond_items;
+    add-clicked => { root.fond_add(); }
+    delete-clicked(idx) => { root.fond_delete(idx); }
+}
+```
+
+---
+
+### Step 6: 在App中协调初始化
+
+**文件**: `src/app.rs`
+
+```rust
+impl App {
+    pub fn initialize(ui_handle: &AppWindow) -> Self {
+        let settings_service = Rc::new(SettingsService::new());
+        
+        // 初始化FondViewModel
+        let fond_vm = Rc::new(RefCell::new(
+            Self::initialize_fond_vm(&settings_service)
+        ));
+        fond_vm.borrow().load();
+
+        // ... 初始化其他ViewModel ...
+
+        App {
+            settings_vm,
+            about_vm,
+            home_vm,
+            fond_vm,
+        }
+    }
+
+    /// 初始化Fond相关的数据库连接
+    fn initialize_fond_vm(settings_service: &SettingsService) -> FondViewModel {
+        let db_path = if let Ok(Some(path)) = settings_service.get_last_opened_library() {
+            let db = std::path::PathBuf::from(&path).join(".fondspod.db");
+            log::info!("App: Using database at: {:?}", db);
+            db
+        } else {
+            log::warn!("App: No last_opened_library found, using in-memory database");
+            std::path::PathBuf::from(":memory:")
+        };
+        
+        let conn = fonds_pod_lib::persistence::establish_connection(&db_path)
+            .unwrap_or_else(|_| {
+                fonds_pod_lib::persistence::establish_connection(
+                    &std::path::PathBuf::from(":memory:")
+                ).unwrap()
+            });
+
+        let repo = Rc::new(RefCell::new(
+            fonds_pod_lib::persistence::FondsRepository::new(conn)
+        ));
+        FondViewModel::new(repo)
+    }
+
+    pub fn setup_ui_callbacks(&self, ui_handle: &AppWindow) {
+        // ... 其他设置 ...
+
+        // 设置FondViewModel回调
+        FondViewModel::setup_callbacks(Rc::clone(&self.fond_vm), ui_handle);
+
+        // 初始化UI数据
+        let items = self.fond_vm.borrow().get_items();
+        ui_handle.set_fond_items(items);
+
+        // ... 其他回调 ...
+    }
+}
+```
+
+**设计原则**:
+- ✅ App 只负责协调，具体逻辑在ViewModel
+- ✅ 数据库初始化与ViewModel分离
+- ✅ 回调设置委托给各个ViewModel
+
+---
+
+## 🐛 常见问题与解决方案
+
+### 问题1: 外键约束违反导致数据无法插入
+
+**现象**: `fond_classification_code` 为空时，数据库INSERT失败
+
+**根本原因**: Schema中添加了外键约束：
+```sql
+FOREIGN KEY (fond_classification_code) REFERENCES fond_classifications(code)
+```
+
+**解决方案**:
+1. 删除外键约束
+2. 添加默认值：`fond_classification_code TEXT NOT NULL DEFAULT ''`
+3. 重新生成数据库（删除 `.fondspod.db` 文件）
+
+```bash
+# 删除旧数据库强制重新创建
+Remove-Item "C:\__mig__\.fondspod.db" -ErrorAction SilentlyContinue
+cargo run
+```
+
+---
+
+### 问题2: UI中显示的数据列表为空
+
+**排查步骤**:
+
+1. **检查日志输出**
+   ```bash
+   # 应该看到如下日志
+   FondViewModel: Loading fonds data
+   FondViewModel: Loaded 0 fonds
+   Initial setup: Setting 0 fond items to UI
+   ```
+
+2. **验证数据库连接**
+   ```rust
+   log::info!("Using database at: {:?}", db_path);
+   ```
+
+3. **检查回调是否触发**
+   ```rust
+   log::info!("FondViewModel::setup_callbacks: fond_add triggered");
+   ```
+
+4. **验证UI绑定**
+   - 检查 `ui/app-window.slint` 中的属性绑定
+   - 确认 `fond_items` 属性正确传递
+
+---
+
+### 问题3: 点击添加按钮无反应
+
+**检查清单**:
+
+- ✅ `FondViewModel::setup_callbacks()` 是否被调用
+- ✅ UI 中的 `on_fond_add` 回调是否注册
+- ✅ 数据库连接是否成功建立
+- ✅ 是否有权限写入数据库文件
+
+**调试方法**:
+
+```rust
+ui_handle.on_fond_add(move || {
+    eprintln!("DEBUG: fond_add callback triggered!");  // 加入调试输出
+    // ... 业务逻辑 ...
+});
+```
+
+---
+
+## 🔧 调试技巧
+
+### 1. 启用详细日志
+
+```bash
+# 运行时指定日志级别
+RUST_LOG=debug cargo run
+```
+
+### 2. 在关键位置添加日志
+
+```rust
+log::info!("FondViewModel: Loading fonds data");
+log::debug!("FondViewModel: Repository found {} items", items.len());
+log::warn!("FondViewModel: Database connection warning");
+log::error!("FondViewModel: Failed to add fond: {}", error);
+```
+
+### 3. 检查数据库状态
+
+```bash
+# 使用 SQLite 命令行工具检查数据
+sqlite3 "C:\__mig__\.fondspod.db" "SELECT COUNT(*) FROM fonds;"
+```
+
+### 4. 添加跟踪点
+
+```rust
+pub fn add(&self) {
+    eprintln!("TRACE: add() called");
+    let new_fond = Fond { /* ... */ };
+    eprintln!("TRACE: created fond: {:?}", new_fond);
+    self.inner.add(new_fond);
+    eprintln!("TRACE: added, count = {}", self.inner.items.row_count());
+}
+```
+
+---
+
+## ✅ 测试验证检单
+
+开发完成后，按以下步骤进行测试：
+
+- [ ] **编译通过**: `cargo build` 无错误
+- [ ] **数据库创建**: `.fondspod.db` 文件正确生成
+- [ ] **数据加载**: 启动时日志显示 "Loaded X fonds"
+- [ ] **添加功能**: 点击 "+" 按钮，新项目出现在列表中
+- [ ] **删除功能**: 选择项目并删除，列表更新
+- [ ] **数据持久化**: 重启应用，数据仍然存在
+- [ ] **日志完整**: 日志输出清晰，便于问题诊断
+- [ ] **UI响应**: 所有操作反馈及时，无卡顿
+
+---
+
+## 📚 相关参考
+
+- **Core 抽象层**: `src/core/` - `CrudViewModel`, `GenericRepository`
+- **数据模型示例**: `src/models/schema.rs`
+- **仓储实现**: `src/persistence/schema_repository.rs`
+- **UI 组件**: `ui/components/crud-list.slint`
+- **应用协调**: `src/app.rs`
+
+---

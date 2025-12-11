@@ -5,6 +5,7 @@ use slint::{ComponentHandle, Model};
 use fonds_pod_lib::viewmodels::{SettingsViewModel, AboutViewModel, HomeViewModel, FondViewModel};
 use fonds_pod_lib::services::SettingsService;
 use fonds_pod_lib::AppWindow;
+use fonds_pod_lib::CrudViewModelBase;
 
 // 使用类型别名简化 Rc<RefCell<T>> 的使用
 type SharedVm<T> = Rc<RefCell<T>>;

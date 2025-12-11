@@ -7,6 +7,7 @@ pub mod services;
 // Re-export core traits for convenience
 pub use core::{
     Creatable, GenericRepository, Activeable, ActiveableRepository, Sortable, SortableRepository,
+    CrudViewModelBase,
 };
 
 // Re-export viewmodels

@@ -1,14 +1,29 @@
 use fonds_pod_lib::viewmodels::FondViewModel;
-use fonds_pod_lib::persistence::{FondsRepository, establish_connection};
+use fonds_pod_lib::persistence::establish_connection;
+use fonds_pod_lib::persistence::schema;
+use fonds_pod_lib::persistence::FondsRepository;
+use fonds_pod_lib::CrudViewModelBase;
 use std::rc::Rc;
 use std::cell::RefCell;
 use slint::Model;
+use std::path::Path;
+use std::fs;
+
+fn setup_test_db(test_name: &str) -> String {
+    let path = format!(".fondspod_test_{}.db", test_name);
+    if Path::new(&path).exists() {
+        let _ = fs::remove_file(&path);
+    }
+    path
+}
 
 #[test]
 fn test_fond_vm_add() {
-    // 使用内存数据库
-    let db_path = std::path::PathBuf::from(":memory:");
-    let conn = establish_connection(&db_path).expect("Failed to establish connection");
+    let db_path = setup_test_db("fond_vm");
+    let conn = establish_connection(Path::new(&db_path)).expect("Failed to establish connection");
+    
+    // Initialize schema
+    schema::init_schema(&mut *conn.borrow_mut()).expect("Failed to initialize schema");
     
     let repo = Rc::new(RefCell::new(FondsRepository::new(conn)));
     let vm = FondViewModel::new(repo);
