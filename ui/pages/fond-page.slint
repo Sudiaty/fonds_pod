@@ -1,7 +1,14 @@
-import { CrudList } from "../components/crud-list.slint";
+import { CrudList, CrudListItem } from "../components/crud-list.slint";
 
 export component FondPage inherits Rectangle {
+    in property <[CrudListItem]> items: [];
+    callback add-clicked();
+    callback delete-clicked(int);
+
     CrudList {
-        title: @tr("" => "fond_page_title");
+        title: @tr("fond_page_title");
+        items: root.items;
+        add-clicked => { root.add-clicked(); }
+        delete-clicked => { root.delete-clicked(self.active-index); }
     }
 }

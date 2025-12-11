@@ -157,12 +157,12 @@ macro_rules! impl_sortable_repository {
             { $( $update_col ),* }
         );
 
-        impl<'a> crate::core::SortableRepository<$entity> for $repo<'a> {
+        impl crate::core::SortableRepository<$entity> for $repo {
             fn update_sort_order(&mut self, id: i32, sort_order: i32) -> Result<(), Box<dyn std::error::Error>> {
                 use diesel::prelude::*;
                 diesel::update($table::table.filter($table::id.eq(id)))
                     .set($table::sort_order.eq(sort_order))
-                    .execute(self.conn)?;
+                    .execute(&mut *self.conn.borrow_mut())?;
                 Ok(())
             }
         }

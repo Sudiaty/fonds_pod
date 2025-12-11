@@ -48,3 +48,18 @@ pub struct Fond {
 }
 
 impl_creatable!(Fond);
+
+use crate::core::ToCrudListItem;
+use crate::CrudListItem;
+
+impl ToCrudListItem for Fond {
+    fn to_crud_list_item(&self) -> CrudListItem {
+        CrudListItem {
+            id: self.id,
+            title: self.name.clone().into(),
+            subtitle: self.fond_no.clone().into(),
+            active: true,
+        }
+    }
+}
+

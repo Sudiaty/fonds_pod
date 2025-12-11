@@ -11,12 +11,12 @@ impl_repository!(
 );
 
 // 额外实现 SortableRepository
-impl<'a> crate::core::SortableRepository<FondSchema> for FondSchemasRepository<'a> {
+impl crate::core::SortableRepository<FondSchema> for FondSchemasRepository {
     fn update_sort_order(&mut self, id: i32, sort_order: i32) -> Result<(), Box<dyn std::error::Error>> {
         use diesel::prelude::*;
         diesel::update(fond_schemas::table.filter(fond_schemas::id.eq(id)))
             .set(fond_schemas::order_no.eq(sort_order))
-            .execute(self.conn)?;
+            .execute(&mut *self.conn.borrow_mut())?;
         Ok(())
     }
 }

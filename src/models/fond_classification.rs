@@ -1,7 +1,7 @@
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
-use crate::{impl_creatable, impl_activeable, impl_sortable, impl_crud_list_displayable};
+use crate::{impl_creatable, impl_activeable, impl_sortable};
 
 table! {
     fond_classifications (id) {
@@ -58,4 +58,3 @@ pub struct FondClassification {
 impl_creatable!(FondClassification);
 impl_activeable!(FondClassification);
 impl_sortable!(FondClassification);
-impl_crud_list_displayable!(FondClassification, code, name);

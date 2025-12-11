@@ -13,7 +13,7 @@ impl_repository!(
 );
 
 // 额外的自定义方法
-impl<'a> SchemaItemRepository<'a> {
+impl SchemaItemRepository {
     /// Find all items belonging to a specific schema
     pub fn find_by_schema_id(&mut self, schema_id_val: i32) -> Result<Vec<SchemaItem>, Box<dyn Error>> {
         self.find_by_predicate(|item| item.schema_id == schema_id_val)

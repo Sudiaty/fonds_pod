@@ -6,6 +6,7 @@ import { AboutPage } from "pages/about-page.slint";
 import { SettingsPage } from "pages/settings-page.slint";
 import { HomePage } from "pages/home-page.slint";
 import { FondClassificationPage } from "pages/fond-classification-page.slint";
+import { FondPage } from "pages/fond-page.slint";
 import { CrudListItem, CrudListRowStyle, DialogField, DialogFieldType } from "models.slint";
 
 export component AppWindow inherits Window {
@@ -50,6 +51,15 @@ export component AppWindow inherits Window {
     in-out property <[DialogField]> rename_archive_fields: [];
     in-out property <string> last_opened_library: "";
     in-out property <[string]> library_names: [];
+
+    // Fond page properties
+    in property <[CrudListItem]> fond_items: [];
+    callback fond_add();
+    callback fond_delete(int);
+
+    // in-out property <FondPageViewModel> fond_vm: {
+
+    // }
     
     // Fond Classification page properties
     in property <[CrudListItem]> classification_crud_items: [];
@@ -241,7 +251,15 @@ export component AppWindow inherits Window {
                     deactivate_child_classification(id) => { root.deactivate_child_classification(id); }
                 }
                 
-                if root.current_page != "about" && root.current_page != "settings" && root.current_page != "home" : Text {
+                if root.current_page == "fonds" : FondPage {
+                    width: parent.width;
+                    height: parent.height;
+                    items: root.fond_items;
+                    add-clicked => { root.fond_add(); }
+                    delete-clicked(idx) => { root.fond_delete(idx); }
+                }
+                
+                if root.current_page != "about" && root.current_page != "settings" && root.current_page != "home" && root.current_page != "classification" && root.current_page != "fonds" : Text {
                     x: parent.width / 2 - self.width / 2;
                     y: parent.height / 2 - self.height / 2;
                     text: "Current Page: " + root.current_page;

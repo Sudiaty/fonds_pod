@@ -8,3 +8,5 @@ pub mod file;
 pub mod item;
 pub mod sequence;
 pub mod app_settings;
+
+pub use fond::Fond;

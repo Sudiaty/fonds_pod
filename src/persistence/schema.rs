@@ -63,12 +63,11 @@ pub fn init_schema(conn: &mut SqliteConnection) -> Result<(), Box<dyn Error>> {
         CREATE TABLE IF NOT EXISTS fonds (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             fond_no TEXT NOT NULL UNIQUE,
-            fond_classification_code TEXT NOT NULL,
+            fond_classification_code TEXT NOT NULL DEFAULT '',
             name TEXT NOT NULL,
             created_by TEXT NOT NULL,
             created_machine TEXT NOT NULL,
-            created_at TEXT NOT NULL,
-            FOREIGN KEY (fond_classification_code) REFERENCES fond_classifications(code)
+            created_at TEXT NOT NULL
         )
         "#,
     )

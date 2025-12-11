@@ -219,26 +219,29 @@ macro_rules! impl_repository {
         { $( $insert_col:ident ),* $(,)? },
         { $( $update_col:ident ),* $(,)? }
     ) => {
-        pub struct $repo<'a> {
-            conn: &'a mut diesel::SqliteConnection,
+        use ::std::rc::Rc;
+        use ::std::cell::RefCell;
+
+        pub struct $repo {
+            conn: Rc<RefCell<diesel::SqliteConnection>>,
         }
 
-        impl<'a> $repo<'a> {
-            pub fn new(conn: &'a mut diesel::SqliteConnection) -> Self {
+        impl $repo {
+            pub fn new(conn: Rc<RefCell<diesel::SqliteConnection>>) -> Self {
                 $repo { conn }
             }
         }
 
-        impl<'a> crate::core::GenericRepository<$entity> for $repo<'a> {
+        impl crate::core::GenericRepository<$entity> for $repo {
             fn insert(&mut self, entity: &$entity) -> Result<i32, Box<dyn std::error::Error>> {
                 use diesel::prelude::*;
                 // 插入时只插入指定列，排除 id（由数据库自增）
                 diesel::insert_into($table::table)
                     .values(( $( $table::$insert_col.eq(&entity.$insert_col), )* ))
-                    .execute(self.conn)?;
+                    .execute(&mut *self.conn.borrow_mut())?;
                 // 获取最后插入的 id
                 let last_id: i32 = diesel::select(diesel::dsl::sql::<diesel::sql_types::Integer>("last_insert_rowid()"))
-                    .get_result(self.conn)?;
+                    .get_result(&mut *self.conn.borrow_mut())?;
                 Ok(last_id)
             }
 
@@ -246,14 +249,14 @@ macro_rules! impl_repository {
                 use diesel::prelude::*;
                 let result = $table::table
                     .filter($table::id.eq(id))
-                    .first::<$entity>(self.conn)
+                    .first::<$entity>(&mut *self.conn.borrow_mut())
                     .optional()?;
                 Ok(result)
             }
 
             fn find_all(&mut self) -> Result<Vec<$entity>, Box<dyn std::error::Error>> {
                 use diesel::prelude::*;
-                let results = $table::table.load::<$entity>(self.conn)?;
+                let results = $table::table.load::<$entity>(&mut *self.conn.borrow_mut())?;
                 Ok(results)
             }
 
@@ -262,14 +265,14 @@ macro_rules! impl_repository {
                 use crate::core::Creatable;
                 diesel::update($table::table.filter($table::id.eq(entity.id())))
                     .set(( $( $table::$update_col.eq(&entity.$update_col), )* ))
-                    .execute(self.conn)?;
+                    .execute(&mut *self.conn.borrow_mut())?;
                 Ok(())
             }
 
             fn delete(&mut self, id: i32) -> Result<(), Box<dyn std::error::Error>> {
                 use diesel::prelude::*;
                 diesel::delete($table::table.filter($table::id.eq(id)))
-                    .execute(self.conn)?;
+                    .execute(&mut *self.conn.borrow_mut())?;
                 Ok(())
             }
         }

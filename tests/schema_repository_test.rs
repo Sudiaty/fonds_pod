@@ -19,8 +19,8 @@ fn setup_test_db(test_name: &str) -> String {
 #[test]
 fn test_schema_repository_insert_and_find() {
     let path = setup_test_db("insert_and_find");
-    let mut conn = establish_connection(Path::new(&path)).unwrap();
-    let mut repo = SchemaRepository::new(&mut conn);
+    let conn = establish_connection(Path::new(&path)).unwrap();
+    let mut repo = SchemaRepository::new(conn);
 
     // 使用 create 方法，自动设置 created_at，返回自增 id
     let new_id = repo.create(Schema { schema_no: "S001".into(), name: "Test Schema".into(), sort_order: 1, ..Default::default() }).unwrap();
@@ -50,8 +50,8 @@ fn test_schema_repository_insert_and_find() {
 #[test]
 fn test_schema_repository_find_all() {
     let path = setup_test_db("find_all");
-    let mut conn = establish_connection(Path::new(&path)).unwrap();
-    let mut repo = SchemaRepository::new(&mut conn);
+    let conn = establish_connection(Path::new(&path)).unwrap();
+    let mut repo = SchemaRepository::new(conn);
 
     repo.create(Schema { schema_no: "S001".into(), name: "Schema 1".into(), ..Default::default() }).unwrap();
     repo.create(Schema { schema_no: "S002".into(), name: "Schema 2".into(), ..Default::default() }).unwrap();
@@ -65,8 +65,8 @@ fn test_schema_repository_find_all() {
 #[test]
 fn test_schema_repository_update() {
     let path = setup_test_db("update");
-    let mut conn = establish_connection(Path::new(&path)).unwrap();
-    let mut repo = SchemaRepository::new(&mut conn);
+    let conn = establish_connection(Path::new(&path)).unwrap();
+    let mut repo = SchemaRepository::new(conn);
 
     let new_id = repo.create(Schema { schema_no: "S001".into(), name: "Original Name".into(), ..Default::default() }).unwrap();
 
@@ -83,8 +83,8 @@ fn test_schema_repository_update() {
 #[test]
 fn test_schema_repository_delete() {
     let path = setup_test_db("delete");
-    let mut conn = establish_connection(Path::new(&path)).unwrap();
-    let mut repo = SchemaRepository::new(&mut conn);
+    let conn = establish_connection(Path::new(&path)).unwrap();
+    let mut repo = SchemaRepository::new(conn);
 
     let new_id = repo.create(Schema { schema_no: "S001".into(), name: "Test Schema".into(), ..Default::default() }).unwrap();
 
@@ -103,8 +103,8 @@ fn test_schema_repository_delete() {
 #[test]
 fn test_schema_repository_sortable() {
     let path = setup_test_db("sortable");
-    let mut conn = establish_connection(Path::new(&path)).unwrap();
-    let mut repo = SchemaRepository::new(&mut conn);
+    let conn = establish_connection(Path::new(&path)).unwrap();
+    let mut repo = SchemaRepository::new(conn);
 
     // Create schemas with different sort orders
     let id1 = repo.create(Schema { schema_no: "S001".into(), name: "Schema 1".into(), sort_order: 3, ..Default::default() }).unwrap();

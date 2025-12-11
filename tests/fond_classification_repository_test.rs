@@ -17,8 +17,8 @@ fn setup_test_db(test_name: &str) -> String {
 #[test]
 fn test_fond_classifications_repository() {
     let db_path = setup_test_db("fond_classification");
-    let mut conn = establish_connection(Path::new(&db_path)).unwrap();
-    let mut repo = FondClassificationsRepository::new(&mut conn);
+    let conn = establish_connection(Path::new(&db_path)).unwrap();
+    let mut repo = FondClassificationsRepository::new(conn);
 
     // Test create
     let classification = FondClassification {
