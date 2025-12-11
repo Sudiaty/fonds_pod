@@ -4,11 +4,14 @@ fn main() {
         println!("cargo:rustc-env=APP_VERSION=dev");
     }
 
-    println!("Compiling Slint...");
+    println!("Compiling Slint with translations...");
+    
+    // Compile the UI with bundled translations (like fonds_pod-legacy)
     slint_build::compile_with_config(
         "./ui/app-window.slint",
         slint_build::CompilerConfiguration::new().with_bundled_translations("./ui/locale"),
     ).expect("Slint build failed");
+    
     println!("Slint compiled successfully");
 
     // Embed Windows resources (icon for tray)

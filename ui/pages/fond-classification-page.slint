@@ -1,0 +1,177 @@
+import { VerticalBox, HorizontalBox, ScrollView } from "std-widgets.slint";
+import { Theme, Layout } from "../theme.slint";
+import { CrudList } from "../components/crud-list.slint";
+import { CrudListItem, CrudListRowStyle, QuickAction, ContextMenuItem, DialogField, DialogFieldType } from "../models.slint";
+import { FormDialog } from "../components/dialogs.slint";
+
+// ============================================================================
+// Fond Classification Page Component - MVVM Architecture
+// ============================================================================
+export component FondClassificationPage inherits Rectangle {
+    // Top level classifications
+    in property <[CrudListItem]> classification_crud_items: [];
+    in-out property <int> selected_classification: 0;
+
+    // Child classifications
+    in property <[CrudListItem]> child_crud_items: [];
+    in-out property <int> selected_child: 0;
+
+    // Row styles for visual formatting
+    in property <[CrudListRowStyle]> classification_row_styles: [];
+    in property <[CrudListRowStyle]> child_row_styles: [];
+
+    // Dialog states
+    in-out property <bool> show_add_top_classification_dialog: false;
+    in-out property <bool> show_add_child_classification_dialog: false;
+    in-out property <[DialogField]> add_top_classification_fields: [
+        { label: "label_code", field_type: DialogFieldType.text, value: "", placeholder: @tr("" => "placeholder_code") },
+        { label: "label_name", field_type: DialogFieldType.text, value: "", placeholder: @tr("" => "placeholder_name") },
+    ];
+    in-out property <[DialogField]> add_child_classification_fields: [
+        { label: "label_code", field_type: DialogFieldType.text, value: "", placeholder: @tr("" => "placeholder_child_code") },
+        { label: "label_name", field_type: DialogFieldType.text, value: "", placeholder: @tr("" => "placeholder_child_name") },
+    ];
+
+    // Callbacks for top level classifications
+    callback add_classification();
+    callback delete_classification();
+    callback classification_item_clicked(int);
+    callback classification_item_activated(int);  // Callback for when item is activated
+    callback activate_top_classification(int);    // Activate by id
+    callback deactivate_top_classification(int);  // Deactivate by id
+    callback export_classifications();
+    callback import_classifications();
+
+    // Callbacks for child classifications
+    callback add_child_classification();
+    callback delete_child_classification();
+    callback child_classification_clicked(int);
+    callback child_classification_activated(int);  // Callback for when child item is activated
+    callback activate_child_classification(int);   // Activate by id
+    callback deactivate_child_classification(int); // Deactivate by id
+
+    // Dialog callbacks
+    callback confirm_add_top_classification([DialogField]);
+    callback cancel_add_top_classification();
+    callback confirm_add_child_classification([DialogField]);
+    callback cancel_add_child_classification();
+
+    background: transparent;
+
+    HorizontalBox {
+        width: 100%;
+        height: 100%;
+        spacing: 0px;
+
+    VerticalBox {
+        horizontal-stretch: 0.4;
+        padding: Layout.standard_padding;
+        spacing: Layout.standard_spacing;
+
+        CrudList {
+            vertical-stretch: 1;
+            title: @tr("" => "label_top_classifications");
+            items: root.classification_crud_items;
+            row-styles: root.classification_row_styles;
+            active-index <=> root.selected_classification;
+            show-add-button: true;
+            show-activate-menu: true;
+            activate-first-on-load: true;
+
+            // Toolbar actions: export and import
+            toolbar-actions: [
+                { icon: "📤", tooltip: @tr("" => "tooltip_export") },
+                { icon: "📥", tooltip: @tr("" => "tooltip_import") }
+            ];
+
+            add-clicked => { root.add_classification(); }
+
+            toolbar-action-clicked(action_idx) => {
+                if action_idx == 0 {
+                    root.export_classifications();
+                } else if action_idx == 1 {
+                    root.import_classifications();
+                }
+            }
+
+            // item-clicked(index) => {
+            //     root.classification_item_clicked(index);
+            // }
+
+            item-activated(index) => {
+                root.classification_item_activated(index);
+            }
+
+            delete-clicked => { root.delete_classification(); }
+            activate-item(id) => { root.activate_top_classification(id); }
+            deactivate-item(id) => { root.deactivate_top_classification(id); }
+        }
+    }
+
+    Rectangle { width: Layout.separator_width; background: Theme.nav_border; }
+
+    VerticalBox {
+        horizontal-stretch: 0.6;
+        padding: Layout.standard_padding;
+        spacing: Layout.standard_spacing;
+
+        CrudList {
+            vertical-stretch: 1;
+            title: @tr("" => "label_child_classifications");
+            items: root.child_crud_items;
+            row-styles: root.child_row_styles;
+            active-index <=> root.selected_child;
+            show-add-button: true;
+            show-activate-menu: true;
+            activate-first-on-load: false;
+
+            add-clicked => { root.add_child_classification(); }
+            delete-clicked => { root.delete_child_classification(); }
+            activate-item(id) => { root.activate_child_classification(id); }
+            deactivate-item(id) => { root.deactivate_child_classification(id); }
+        }
+    }
+    }
+
+    // Add Top Level Classification Dialog (Modal Overlay - covers entire page, positioned on top)
+    if root.show_add_top_classification_dialog : FormDialog {
+        width: 100%;
+        height: 100%;
+        title: @tr("" => "dialog_add_classification");
+        current_language: 0; // TODO: Get from settings
+        fields: root.add_top_classification_fields;
+
+        confirm(fields) => {
+            root.confirm_add_top_classification(fields);
+        }
+
+        cancel => {
+            root.cancel_add_top_classification();
+        }
+
+        browse_folder(index) => {
+            // Not used for classification dialog
+        }
+    }
+
+    // Add Child Classification Dialog (Modal Overlay - covers entire page, positioned on top)
+    if root.show_add_child_classification_dialog : FormDialog {
+        width: 100%;
+        height: 100%;
+        title: @tr("" => "dialog_add_classification");
+        current_language: 0; // TODO: Get from settings
+        fields: root.add_child_classification_fields;
+
+        confirm(fields) => {
+            root.confirm_add_child_classification(fields);
+        }
+
+        cancel => {
+            root.cancel_add_child_classification();
+        }
+
+        browse_folder(index) => {
+            // Not used for classification dialog
+        }
+    }
+}
