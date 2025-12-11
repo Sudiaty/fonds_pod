@@ -348,7 +348,7 @@ export component CrudList inherits VerticalBox {
                             if root.show-activate-menu && item.active : MenuRow {
                                 text: @tr("menu_deactivate");
                                 icon: "⏸️";
-                                text-color: Theme.text_secondary;
+                                text-color: Theme.text_primary;
                                 on-clicked => {
                                     root.deactivate-item(item.id);
                                     item_context_menu.close();

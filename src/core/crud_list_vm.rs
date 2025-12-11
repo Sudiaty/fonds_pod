@@ -1,12 +1,21 @@
-use crate::{Creatable, core::GenericRepository, CrudListItem};
-use slint::{ModelRc, Model, VecModel};
-use std::rc::Rc;
+use crate::{core::GenericRepository, Creatable, CrudListItem};
+use slint::{Model, ModelRc, VecModel};
 use std::cell::RefCell;
 use std::marker::PhantomData;
+use std::rc::Rc;
 
 /// Trait to convert an entity to a CrudListItem
 pub trait ToCrudListItem {
     fn to_crud_list_item(&self) -> CrudListItem;
+}
+
+/// ActiveableCrudViewModel trait - 为支持激活/停用的CRUD ViewModel提供接口
+pub trait ActiveableCrudViewModel: CrudViewModelBase {
+    /// 激活指定ID的项
+    fn activate(&self, id: i32);
+
+    /// 停用指定ID的项
+    fn deactivate(&self, id: i32);
 }
 
 /// CrudViewModelBase trait - 为所有CRUD ViewModel提供通用接口
@@ -28,6 +37,16 @@ pub trait CrudViewModelBase {
 
     /// 删除指定索引的项
     fn delete(&self, index: i32);
+
+    /// 激活指定ID的项（如果支持activeable）
+    fn activate(&self, _id: i32) {
+        // 默认实现：什么都不做
+    }
+
+    /// 停用指定ID的项（如果支持activeable）
+    fn deactivate(&self, _id: i32) {
+        // 默认实现：什么都不做
+    }
 
     /// 刷新数据（默认实现调用load）
     fn refresh(&self) {
@@ -73,8 +92,26 @@ where
     }
 
     pub fn load(&self) {
-        let items = self.repo.borrow_mut().find_all().unwrap_or_default();
-        let crud_items: Vec<CrudListItem> = items.iter().map(|item| item.to_crud_list_item()).collect();
+        let items: Vec<T> = {
+            use std::any::Any;
+            let mut repo = self.repo.borrow_mut();
+            // Check if it's FondClassificationsRepository
+            if let Some(activeable_repo) = (&mut *repo as &mut dyn Any)
+                .downcast_mut::<crate::persistence::FondClassificationsRepository>(
+            ) {
+                // For FondClassificationsRepository, load ALL items (including inactive)
+                // UI will handle styling based on active status
+                use crate::core::GenericRepository;
+                let result: Vec<crate::models::fond_classification::FondClassification> =
+                    activeable_repo.find_all().unwrap_or_default();
+                // Unsafe cast - we know this is safe because T is FondClassification in this context
+                unsafe { std::mem::transmute(result) }
+            } else {
+                repo.find_all().unwrap_or_default()
+            }
+        };
+        let crud_items: Vec<CrudListItem> =
+            items.iter().map(|item| item.to_crud_list_item()).collect();
         self.items.set_vec(crud_items);
     }
 
@@ -88,16 +125,158 @@ where
 
     pub fn delete(&self, index: usize) {
         if let Some(item) = self.items.row_data(index) {
-             let mut repo = self.repo.borrow_mut();
-             if repo.delete(item.id).is_ok() {
-                 self.items.remove(index);
-             }
+            let mut repo = self.repo.borrow_mut();
+            if repo.delete(item.id).is_ok() {
+                self.items.remove(index);
+            }
         }
     }
-    
+
+    pub fn activate(&self, id: i32) {
+        use std::any::Any;
+        {
+            let mut repo = self.repo.borrow_mut();
+            // Check if it's FondClassificationsRepository
+            if let Some(activeable_repo) = (&mut *repo as &mut dyn Any)
+                .downcast_mut::<crate::persistence::FondClassificationsRepository>(
+            ) {
+                use crate::core::ActiveableRepository;
+                if activeable_repo.activate(id).is_ok() {
+                    // 重新加载数据 - 需要在borrow结束后调用
+                    drop(repo);
+                    self.load();
+                    return;
+                }
+            }
+        }
+        // 如果不是activeable repo，什么都不做
+    }
+
+    pub fn deactivate(&self, id: i32) {
+        use std::any::Any;
+        {
+            let mut repo = self.repo.borrow_mut();
+            // Check if it's FondClassificationsRepository
+            if let Some(activeable_repo) = (&mut *repo as &mut dyn Any)
+                .downcast_mut::<crate::persistence::FondClassificationsRepository>(
+            ) {
+                use crate::core::ActiveableRepository;
+                if activeable_repo.deactivate(id).is_ok() {
+                    // 重新加载数据 - 需要在borrow结束后调用
+                    drop(repo);
+                    self.load();
+                    return;
+                }
+            }
+        }
+        // 如果不是activeable repo，什么都不做
+    }
+
     pub fn get_items(&self) -> ModelRc<CrudListItem> {
         ModelRc::from(self.items.clone())
     }
+}
+
+/// 为支持activeable的CrudViewModel自动生成ActiveableCrudViewModel实现
+///
+/// 此宏需要：
+/// - 一个包含 `inner: CrudViewModel<T, R>` 字段的结构体
+/// - 必须提供 `create_default()` 方法来生成新实体
+///
+/// # 示例
+/// ```ignore
+/// pub struct FondClassificationViewModel {
+///     inner: CrudViewModel<FondClassification, FondClassificationsRepository>,
+/// }
+///
+/// impl FondClassificationViewModel {
+///     fn create_default() -> FondClassification {
+///         FondClassification {
+///             id: 0,
+///             code: format!("C{:03}", chrono::Local::now().timestamp() % 1000),
+///             ..Default::default()
+///         }
+///     }
+/// }
+///
+/// impl_activeable_crud_vm_base!(FondClassificationViewModel, "FondClassificationViewModel", FondClassification);
+/// ```
+#[macro_export]
+macro_rules! impl_activeable_crud_vm_base {
+    ($vm_type:ty, $vm_name:expr, $entity_type:ty) => {
+        impl $crate::ActiveableCrudViewModel for $vm_type {
+            fn activate(&self, id: i32) {
+                log::info!("{}: Activating item with id {}", Self::vm_name(), id);
+                self.inner.activate(id);
+                log::info!(
+                    "{}: Activated item, current count: {}",
+                    Self::vm_name(),
+                    self.inner.items.row_count()
+                );
+            }
+
+            fn deactivate(&self, id: i32) {
+                log::info!("{}: Deactivating item with id {}", Self::vm_name(), id);
+                self.inner.deactivate(id);
+                log::info!(
+                    "{}: Deactivated item, current count: {}",
+                    Self::vm_name(),
+                    self.inner.items.row_count()
+                );
+            }
+        }
+
+        impl $crate::core::CrudViewModelBase for $vm_type {
+            fn vm_name() -> &'static str {
+                $vm_name
+            }
+
+            fn load(&self) {
+                log::info!("{}: Loading data", Self::vm_name());
+                self.inner.load();
+                log::info!(
+                    "{}: Loaded {} items",
+                    Self::vm_name(),
+                    self.inner.items.row_count()
+                );
+            }
+
+            fn get_items(&self) -> slint::ModelRc<crate::CrudListItem> {
+                self.inner.get_items()
+            }
+
+            fn add(&self) {
+                log::info!("{}: Adding new item", Self::vm_name());
+                let new_item = <$vm_type>::create_default();
+                self.inner.add(new_item);
+                log::info!(
+                    "{}: Added item, total count: {}",
+                    Self::vm_name(),
+                    self.inner.items.row_count()
+                );
+            }
+
+            fn delete(&self, index: i32) {
+                log::info!("{}: Deleting item at index {}", Self::vm_name(), index);
+                if index >= 0 {
+                    self.inner.delete(index as usize);
+                    log::info!(
+                        "{}: Deleted item, remaining count: {}",
+                        Self::vm_name(),
+                        self.inner.items.row_count()
+                    );
+                }
+            }
+
+            fn activate(&self, id: i32) {
+                $crate::ActiveableCrudViewModel::activate(self, id);
+            }
+
+            fn deactivate(&self, id: i32) {
+                $crate::ActiveableCrudViewModel::deactivate(self, id);
+            }
+        }
+    };
 }
 
 /// 为CrudViewModel<T, R>自动生成标准的load/add/delete/get_items实现
@@ -168,6 +347,26 @@ macro_rules! impl_crud_vm_base {
                         self.inner.items.row_count()
                     );
                 }
+            }
+
+            fn activate(&self, id: i32) {
+                log::info!("{}: Activating item with id {}", Self::vm_name(), id);
+                self.inner.activate(id);
+                log::info!(
+                    "{}: Activated item, current count: {}",
+                    Self::vm_name(),
+                    self.inner.items.row_count()
+                );
+            }
+
+            fn deactivate(&self, id: i32) {
+                log::info!("{}: Deactivating item with id {}", Self::vm_name(), id);
+                self.inner.deactivate(id);
+                log::info!(
+                    "{}: Deactivated item, current count: {}",
+                    Self::vm_name(),
+                    self.inner.items.row_count()
+                );
             }
         }
     };

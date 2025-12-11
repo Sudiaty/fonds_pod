@@ -34,7 +34,7 @@ export component FondClassificationPage inherits Rectangle {
 
     // Callbacks for top level classifications
     callback add_classification();
-    callback delete_classification();
+    callback delete_classification(int);
     callback classification_item_clicked(int);
     callback classification_item_activated(int);  // Callback for when item is activated
     callback activate_top_classification(int);    // Activate by id
@@ -102,7 +102,7 @@ export component FondClassificationPage inherits Rectangle {
                 root.classification_item_activated(index);
             }
 
-            delete-clicked => { root.delete_classification(); }
+            delete-clicked => { root.delete_classification(self.active-index); }
             activate-item(id) => { root.activate_top_classification(id); }
             deactivate-item(id) => { root.deactivate_top_classification(id); }
         }

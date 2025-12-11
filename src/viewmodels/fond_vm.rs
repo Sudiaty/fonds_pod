@@ -1,22 +1,21 @@
 use crate::core::CrudViewModel;
 use crate::models::Fond;
 use crate::persistence::FondsRepository;
-use std::rc::Rc;
-use std::cell::RefCell;
-use slint::{Model, ComponentHandle};
-use crate::CrudListItem;
 use crate::AppWindow;
+use crate::CrudListItem;
+use slint::{ComponentHandle, Model};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 /// Fond（全宗）管理ViewModel
-/// 
+///
 /// 此ViewModel通过复用CrudViewModelBase trait和宏，提供了极简的实现。
 /// 只需实现 `create_default()` 方法来定义新项的默认值。
 pub struct FondViewModel {
     inner: CrudViewModel<Fond, FondsRepository>,
 }
-
 impl FondViewModel {
-    /// 创建新的 FondViewModel 实例
+    /// 创建新的FondViewModel实例
     pub fn new(repo: Rc<RefCell<FondsRepository>>) -> Self {
         let inner = CrudViewModel::new(repo);
         Self { inner }
@@ -26,7 +25,7 @@ impl FondViewModel {
     fn create_default() -> Fond {
         use std::sync::atomic::{AtomicU32, Ordering};
         static COUNTER: AtomicU32 = AtomicU32::new(1);
-        
+
         let count = COUNTER.fetch_add(1, Ordering::SeqCst);
         Fond {
             id: 0,
@@ -43,12 +42,9 @@ impl FondViewModel {
     }
 
     /// 为UI设置CRUD回调 - 标准实现在这里
-    pub fn setup_callbacks(
-        vm: Rc<RefCell<Self>>,
-        ui_handle: &AppWindow,
-    ) {
+    pub fn setup_callbacks(vm: Rc<RefCell<Self>>, ui_handle: &AppWindow) {
         use crate::core::CrudViewModelBase;
-        
+
         // Add callback
         let vm_clone = vm.clone();
         let ui_weak = ui_handle.as_weak();
@@ -69,7 +65,10 @@ impl FondViewModel {
         let vm_clone = vm.clone();
         let ui_weak = ui_handle.as_weak();
         ui_handle.on_fond_delete(move |idx| {
-            log::info!("FondViewModel::setup_callbacks: delete triggered for index {}", idx);
+            log::info!(
+                "FondViewModel::setup_callbacks: delete triggered for index {}",
+                idx
+            );
             if let Some(ui) = ui_weak.upgrade() {
                 vm_clone.borrow().delete(idx);
                 let items = vm_clone.borrow().get_items();

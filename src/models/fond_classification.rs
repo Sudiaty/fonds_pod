@@ -1,7 +1,7 @@
+use crate::{impl_activeable, impl_creatable, impl_sortable};
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
-use chrono::NaiveDateTime;
-use crate::{impl_creatable, impl_activeable, impl_sortable};
 
 table! {
     fond_classifications (id) {
@@ -58,3 +58,17 @@ pub struct FondClassification {
 impl_creatable!(FondClassification);
 impl_activeable!(FondClassification);
 impl_sortable!(FondClassification);
+
+use crate::core::ToCrudListItem;
+use crate::CrudListItem;
+
+impl ToCrudListItem for FondClassification {
+    fn to_crud_list_item(&self) -> CrudListItem {
+        CrudListItem {
+            id: self.id,
+            title: self.name.clone().into(),
+            subtitle: self.code.clone().into(),
+            active: self.active,
+        }
+    }
+}
