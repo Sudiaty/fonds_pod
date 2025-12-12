@@ -158,6 +158,46 @@ msgid "label_path"
 msgstr "路径"
 
 msgctxt ""
+msgid "label_code"
+msgstr "代码"
+
+msgctxt ""
+msgid "placeholder_code"
+msgstr "输入分类代码"
+
+msgctxt ""
+msgid "placeholder_name"
+msgstr "输入分类名称"
+
+msgctxt ""
+msgid "placeholder_child_code"
+msgstr "输入子分类代码"
+
+msgctxt ""
+msgid "placeholder_child_name"
+msgstr "输入子分类名称"
+
+msgctxt ""
+msgid "label_top_classifications"
+msgstr "顶级分类"
+
+msgctxt ""
+msgid "tooltip_export"
+msgstr "导出分类"
+
+msgctxt ""
+msgid "tooltip_import"
+msgstr "导入分类"
+
+msgctxt ""
+msgid "label_child_classifications"
+msgstr "子分类"
+
+msgctxt ""
+msgid "dialog_add_classification"
+msgstr "添加分类"
+
+msgctxt ""
 msgid "btn_cancel"
 msgstr "取消"
 

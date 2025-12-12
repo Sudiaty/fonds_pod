@@ -70,7 +70,7 @@ impl FondViewModel {
                 idx
             );
             if let Some(ui) = ui_weak.upgrade() {
-                vm_clone.borrow().delete(idx);
+                let _ = vm_clone.borrow().delete(idx);
                 let items = vm_clone.borrow().get_items();
                 log::info!(
                     "FondViewModel::setup_callbacks: Setting {} items to UI",

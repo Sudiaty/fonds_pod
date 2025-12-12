@@ -3,11 +3,11 @@ use std::rc::Rc;
 
 use fonds_pod_lib::services::SettingsService;
 use fonds_pod_lib::viewmodels::{
-    AboutViewModel, FondClassificationViewModel, FondViewModel, HomeViewModel, SettingsViewModel,
+    AboutViewModel, FondClassificationViewModel, FondViewModel, HomeViewModel, SchemaViewModel, SchemaItemViewModel, SettingsViewModel,
 };
 use fonds_pod_lib::AppWindow;
 use fonds_pod_lib::CrudViewModelBase;
-use slint::{ComponentHandle, Model};
+use slint::{ComponentHandle, Model, Timer};
 
 // 使用类型别名简化 Rc<RefCell<T>> 的使用
 type SharedVm<T> = Rc<RefCell<T>>;
@@ -18,9 +18,30 @@ pub struct App {
     pub home_vm: SharedVm<HomeViewModel>,
     pub fond_vm: SharedVm<FondViewModel>,
     pub fond_classification_vm: SharedVm<FondClassificationViewModel>,
+    pub schema_vm: SharedVm<SchemaViewModel>,
+    pub schema_item_vm: SharedVm<SchemaItemViewModel>,
 }
 
 impl App {
+    /// 获取数据库连接 - 从last_opened_library设置中获取SQLite数据库路径
+    fn get_database_connection(settings_service: &SettingsService) -> Rc<RefCell<diesel::SqliteConnection>> {
+        let db_path = if let Ok(Some(path)) = settings_service.get_last_opened_library() {
+            let db = std::path::PathBuf::from(&path).join(".fondspod.db");
+            log::info!("App: Using database at: {:?}", db);
+            db
+        } else {
+            log::warn!("App: No last_opened_library found, using in-memory database");
+            std::path::PathBuf::from(":memory:")
+        };
+
+        fonds_pod_lib::persistence::establish_connection(&db_path).unwrap_or_else(|_| {
+            fonds_pod_lib::persistence::establish_connection(&std::path::PathBuf::from(
+                ":memory:",
+            ))
+            .unwrap()
+        })
+    }
+
     pub fn initialize(ui_handle: &AppWindow) -> Self {
         let settings_service = Rc::new(SettingsService::new());
 
@@ -56,37 +77,31 @@ impl App {
         ));
         fond_classification_vm.borrow().load();
 
+        // Initialize Schema ViewModel
+        let schema_vm = Rc::new(RefCell::new(Self::initialize_schema_vm(&settings_service)));
+        schema_vm.borrow().load();
+
+        // Initialize Schema Item ViewModel
+        let schema_item_vm = Rc::new(RefCell::new(Self::initialize_schema_item_vm(&settings_service)));
+        schema_item_vm.borrow().load();
+
         App {
             settings_vm,
             about_vm,
             home_vm,
             fond_vm,
             fond_classification_vm,
+            schema_vm,
+            schema_item_vm,
         }
     }
 
     /// 初始化Fond ViewModel和数据库连接
     fn initialize_fond_vm(settings_service: &SettingsService) -> FondViewModel {
-        // Initialize DB connection from last_opened_library in settings
-        let db_path = if let Ok(Some(path)) = settings_service.get_last_opened_library() {
-            let db = std::path::PathBuf::from(&path).join(".fondspod.db");
-            log::info!("App: Using database at: {:?}", db);
-            db
-        } else {
-            log::warn!("App: No last_opened_library found, using in-memory database");
-            std::path::PathBuf::from(":memory:")
-        };
-
-        let conn =
-            fonds_pod_lib::persistence::establish_connection(&db_path).unwrap_or_else(|_| {
-                fonds_pod_lib::persistence::establish_connection(&std::path::PathBuf::from(
-                    ":memory:",
-                ))
-                .unwrap()
-            });
+        let conn = Self::get_database_connection(settings_service);
 
         let repo = Rc::new(RefCell::new(
-            fonds_pod_lib::persistence::FondsRepository::new(conn),
+            fonds_pod_lib::FondsRepository::new(conn),
         ));
         FondViewModel::new(repo)
     }
@@ -95,28 +110,32 @@ impl App {
     fn initialize_fond_classification_vm(
         settings_service: &SettingsService,
     ) -> FondClassificationViewModel {
-        // Initialize DB connection from last_opened_library in settings
-        let db_path = if let Ok(Some(path)) = settings_service.get_last_opened_library() {
-            let db = std::path::PathBuf::from(&path).join(".fondspod.db");
-            log::info!("App: Using database at: {:?}", db);
-            db
-        } else {
-            log::warn!("App: No last_opened_library found, using in-memory database");
-            std::path::PathBuf::from(":memory:")
-        };
-
-        let conn =
-            fonds_pod_lib::persistence::establish_connection(&db_path).unwrap_or_else(|_| {
-                fonds_pod_lib::persistence::establish_connection(&std::path::PathBuf::from(
-                    ":memory:",
-                ))
-                .unwrap()
-            });
+        let conn = Self::get_database_connection(settings_service);
 
         let repo = Rc::new(RefCell::new(
-            fonds_pod_lib::persistence::FondClassificationsRepository::new(conn),
+            fonds_pod_lib::FondClassificationsRepository::new(conn),
         ));
         FondClassificationViewModel::new(repo)
+    }
+
+    /// 初始化Schema ViewModel和数据库连接
+    fn initialize_schema_vm(settings_service: &SettingsService) -> SchemaViewModel {
+        let conn = Self::get_database_connection(settings_service);
+
+        let schema_repo = Rc::new(RefCell::new(
+            fonds_pod_lib::SchemaRepository::new(conn),
+        ));
+        SchemaViewModel::new(schema_repo)
+    }
+
+    /// 初始化Schema Item ViewModel和数据库连接
+    fn initialize_schema_item_vm(settings_service: &SettingsService) -> SchemaItemViewModel {
+        let conn = Self::get_database_connection(settings_service);
+
+        let schema_item_repo = Rc::new(RefCell::new(
+            fonds_pod_lib::SchemaItemRepository::new(conn),
+        ));
+        SchemaItemViewModel::new(schema_item_repo)
     }
 
     /// Setup all UI callbacks - 由各个 ViewModel 负责自己的回调
@@ -133,6 +152,23 @@ impl App {
             Rc::clone(&self.fond_classification_vm),
             ui_handle,
         );
+        SchemaViewModel::setup_callbacks(Rc::clone(&self.schema_vm), ui_handle);
+        SchemaItemViewModel::setup_callbacks(Rc::clone(&self.schema_item_vm), ui_handle);
+
+        // Schema selection callback
+        let schema_vm_clone = Rc::clone(&self.schema_vm);
+        let schema_item_vm_clone = Rc::clone(&self.schema_item_vm);
+        let ui_weak = ui_handle.as_weak();
+        ui_handle.on_schema_item_clicked(move |index| {
+            if let Some(item) = schema_vm_clone.borrow().get_items().row_data(index as usize) {
+                schema_item_vm_clone.borrow_mut().set_selected_schema_id(Some(item.id));
+                // TODO: reload schema items filtered by schema_id
+                if let Some(ui) = ui_weak.upgrade() {
+                    let items = schema_item_vm_clone.borrow().get_items();
+                    ui.set_detail_list_items(items);
+                }
+            }
+        });
 
         // Initial load for Fond VM
         let items = self.fond_vm.borrow().get_items();
@@ -148,7 +184,23 @@ impl App {
             "App: Initial setup: Setting {} classification items to UI",
             classification_items.row_count()
         );
-        ui_handle.set_classification_crud_items(classification_items);
+        ui_handle.set_classification_crud_items(classification_items.clone());
+
+        // Initialize child classifications for the first item if available
+        self.fond_classification_vm.borrow_mut().initialize_child_classifications();
+        let child_items = self.fond_classification_vm.borrow().get_child_items();
+        ui_handle.set_child_crud_items(child_items);
+
+        // Initial load for Schema VM
+        let schema_items = self.schema_vm.borrow().get_items();
+        log::info!(
+            "App: Initial setup: Setting {} schema items to UI",
+            schema_items.row_count()
+        );
+        ui_handle.set_schema_list_items(schema_items);
+
+        let schema_item_items = self.schema_item_vm.borrow().get_items();
+        ui_handle.set_detail_list_items(schema_item_items);
 
         // Setup common callbacks
         ui_handle.on_page_changed({
@@ -164,6 +216,14 @@ impl App {
                     log::info!("App: Toast message: {}", message);
                     ui.set_toast_message(message);
                     ui.set_toast_visible(true);
+                    
+                    // Schedule toast to disappear after 3 seconds using Slint Timer
+                    let ui_weak_clone = ui_weak.clone();
+                    Timer::single_shot(std::time::Duration::from_secs(3), move || {
+                        if let Some(ui) = ui_weak_clone.upgrade() {
+                            ui.set_toast_visible(false);
+                        }
+                    });
                 }
             }
         });

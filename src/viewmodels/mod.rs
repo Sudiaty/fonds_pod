@@ -1,5 +1,5 @@
 pub mod schema_vm;
-pub use schema_vm::SchemaViewModel;
+pub use schema_vm::{SchemaViewModel, SchemaItemViewModel};
 
 pub mod settings_vm;
 pub use settings_vm::{ArchiveLibraryUIItem, SettingsViewModel};

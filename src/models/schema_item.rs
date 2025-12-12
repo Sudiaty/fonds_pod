@@ -2,6 +2,8 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 use crate::impl_creatable;
+use crate::core::ToCrudListItem;
+use crate::CrudListItem;
 
 table! {
     schema_items (id) {
@@ -41,3 +43,14 @@ pub struct SchemaItem {
 }
 
 impl_creatable!(SchemaItem);
+
+impl ToCrudListItem for SchemaItem {
+    fn to_crud_list_item(&self) -> CrudListItem {
+        CrudListItem {
+            id: self.id,
+            title: self.item_name.clone().into(),
+            subtitle: self.item_no.clone().into(),
+            active: true,
+        }
+    }
+}

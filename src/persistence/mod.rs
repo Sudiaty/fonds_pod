@@ -20,6 +20,8 @@ pub use series_repository::SeriesRepository;
 pub use file_repository::FilesRepository;
 pub use item_repository::ItemsRepository;
 pub use config_repository::FileConfigRepository;
+pub use schema_repository::SchemaRepository;
+pub use schema_item_repository::SchemaItemRepository;
 
 use diesel::sqlite::SqliteConnection;
 use diesel::Connection;

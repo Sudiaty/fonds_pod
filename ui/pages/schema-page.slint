@@ -1,0 +1,83 @@
+import { VerticalBox, HorizontalBox } from "std-widgets.slint";
+import { Theme, Layout } from "../theme.slint";
+import { CrudList } from "../components/crud-list.slint";
+import { CrudListItem } from "../models.slint";
+
+// ============================================================================
+// Schema Page Component - MVVM Architecture
+// ============================================================================
+export component SchemaPage inherits Rectangle {
+    // Schema list
+    in property <[CrudListItem]> schema_list_items: [];
+
+    // Schema item details
+    in property <[CrudListItem]> detail_list_items: [];
+
+    // Callbacks for schemas
+    callback add_schema();
+    callback delete_schema();
+    callback schema_item_clicked(int);
+    callback schema_activated(int);
+
+    // Callbacks for schema items
+    callback add_schema_item();
+    callback delete_schema_item();
+    callback schema_item_item_clicked(int);
+    callback schema_item_activated(int);
+
+    background: transparent;
+
+    HorizontalBox {
+        width: 100%;
+        height: 100%;
+        spacing: 0px;
+
+        VerticalBox {
+            horizontal-stretch: 0.4;
+            padding: Layout.standard_padding;
+            spacing: Layout.standard_spacing;
+
+            CrudList {
+                vertical-stretch: 1;
+                title: @tr("label_schema");
+                items: root.schema_list_items;
+                show-add-button: true;
+                activate-first-on-load: true;
+
+                add-clicked => { root.add_schema(); }
+                item-clicked(index) => {
+                    root.schema_item_clicked(index);
+                }
+                item-activated(index) => {
+                    root.schema_activated(index);
+                }
+                delete-clicked => { root.delete_schema(); }
+            }
+        }
+
+        Rectangle { width: Layout.separator_width; background: Theme.nav_border; }
+
+        VerticalBox {
+            horizontal-stretch: 0.6;
+            padding: Layout.standard_padding;
+            spacing: Layout.standard_spacing;
+
+            CrudList {
+                vertical-stretch: 1;
+                title: @tr("label_items");
+                items: root.detail_list_items;
+                show-add-button: true;
+                activate-first-on-load: false;
+
+                add-clicked => { root.add_schema_item(); }
+                item-clicked(index) => {
+                    root.schema_item_item_clicked(index);
+                }
+                item-activated(index) => {
+                    root.schema_item_activated(index);
+                }
+                delete-clicked => { root.delete_schema_item(); }
+            }
+        }
+    }
+}

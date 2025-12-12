@@ -7,6 +7,7 @@ import { SettingsPage } from "pages/settings-page.slint";
 import { HomePage } from "pages/home-page.slint";
 import { FondClassificationPage } from "pages/fond-classification-page.slint";
 import { FondPage } from "pages/fond-page.slint";
+import { SchemaPage } from "pages/schema-page.slint";
 import { CrudListItem, CrudListRowStyle, DialogField, DialogFieldType } from "models.slint";
 
 export component AppWindow inherits Window {
@@ -57,6 +58,18 @@ export component AppWindow inherits Window {
     callback fond_add();
     callback fond_delete(int);
     
+    // Schema page properties
+    in property <[CrudListItem]> schema_list_items: [];
+    in property <[CrudListItem]> detail_list_items: [];
+    callback schema_add();
+    callback schema_delete();
+    callback schema_item_clicked(int);
+    callback schema_activated(int);
+    callback schema_item_add();
+    callback schema_item_delete();
+    callback schema_item_item_clicked(int);
+    callback schema_item_activated(int);
+    
     // Fond Classification page properties
     in property <[CrudListItem]> classification_crud_items: [];
     in-out property <int> selected_classification: 0;
@@ -106,7 +119,7 @@ export component AppWindow inherits Window {
     callback export_classifications();
     callback import_classifications();
     callback add_child_classification();
-    callback delete_child_classification();
+    callback delete_child_classification(int);
     callback child_classification_clicked(int);
     callback child_classification_activated(int);  // Callback for child item activation
     callback activate_child_classification(int);   // Activate by id
@@ -240,7 +253,7 @@ export component AppWindow inherits Window {
                     export_classifications => { root.export_classifications(); }
                     import_classifications => { root.import_classifications(); }
                     add_child_classification => { root.add_child_classification(); }
-                    delete_child_classification => { root.delete_child_classification(); }
+                    delete_child_classification(index) => { root.delete_child_classification(index); }
                     child_classification_clicked(index) => { root.child_classification_clicked(index); }
                     child_classification_activated(index) => { root.child_classification_activated(index); }
                     activate_child_classification(id) => { root.activate_child_classification(id); }
@@ -255,7 +268,22 @@ export component AppWindow inherits Window {
                     delete-clicked(idx) => { root.fond_delete(idx); }
                 }
                 
-                if root.current_page != "about" && root.current_page != "settings" && root.current_page != "home" && root.current_page != "classification" && root.current_page != "fonds" : Text {
+                if root.current_page == "schema" : SchemaPage {
+                    width: parent.width;
+                    height: parent.height;
+                    schema_list_items: root.schema_list_items;
+                    detail_list_items: root.detail_list_items;
+                    add_schema => { root.schema_add(); }
+                    delete_schema => { root.schema_delete(); }
+                    schema_item_clicked(index) => { root.schema_item_clicked(index); }
+                    schema_activated(index) => { root.schema_activated(index); }
+                    add_schema_item => { root.schema_item_add(); }
+                    delete_schema_item => { root.schema_item_delete(); }
+                    schema_item_item_clicked(index) => { root.schema_item_item_clicked(index); }
+                    schema_item_activated(index) => { root.schema_item_activated(index); }
+                }
+                
+                if root.current_page != "about" && root.current_page != "settings" && root.current_page != "home" && root.current_page != "classification" && root.current_page != "fonds" && root.current_page != "schema" : Text {
                     x: parent.width / 2 - self.width / 2;
                     y: parent.height / 2 - self.height / 2;
                     text: "Current Page: " + root.current_page;

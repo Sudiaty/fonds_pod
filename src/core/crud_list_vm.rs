@@ -36,7 +36,7 @@ pub trait CrudViewModelBase {
     fn add(&self);
 
     /// 删除指定索引的项
-    fn delete(&self, index: i32);
+    fn delete(&self, index: i32) -> Result<(), String>;
 
     /// 激活指定ID的项（如果支持activeable）
     fn activate(&self, _id: i32) {
@@ -99,11 +99,10 @@ where
             if let Some(activeable_repo) = (&mut *repo as &mut dyn Any)
                 .downcast_mut::<crate::persistence::FondClassificationsRepository>(
             ) {
-                // For FondClassificationsRepository, load ALL items (including inactive)
+                // For FondClassificationsRepository, load only top-level items (parent_id is NULL)
                 // UI will handle styling based on active status
-                use crate::core::GenericRepository;
                 let result: Vec<crate::models::fond_classification::FondClassification> =
-                    activeable_repo.find_all().unwrap_or_default();
+                    activeable_repo.find_by_parent_id(None).unwrap_or_default();
                 // Unsafe cast - we know this is safe because T is FondClassification in this context
                 unsafe { std::mem::transmute(result) }
             } else {
@@ -123,12 +122,18 @@ where
         }
     }
 
-    pub fn delete(&self, index: usize) {
+    pub fn delete(&self, index: usize) -> Result<(), String> {
         if let Some(item) = self.items.row_data(index) {
             let mut repo = self.repo.borrow_mut();
-            if repo.delete(item.id).is_ok() {
-                self.items.remove(index);
+            match repo.delete(item.id) {
+                Ok(_) => {
+                    self.items.remove(index);
+                    Ok(())
+                }
+                Err(e) => Err(format!("删除失败: {}", e)),
             }
+        } else {
+            Err("项目未找到".to_string())
         }
     }
 
@@ -256,15 +261,25 @@ macro_rules! impl_activeable_crud_vm_base {
                 );
             }
 
-            fn delete(&self, index: i32) {
+            fn delete(&self, index: i32) -> Result<(), String> {
                 log::info!("{}: Deleting item at index {}", Self::vm_name(), index);
                 if index >= 0 {
-                    self.inner.delete(index as usize);
-                    log::info!(
-                        "{}: Deleted item, remaining count: {}",
-                        Self::vm_name(),
-                        self.inner.items.row_count()
-                    );
+                    match self.inner.delete(index as usize) {
+                        Ok(_) => {
+                            log::info!(
+                                "{}: Deleted item, remaining count: {}",
+                                Self::vm_name(),
+                                self.inner.items.row_count()
+                            );
+                            Ok(())
+                        }
+                        Err(e) => {
+                            log::error!("{}: Failed to delete item: {}", Self::vm_name(), e);
+                            Err(e)
+                        }
+                    }
+                } else {
+                    Err("无效索引".to_string())
                 }
             }
 
@@ -337,15 +352,25 @@ macro_rules! impl_crud_vm_base {
                 );
             }
 
-            fn delete(&self, index: i32) {
+            fn delete(&self, index: i32) -> Result<(), String> {
                 log::info!("{}: Deleting item at index {}", Self::vm_name(), index);
                 if index >= 0 {
-                    self.inner.delete(index as usize);
-                    log::info!(
-                        "{}: Deleted item, remaining count: {}",
-                        Self::vm_name(),
-                        self.inner.items.row_count()
-                    );
+                    match self.inner.delete(index as usize) {
+                        Ok(_) => {
+                            log::info!(
+                                "{}: Deleted item, remaining count: {}",
+                                Self::vm_name(),
+                                self.inner.items.row_count()
+                            );
+                            Ok(())
+                        }
+                        Err(e) => {
+                            log::error!("{}: Failed to delete item: {}", Self::vm_name(), e);
+                            Err(e)
+                        }
+                    }
+                } else {
+                    Err("无效索引".to_string())
                 }
             }
 

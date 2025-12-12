@@ -44,7 +44,7 @@ export component FondClassificationPage inherits Rectangle {
 
     // Callbacks for child classifications
     callback add_child_classification();
-    callback delete_child_classification();
+    callback delete_child_classification(int);
     callback child_classification_clicked(int);
     callback child_classification_activated(int);  // Callback for when child item is activated
     callback activate_child_classification(int);   // Activate by id
@@ -126,7 +126,7 @@ export component FondClassificationPage inherits Rectangle {
             activate-first-on-load: false;
 
             add-clicked => { root.add_child_classification(); }
-            delete-clicked => { root.delete_child_classification(); }
+            delete-clicked => { root.delete_child_classification(self.active-index); }
             activate-item(id) => { root.activate_child_classification(id); }
             deactivate-item(id) => { root.deactivate_child_classification(id); }
         }

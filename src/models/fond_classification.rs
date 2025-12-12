@@ -72,3 +72,39 @@ impl ToCrudListItem for FondClassification {
         }
     }
 }
+
+/// 用于JSON导入导出的分类结构
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ClassificationJson {
+    pub code: String,
+    pub name: String,
+    pub active: bool,
+    pub children: Vec<ClassificationJson>,
+}
+
+impl ClassificationJson {
+    /// 从FondClassification创建ClassificationJson
+    pub fn from_fond_classification(classification: &FondClassification) -> Self {
+        Self {
+            code: classification.code.clone(),
+            name: classification.name.clone(),
+            active: classification.active,
+            children: Vec::new(),
+        }
+    }
+
+    /// 转换为FondClassification（用于导入）
+    pub fn to_fond_classification(&self, parent_id: Option<i32>, sort_order: i32) -> FondClassification {
+        FondClassification {
+            id: 0, // 由数据库生成
+            code: self.code.clone(),
+            name: self.name.clone(),
+            parent_id,
+            active: self.active,
+            sort_order,
+            created_by: "import".to_string(),
+            created_machine: std::env::var("COMPUTERNAME").unwrap_or_else(|_| "unknown".to_string()),
+            created_at: chrono::Utc::now().naive_utc(),
+        }
+    }
+}

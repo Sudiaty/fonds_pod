@@ -12,7 +12,10 @@ pub use core::{
 };
 
 // Re-export viewmodels
-pub use viewmodels::{AboutViewModel, ArchiveLibraryUIItem, SchemaViewModel, SettingsViewModel};
+pub use viewmodels::{AboutViewModel, ArchiveLibraryUIItem, SchemaViewModel, SchemaItemViewModel, SettingsViewModel};
+
+// Re-export repositories for convenience
+pub use persistence::{FondsRepository, FondClassificationsRepository, SchemaRepository, SchemaItemRepository};
 
 // Include Slint modules - this exports AppWindow, CrudListItem, DialogField, DialogFieldType, etc.
 slint::include_modules!();
