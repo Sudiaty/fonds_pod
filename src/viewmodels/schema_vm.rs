@@ -1,10 +1,13 @@
 use crate::core::CrudViewModel;
+use crate::core::CrudViewModelBase;
+use crate::core::GenericRepository;
 use crate::models::schema::Schema;
 use crate::persistence::schema_repository::SchemaRepository;
 use std::rc::Rc;
 use std::cell::RefCell;
 use slint::{Model, ComponentHandle};
 use crate::{CrudListItem, AppWindow};
+use chrono;
 
 /// Schema管理ViewModel
 ///
@@ -44,6 +47,12 @@ impl SchemaViewModel {
         self.inner.items.row_data(index)
     }
 
+    /// 更新数据库连接并重新加载数据
+    pub fn update_connection(&self, new_conn: Rc<RefCell<diesel::SqliteConnection>>) {
+        self.inner.get_repo().borrow_mut().update_connection(new_conn);
+        self.load();
+    }
+
     /// 设置选中的索引
     pub fn set_selected_index(&mut self, index: Option<usize>) {
         self.selected_index = index;
@@ -57,27 +66,101 @@ impl SchemaViewModel {
     /// 为UI设置CRUD回调 - 标准实现在这里
     pub fn setup_callbacks(
         vm: Rc<RefCell<Self>>,
+        schema_item_vm: Rc<RefCell<SchemaItemViewModel>>,
         ui_handle: &AppWindow,
     ) {
         use crate::core::CrudViewModelBase;
 
-        // Add callback
-        let vm_clone = vm.clone();
+        // Add callback - 显示对话框
         let ui_weak = ui_handle.as_weak();
         ui_handle.on_schema_add(move || {
-            log::info!("SchemaViewModel::setup_callbacks: add triggered");
-            vm_clone.borrow().add();
+            log::info!("SchemaViewModel::setup_callbacks: add triggered - showing dialog");
             if let Some(ui) = ui_weak.upgrade() {
-                let items = vm_clone.borrow().get_items();
-                ui.set_schema_list_items(items);
+                ui.set_show_add_schema_dialog(true);
             }
         });
 
-        // Schema activated callback - 设置选中索引
+        // Confirm add schema callback
+        let _vm_clone = vm.clone();
+        let schema_item_vm_clone = Rc::clone(&schema_item_vm);
+        let ui_weak = ui_handle.as_weak();
+        ui_handle.on_confirm_add_schema(move |fields| {
+            log::info!("SchemaViewModel::setup_callbacks: confirm add schema triggered");
+            if let Some(ui) = ui_weak.upgrade() {
+                // 解析字段
+                let mut code = String::new();
+                let mut name = String::new();
+                for field in fields.iter() {
+                    if field.label == "label_code" {
+                        code = field.value.to_string();
+                    } else if field.label == "label_name" {
+                        name = field.value.to_string();
+                    }
+                }
+
+                if !code.is_empty() && !name.is_empty() {
+                    // 创建新的Schema
+                    let mut new_schema = Schema {
+                        id: 0,
+                        schema_no: code,
+                        name,
+                        sort_order: 0,
+                        ..Default::default()
+                    };
+
+                    // 添加到数据库
+                    _vm_clone.borrow().inner.add(&mut new_schema);
+                    log::info!("Successfully added new schema with id {}", new_schema.id);
+                    // 重新加载数据
+                    _vm_clone.borrow().load();
+                    let items = _vm_clone.borrow().get_items();
+                    ui.set_schema_list_items(items);
+
+                    // 设置选中新添加的schema
+                    let items = _vm_clone.borrow().get_items();
+                    let new_index = items.row_count() - 1;
+                    _vm_clone.borrow_mut().set_selected_index(Some(new_index));
+
+                    // 设置schema_item的selected_schema_id
+                    schema_item_vm_clone.borrow_mut().set_selected_schema_id(Some(new_schema.id));
+                    // 加载schema items
+                    schema_item_vm_clone.borrow().load();
+                    let detail_items = schema_item_vm_clone.borrow().get_items();
+                    ui.set_detail_list_items(detail_items);
+
+                    ui.set_show_add_schema_dialog(false);
+                } else {
+                    log::warn!("Code or name is empty, not adding schema");
+                }
+            }
+        });
+
+        // Cancel add schema callback
+        let ui_weak = ui_handle.as_weak();
+        ui_handle.on_cancel_add_schema(move || {
+            log::info!("SchemaViewModel::setup_callbacks: cancel add schema triggered");
+            if let Some(ui) = ui_weak.upgrade() {
+                ui.set_show_add_schema_dialog(false);
+            }
+        });
+
+        // Schema activated callback - 设置选中索引和加载schema items
         let vm_clone = vm.clone();
+        let schema_item_vm_clone = Rc::clone(&schema_item_vm);
+        let ui_weak = ui_handle.as_weak();
         ui_handle.on_schema_activated(move |index| {
             log::info!("SchemaViewModel::setup_callbacks: schema activated for index {}", index);
             vm_clone.borrow_mut().set_selected_index(Some(index as usize));
+            
+            // 获取选中schema的id
+            if let Some(item) = vm_clone.borrow().get_items().row_data(index as usize) {
+                schema_item_vm_clone.borrow_mut().set_selected_schema_id(Some(item.id));
+                schema_item_vm_clone.borrow().load();
+                if let Some(ui) = ui_weak.upgrade() {
+                    let items = schema_item_vm_clone.borrow().get_items();
+                    ui.set_detail_list_items(items);
+                }
+            }
         });
 
         // Delete callback
@@ -134,6 +217,23 @@ impl SchemaViewModel {
             }
         });
     }
+
+    /// 自定义delete方法 - 检查是否是Year Schema
+    pub fn delete(&self, index: i32) -> Result<(), String> {
+        let index_usize = index as usize;
+        
+        // 获取要删除的项
+        if let Some(item) = self.inner.items.row_data(index_usize) {
+            // 检查是否是Year Schema
+            if let Ok(Some(schema)) = self.inner.get_repo().borrow_mut().find_by_id(item.id) {
+                if schema.schema_no == "Year" {
+                    return Err("Cannot delete the schema with code 'Year'".to_string());
+                }
+            }
+        }
+        
+        self.inner.delete(index_usize)
+    }
 }
 
 // 使用宏自动生成 CrudViewModelBase trait 实现
@@ -145,6 +245,7 @@ use crate::persistence::schema_item_repository::SchemaItemRepository;
 /// SchemaItem管理ViewModel
 pub struct SchemaItemViewModel {
     inner: CrudViewModel<SchemaItem, SchemaItemRepository>,
+    repo: Rc<RefCell<SchemaItemRepository>>,
     selected_schema_id: Option<i32>,
     selected_index: Option<usize>,
 }
@@ -152,18 +253,26 @@ pub struct SchemaItemViewModel {
 impl SchemaItemViewModel {
     /// 创建新的 SchemaItemViewModel 实例
     pub fn new(repo: Rc<RefCell<SchemaItemRepository>>) -> Self {
-        let inner = CrudViewModel::new(repo);
+        let inner = CrudViewModel::new(Rc::clone(&repo));
         Self {
             inner,
+            repo,
             selected_schema_id: None,
             selected_index: None,
         }
     }
 
+    /// 更新数据库连接并重新加载数据
+    pub fn update_connection(&self, new_conn: Rc<RefCell<diesel::SqliteConnection>>) {
+        self.repo.borrow_mut().update_connection(new_conn.clone());
+        self.inner.get_repo().borrow_mut().update_connection(new_conn);
+        self.load();
+    }
+
     /// 设置选中的schema id
     pub fn set_selected_schema_id(&mut self, schema_id: Option<i32>) {
         self.selected_schema_id = schema_id;
-        // TODO: filter items
+        self.load();
     }
 
     /// 设置选中的索引
@@ -181,15 +290,64 @@ impl SchemaItemViewModel {
         vm: Rc<RefCell<Self>>,
         ui_handle: &AppWindow,
     ) {
-        // Add callback
-        let vm_clone = vm.clone();
+        // Add callback - 显示对话框
         let ui_weak = ui_handle.as_weak();
         ui_handle.on_schema_item_add(move || {
-            log::info!("SchemaItemViewModel::setup_callbacks: add triggered");
-            vm_clone.borrow().add();
+            log::info!("SchemaItemViewModel::setup_callbacks: add triggered - showing dialog");
             if let Some(ui) = ui_weak.upgrade() {
-                let items = vm_clone.borrow().get_items();
-                ui.set_detail_list_items(items);
+                ui.set_show_add_schema_item_dialog(true);
+            }
+        });
+
+        // Confirm add schema item callback
+        let _vm_clone = vm.clone();
+        let ui_weak = ui_handle.as_weak();
+        ui_handle.on_confirm_add_schema_item(move |fields| {
+            log::info!("SchemaItemViewModel::setup_callbacks: confirm add schema item triggered");
+            if let Some(ui) = ui_weak.upgrade() {
+                // 解析字段
+                let mut code = String::new();
+                let mut name = String::new();
+                for field in fields.iter() {
+                    if field.label == "label_code" {
+                        code = field.value.to_string();
+                    } else if field.label == "label_name" {
+                        name = field.value.to_string();
+                    }
+                }
+
+                if !code.is_empty() && !name.is_empty() {
+                    // 创建新的SchemaItem
+                    let mut new_item = SchemaItem {
+                        id: 0,
+                        schema_id: _vm_clone.borrow().selected_schema_id.unwrap_or(0),
+                        item_no: code,
+                        item_name: name,
+                        created_by: String::new(),
+                        created_machine: String::new(),
+                        created_at: chrono::Utc::now().naive_utc(),
+                    };
+
+                    // 添加到数据库
+                    _vm_clone.borrow().inner.add(&mut new_item);
+                    log::info!("Successfully added new schema item");
+                    // 重新加载数据
+                    _vm_clone.borrow().load();
+                    let items = _vm_clone.borrow().get_items();
+                    ui.set_detail_list_items(items);
+                    ui.set_show_add_schema_item_dialog(false);
+                } else {
+                    log::warn!("Code or name is empty, not adding schema item");
+                }
+            }
+        });
+
+        // Cancel add schema item callback
+        let ui_weak = ui_handle.as_weak();
+        ui_handle.on_cancel_add_schema_item(move || {
+            log::info!("SchemaItemViewModel::setup_callbacks: cancel add schema item triggered");
+            if let Some(ui) = ui_weak.upgrade() {
+                ui.set_show_add_schema_item_dialog(false);
             }
         });
 
@@ -262,7 +420,7 @@ impl SchemaItemViewModel {
             static COUNTER: AtomicU32 = AtomicU32::new(1);
 
             let count = COUNTER.fetch_add(1, Ordering::SeqCst);
-            let item = SchemaItem {
+            let mut item = SchemaItem {
                 id: 0,
                 schema_id,
                 item_no: format!("I{:03}", count),
@@ -271,7 +429,7 @@ impl SchemaItemViewModel {
                 created_machine: String::new(),
                 created_at: chrono::Utc::now().naive_utc(),
             };
-            self.inner.add(item);
+            self.inner.add(&mut item);
         }
     }
 
@@ -287,7 +445,14 @@ impl SchemaItemViewModel {
 
     /// 自定义load方法
     pub fn load(&self) {
-        self.inner.load();
+        if let Some(schema_id) = self.selected_schema_id {
+            match self.repo.borrow_mut().find_by_schema_id(schema_id) {
+                Ok(items) => self.inner.set_items(items),
+                Err(e) => log::error!("Failed to load schema items: {}", e),
+            }
+        } else {
+            self.inner.set_items(vec![]);
+        }
     }
 }
 

@@ -152,23 +152,12 @@ impl App {
             Rc::clone(&self.fond_classification_vm),
             ui_handle,
         );
-        SchemaViewModel::setup_callbacks(Rc::clone(&self.schema_vm), ui_handle);
+        SchemaViewModel::setup_callbacks(
+            Rc::clone(&self.schema_vm),
+            Rc::clone(&self.schema_item_vm),
+            ui_handle,
+        );
         SchemaItemViewModel::setup_callbacks(Rc::clone(&self.schema_item_vm), ui_handle);
-
-        // Schema selection callback
-        let schema_vm_clone = Rc::clone(&self.schema_vm);
-        let schema_item_vm_clone = Rc::clone(&self.schema_item_vm);
-        let ui_weak = ui_handle.as_weak();
-        ui_handle.on_schema_item_clicked(move |index| {
-            if let Some(item) = schema_vm_clone.borrow().get_items().row_data(index as usize) {
-                schema_item_vm_clone.borrow_mut().set_selected_schema_id(Some(item.id));
-                // TODO: reload schema items filtered by schema_id
-                if let Some(ui) = ui_weak.upgrade() {
-                    let items = schema_item_vm_clone.borrow().get_items();
-                    ui.set_detail_list_items(items);
-                }
-            }
-        });
 
         // Initial load for Fond VM
         let items = self.fond_vm.borrow().get_items();
@@ -204,8 +193,50 @@ impl App {
 
         // Setup common callbacks
         ui_handle.on_page_changed({
+            let fond_vm = Rc::clone(&self.fond_vm);
+            let fond_classification_vm = Rc::clone(&self.fond_classification_vm);
+            let schema_vm = Rc::clone(&self.schema_vm);
+            let schema_item_vm = Rc::clone(&self.schema_item_vm);
+            let home_vm = Rc::clone(&self.home_vm);
+            let ui_weak = ui_handle.as_weak();
             move |page_name| {
                 log::info!("App: Navigated to page: {}", page_name);
+                if let Some(ui) = ui_weak.upgrade() {
+                    // Get current last_opened_library
+                    let last_opened_library = home_vm.borrow().last_opened_library.clone();
+                    if !last_opened_library.is_empty() {
+                        let db_path = std::path::PathBuf::from(&last_opened_library).join(".fondspod.db");
+                        let new_conn = fonds_pod_lib::persistence::establish_connection(&db_path).unwrap_or_else(|_| {
+                            fonds_pod_lib::persistence::establish_connection(&std::path::PathBuf::from(":memory:")).unwrap()
+                        });
+
+                        match page_name.as_str() {
+                            "fonds" => {
+                                fond_vm.borrow().update_connection(new_conn);
+                                let items = fond_vm.borrow().get_items();
+                                ui.set_fond_items(items);
+                            }
+                            "classification" => {
+                                let mut vm = fond_classification_vm.borrow_mut();
+                                vm.update_connection(new_conn);
+                                vm.initialize_child_classifications();
+                                let classification_items = vm.get_items();
+                                ui.set_classification_crud_items(classification_items.clone());
+                                let child_items = vm.get_child_items();
+                                ui.set_child_crud_items(child_items);
+                            }
+                            "schema" => {
+                                schema_vm.borrow().update_connection(new_conn.clone());
+                                let schema_items = schema_vm.borrow().get_items();
+                                ui.set_schema_list_items(schema_items);
+                                schema_item_vm.borrow().update_connection(new_conn);
+                                let schema_item_items = schema_item_vm.borrow().get_items();
+                                ui.set_detail_list_items(schema_item_items);
+                            }
+                            _ => {}
+                        }
+                    }
+                }
             }
         });
 

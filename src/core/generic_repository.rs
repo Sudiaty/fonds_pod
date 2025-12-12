@@ -230,6 +230,10 @@ macro_rules! impl_repository {
             pub fn new(conn: Rc<RefCell<diesel::SqliteConnection>>) -> Self {
                 $repo { conn }
             }
+
+            pub fn update_connection(&mut self, new_conn: Rc<RefCell<diesel::SqliteConnection>>) {
+                self.conn = new_conn;
+            }
         }
 
         impl crate::core::GenericRepository<$entity> for $repo {

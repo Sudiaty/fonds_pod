@@ -75,7 +75,9 @@ impl HomeViewModel {
             let libraries = self.settings_service.list_archive_libraries()?;
             if let Some(lib) = libraries.get(index as usize) {
                 self.last_opened_library = lib.path.clone();
+                log::info!("HomeViewModel: Setting last_opened_library to: {}", lib.path);
                 self.settings_service.set_last_opened_library(Some(lib.path.clone()))?;
+                log::info!("HomeViewModel: Successfully saved last_opened_library");
             }
         }
         Ok(())
@@ -96,16 +98,22 @@ impl HomeViewModel {
     }
 
     /// Setup UI callbacks for the home page
-    pub fn setup_ui_callbacks(&self, ui_handle: &AppWindow) {
-        let vm = Rc::new(RefCell::new(self.clone()));
-
+    pub fn setup_ui_callbacks(&self, ui_handle: &AppWindow, vm: Rc<RefCell<Self>>) {
         // Archive selected callback
+        let ui_weak = ui_handle.as_weak();
         ui_handle.on_archive_selected({
             let vm = Rc::clone(&vm);
+            let ui_weak = ui_weak.clone();
             move |index| {
                 if let Ok(mut vm) = vm.try_borrow_mut() {
                     if let Err(e) = vm.set_selected_archive(index) {
                         log::error!("Failed to set selected archive: {}", e);
+                    } else {
+                        log::info!("Archive selected: index={}", index);
+                        // Trigger UI update
+                        if let Some(ui) = ui_weak.upgrade() {
+                            vm.init_ui(&ui);
+                        }
                     }
                 }
             }
@@ -153,9 +161,23 @@ impl HomeViewModel {
     
     /// Static method to setup callbacks (called from App)
     pub fn setup_callbacks(vm: Rc<RefCell<Self>>, ui_handle: &AppWindow) {
-        let vm_borrowed = vm.borrow();
-        vm_borrowed.init_ui(ui_handle);
-        vm_borrowed.setup_ui_callbacks(ui_handle);
+        // First load libraries data
+        {
+            let mut vm_borrowed = vm.borrow_mut();
+            if let Err(e) = vm_borrowed.load_libraries() {
+                log::error!("HomeViewModel: Failed to load libraries: {}", e);
+            }
+        }
+        // Then initialize UI
+        {
+            let vm_borrowed = vm.borrow();
+            vm_borrowed.init_ui(ui_handle);
+        }
+        // Finally setup callbacks
+        {
+            let vm_borrowed = vm.borrow();
+            vm_borrowed.setup_ui_callbacks(ui_handle, Rc::clone(&vm));
+        }
     }
 }
 

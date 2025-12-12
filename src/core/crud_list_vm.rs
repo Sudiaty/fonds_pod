@@ -91,6 +91,10 @@ where
         }
     }
 
+    pub fn get_repo(&self) -> Rc<RefCell<R>> {
+        self.repo.clone()
+    }
+
     pub fn load(&self) {
         let items: Vec<T> = {
             use std::any::Any;
@@ -114,12 +118,18 @@ where
         self.items.set_vec(crud_items);
     }
 
-    pub fn add(&self, mut item: T) {
+    pub fn add(&self, item: &mut T) {
         let mut repo = self.repo.borrow_mut();
         if let Ok(id) = repo.create(item.clone()) {
             item.set_id(id);
             self.items.push(item.to_crud_list_item());
         }
+    }
+
+    pub fn set_items(&self, items: Vec<T>) {
+        let crud_items: Vec<CrudListItem> =
+            items.iter().map(|item| item.to_crud_list_item()).collect();
+        self.items.set_vec(crud_items);
     }
 
     pub fn delete(&self, index: usize) -> Result<(), String> {
@@ -252,8 +262,8 @@ macro_rules! impl_activeable_crud_vm_base {
 
             fn add(&self) {
                 log::info!("{}: Adding new item", Self::vm_name());
-                let new_item = <$vm_type>::create_default();
-                self.inner.add(new_item);
+                let mut new_item = <$vm_type>::create_default();
+                self.inner.add(&mut new_item);
                 log::info!(
                     "{}: Added item, total count: {}",
                     Self::vm_name(),
@@ -343,8 +353,8 @@ macro_rules! impl_crud_vm_base {
 
             fn add(&self) {
                 log::info!("{}: Adding new item", Self::vm_name());
-                let new_item = <$vm_type>::create_default();
-                self.inner.add(new_item);
+                let mut new_item = <$vm_type>::create_default();
+                self.inner.add(&mut new_item);
                 log::info!(
                     "{}: Added item, total count: {}",
                     Self::vm_name(),

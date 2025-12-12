@@ -155,5 +155,14 @@ pub fn init_schema(conn: &mut SqliteConnection) -> Result<(), Box<dyn Error>> {
     )
     .execute(conn)?;
 
+    // Insert default Year schema if not exists
+    sql_query(
+        r#"
+        INSERT OR IGNORE INTO schemas (schema_no, name, sort_order, created_by, created_machine, created_at)
+        VALUES ('Year', 'Year', 0, 'system', 'system', CURRENT_TIMESTAMP)
+        "#,
+    )
+    .execute(conn)?;
+
     Ok(())
 }

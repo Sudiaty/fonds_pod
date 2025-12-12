@@ -32,6 +32,13 @@ impl FondClassificationViewModel {
         }
     }
 
+    /// 更新数据库连接并重新加载数据
+    pub fn update_connection(&self, new_conn: Rc<RefCell<diesel::SqliteConnection>>) {
+        self.repo.borrow_mut().update_connection(new_conn.clone());
+        self.inner.get_repo().borrow_mut().update_connection(new_conn);
+        self.load();
+    }
+
     /// 创建默认的FondClassification实例 - 由 `impl_crud_vm_base!` 宏使用
     fn create_default() -> FondClassification {
         use std::sync::atomic::{AtomicU32, Ordering};
@@ -272,7 +279,7 @@ impl FondClassificationViewModel {
 
                 if !code.is_empty() && !name.is_empty() {
                     // 创建新的分类
-                    let new_classification = FondClassification {
+                    let mut new_classification = FondClassification {
                         id: 0,
                         code,
                         name,
@@ -283,7 +290,7 @@ impl FondClassificationViewModel {
                     };
 
                     // 添加到数据库
-                    vm_clone.borrow().inner.add(new_classification);
+                    vm_clone.borrow().inner.add(&mut new_classification);
                     log::info!("Successfully added new top classification");
                     // 重新加载数据以确保排序正确
                     vm_clone.borrow().load();

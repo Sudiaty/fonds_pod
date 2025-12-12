@@ -70,6 +70,24 @@ export component AppWindow inherits Window {
     callback schema_item_item_clicked(int);
     callback schema_item_activated(int);
     
+    // Schema dialog properties
+    in-out property <bool> show_add_schema_dialog: false;
+    in-out property <bool> show_add_schema_item_dialog: false;
+    in-out property <[DialogField]> add_schema_fields: [
+        { label: "label_code", field_type: DialogFieldType.text, value: "", placeholder: @tr("" => "placeholder_code") },
+        { label: "label_name", field_type: DialogFieldType.text, value: "", placeholder: @tr("" => "placeholder_name") },
+    ];
+    in-out property <[DialogField]> add_schema_item_fields: [
+        { label: "label_code", field_type: DialogFieldType.text, value: "", placeholder: @tr("" => "placeholder_code") },
+        { label: "label_name", field_type: DialogFieldType.text, value: "", placeholder: @tr("" => "placeholder_name") },
+    ];
+    
+    // Schema dialog callbacks
+    callback confirm_add_schema([DialogField]);
+    callback cancel_add_schema();
+    callback confirm_add_schema_item([DialogField]);
+    callback cancel_add_schema_item();
+    
     // Fond Classification page properties
     in property <[CrudListItem]> classification_crud_items: [];
     in-out property <int> selected_classification: 0;
@@ -199,6 +217,7 @@ export component AppWindow inherits Window {
                     selected_archive <=> root.selected_archive;
                     last_opened_library <=> root.last_opened_library;
                     initialize => { root.initialize_home_page(); }
+                    archive_selected(index) => { root.archive_selected(index); }
                 }
                 
                 if root.current_page == "about" : AboutPage {
@@ -281,6 +300,14 @@ export component AppWindow inherits Window {
                     delete_schema_item => { root.schema_item_delete(); }
                     schema_item_item_clicked(index) => { root.schema_item_item_clicked(index); }
                     schema_item_activated(index) => { root.schema_item_activated(index); }
+                    show_add_schema_dialog <=> root.show_add_schema_dialog;
+                    show_add_schema_item_dialog <=> root.show_add_schema_item_dialog;
+                    add_schema_fields <=> root.add_schema_fields;
+                    add_schema_item_fields <=> root.add_schema_item_fields;
+                    confirm_add_schema(fields) => { root.confirm_add_schema(fields); }
+                    cancel_add_schema => { root.cancel_add_schema(); }
+                    confirm_add_schema_item(fields) => { root.confirm_add_schema_item(fields); }
+                    cancel_add_schema_item => { root.cancel_add_schema_item(); }
                 }
                 
                 if root.current_page != "about" && root.current_page != "settings" && root.current_page != "home" && root.current_page != "classification" && root.current_page != "fonds" && root.current_page != "schema" : Text {

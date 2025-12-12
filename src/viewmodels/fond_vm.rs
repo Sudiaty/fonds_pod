@@ -1,4 +1,5 @@
 use crate::core::CrudViewModel;
+use crate::core::CrudViewModelBase;
 use crate::models::Fond;
 use crate::persistence::FondsRepository;
 use crate::AppWindow;
@@ -39,6 +40,12 @@ impl FondViewModel {
     /// 根据索引获取全宗项
     pub fn get_by_index(&self, index: usize) -> Option<CrudListItem> {
         self.inner.items.row_data(index)
+    }
+
+    /// 更新数据库连接并重新加载数据
+    pub fn update_connection(&self, new_conn: Rc<RefCell<diesel::SqliteConnection>>) {
+        self.inner.get_repo().borrow_mut().update_connection(new_conn);
+        self.load();
     }
 
     /// 为UI设置CRUD回调 - 标准实现在这里

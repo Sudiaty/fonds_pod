@@ -92,10 +92,6 @@ export component HomePage inherits Rectangle {
                     current-index <=> root.selected_archive;
                     selected(value) => {
                         root.archive_selected(root.selected_archive);
-                        // Update last_opened_library when selection changes
-                        if root.selected_archive >= 0 && root.selected_archive < root.library_names.length {
-                            root.last_opened_library = root.library_names[root.selected_archive];
-                        }
                     }
                 }
 
