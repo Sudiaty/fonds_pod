@@ -1,6 +1,6 @@
 import { VerticalBox, HorizontalBox, ComboBox } from "std-widgets.slint";
 import { Theme, Layout } from "../theme.slint";
-import { CrudListItem, QuickAction } from "../models.slint";
+import { CrudListItem, QuickAction, SeriesItem, FileItem, ItemItem } from "../models.slint";
 import { CrudList } from "../components/crud-list.slint";
 
 // ============================================================================
@@ -11,7 +11,7 @@ export component HomePage inherits Rectangle {
 
     // Toolbar data
     in property <[string]> archive_libraries: [];
-    in-out property <int> selected_archive: 0;
+    in-out property <int> selected_archive: -1;
     in property <[string]> fonds_names: [];
     in-out property <int> selected_fonds: 0;
     in-out property <string> last_opened_library: "";
@@ -20,16 +20,16 @@ export component HomePage inherits Rectangle {
     // Initialization callback
     callback initialize();
 
-    // Series list data (simplified for now)
+    // Series list data
     in-out property <int> selected_series_index: -1;
     in-out property <string> selected_series_no: "";
     in property <[CrudListItem]> series_list_items: [];
 
-    // Files data (simplified for now)
+    // Files data
     in-out property <int> selected_file: 0;
     in property <[CrudListItem]> files_list_items: [];
 
-    // Items data (simplified for now)
+    // Items data
     in-out property <int> selected_item: 0;
     in property <[CrudListItem]> items_list_items: [];
 

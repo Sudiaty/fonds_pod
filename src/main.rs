@@ -12,8 +12,8 @@ use fonds_pod_lib::AppWindow;
 pub const APP_VERSION: &str = env!("APP_VERSION");
 
 fn main() -> Result<(), Box<dyn Error>> {
-    // 初始化日志记录
-    simple_logger::init_with_level(log::Level::Info)?;
+    // 初始化日志记录 - 从环境变量读取日志级别
+    simple_logger::init_with_env()?;
 
     log::info!("Starting application version {}", APP_VERSION);
 

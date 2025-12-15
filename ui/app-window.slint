@@ -8,7 +8,8 @@ import { HomePage } from "pages/home-page.slint";
 import { FondClassificationPage } from "pages/fond-classification-page.slint";
 import { FondPage } from "pages/fond-page.slint";
 import { SchemaPage } from "pages/schema-page.slint";
-import { CrudListItem, CrudListRowStyle, DialogField, DialogFieldType } from "models.slint";
+import { CrudListItem, CrudListRowStyle, DialogField, DialogFieldType, SeriesItem, FileItem, ItemItem, SchemaOption, ClassificationOption, FondsSchemaOption } from "models.slint";
+import { AddFondsDialogWindow } from "dialogs.slint";
 
 export component AppWindow inherits Window {
     title: "FondsPod";
@@ -18,6 +19,9 @@ export component AppWindow inherits Window {
     background: Theme.bg_primary;
     default-font-family: "Microsoft YaHei";
     default-font-size: 14px;
+    
+    // Force generation of types for independent dialogs (not used, just ensures Rust codegen)
+    private property <[FondsSchemaOption]> _unused_schema_options: [];
     
     // Translation properties for common UI messages using gettext
     out property <string> language_applied: @tr("" => "language_applied");
@@ -53,6 +57,30 @@ export component AppWindow inherits Window {
     in-out property <string> last_opened_library: "";
     in-out property <[string]> library_names: [];
 
+    // Home page properties
+    in-out property <[string]> fonds_names: [];
+    in-out property <int> selected_fonds: 0;
+    in-out property <[CrudListItem]> series_list_items: [];
+    in-out property <int> selected_series_index: -1;
+    in-out property <string> selected_series_no: "";
+    in-out property <[CrudListItem]> files_list_items: [];
+    in-out property <int> selected_file: 0;
+    in-out property <[CrudListItem]> items_list_items: [];
+    in-out property <int> selected_item: 0;
+    in-out property <string> open_file_path: "";
+    in-out property <string> open_item_path: "";
+    
+    // Add fonds dialog properties
+    in-out property <string> add_fonds_name: "";
+    in-out property <[string]> primary_classifications: [];
+    in-out property <[[string]]> secondary_classifications: [];
+    in-out property <int> selected_primary_classification: 0;
+    in-out property <int> selected_secondary_classification: 0;
+    in-out property <[FondsSchemaOption]> available_schemas: [];
+    in-out property <[FondsSchemaOption]> selected_schemas: [];
+    in-out property <int> highlighted_available_schema: -1;
+    in-out property <int> highlighted_chosen_schema: -1;
+    
     // Fond page properties
     in property <[CrudListItem]> fond_items: [];
     callback fond_add();
@@ -152,19 +180,27 @@ export component AppWindow inherits Window {
     // Home page callbacks
     callback initialize_home_page();
     callback request_add_fonds_dialog();
+    callback show_add_fonds_dialog_window();
+    callback confirm_add_fonds(string, string, [string]); // name, classification_code, selected_schema_nos
+    callback cancel_add_fonds();
+    callback toggle_schema_selection(int);
+    callback move_schema_to_selected(int);
+    callback move_schema_back(int);
+    callback fonds_selected(int);  // index
+    callback series_selected(int); // index
     callback open_fonds(string);
     callback select_series(int, string);
     callback series_activated(int);
     callback rebuild_series();
     callback delete_series();
-    callback add_file();
+    callback add_file();  // Will generate default name
     callback delete_file();
     callback rename_file(int, string);
     callback file_clicked(int);
     callback file_activated(int);
     callback open_file();
     callback open_file_at(int);
-    callback add_item();
+    callback add_item();  // Will generate default name
     callback delete_item();
     callback rename_item(int, string);
     callback item_clicked(int);
@@ -216,8 +252,40 @@ export component AppWindow inherits Window {
                     library_names <=> root.library_names;
                     selected_archive <=> root.selected_archive;
                     last_opened_library <=> root.last_opened_library;
+                    fonds_names <=> root.fonds_names;
+                    selected_fonds <=> root.selected_fonds;
+                    series_list_items <=> root.series_list_items;
+                    selected_series_index <=> root.selected_series_index;
+                    selected_series_no <=> root.selected_series_no;
+                    files_list_items <=> root.files_list_items;
+                    selected_file <=> root.selected_file;
+                    items_list_items <=> root.items_list_items;
+                    selected_item <=> root.selected_item;
+                    open_file_path <=> root.open_file_path;
+                    open_item_path <=> root.open_item_path;
                     initialize => { root.initialize_home_page(); }
                     archive_selected(index) => { root.archive_selected(index); }
+                    request_add_fonds_dialog() => { root.request_add_fonds_dialog(); }
+                    open_fonds(fonds) => { root.open_fonds(fonds); }
+                    select_series(index, series_no) => { root.select_series(index, series_no); }
+                    series_activated(index) => { root.series_activated(index); }
+                    rebuild_series() => { root.rebuild_series(); }
+                    delete_series() => { root.delete_series(); }
+                    add_file() => { root.add_file(); }
+                    delete_file() => { root.delete_file(); }
+                    rename_file(index, name) => { root.rename_file(index, name); }
+                    file_clicked(index) => { root.file_clicked(index); }
+                    file_activated(index) => { root.file_activated(index); }
+                    open_file() => { root.open_file(); }
+                    open_file_at(index) => { root.open_file_at(index); }
+                    add_item() => { root.add_item(); }
+                    delete_item() => { root.delete_item(); }
+                    rename_item(index, name) => { root.rename_item(index, name); }
+                    item_clicked(index) => { root.item_clicked(index); }
+                    item_activated(index) => { root.item_activated(index); }
+                    open_item() => { root.open_item(); }
+                    open_item_at(index) => { root.open_item_at(index); }
+                    file_selected(index) => { root.file_selected(index); }
                 }
                 
                 if root.current_page == "about" : AboutPage {
@@ -387,5 +455,47 @@ export component AppWindow inherits Window {
         animate opacity {
             duration: 300ms;
         }
+    }
+    
+    // Internal property to control dialog visibility
+    private property <bool> show_add_fonds_dialog: false;
+    
+    // Show dialog when data is updated from request callback
+    private property <int> add_fonds_dialog_trigger: 0;
+    
+    // Independent Add Fonds Dialog
+    add_fonds_dialog := AddFondsDialogWindow {
+        visible: root.show_add_fonds_dialog;
+        primary_classifications <=> root.primary_classifications;
+        secondary_classifications <=> root.secondary_classifications;
+        selected_primary_classification <=> root.selected_primary_classification;
+        selected_secondary_classification <=> root.selected_secondary_classification;
+        available_schema_items <=> root.available_schemas;
+        chosen_schema_items <=> root.selected_schemas;
+        highlighted_available_schema <=> root.highlighted_available_schema;
+        highlighted_chosen_schema <=> root.highlighted_chosen_schema;
+        fonds_name_input <=> root.add_fonds_name;
+        
+        confirm() => {
+            root.confirm_add_fonds(add_fonds_dialog.fonds_name_input, "", []);
+            root.show_add_fonds_dialog = false;
+        }
+        
+        cancel() => {
+            root.show_add_fonds_dialog = false;
+        }
+        
+        move_schema_to_selected(index) => {
+            root.move_schema_to_selected(index);
+        }
+        
+        move_schema_back(index) => {
+            root.move_schema_back(index);
+        }
+    }
+    
+    // Handler for showing add fonds dialog
+    show_add_fonds_dialog_window() => {
+        root.show_add_fonds_dialog = true;
     }
 }

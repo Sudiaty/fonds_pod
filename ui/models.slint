@@ -8,6 +8,50 @@ export struct ArchiveLibraryItem {
     path: string,
 }
 
+// Series item for home page
+export struct SeriesItem {
+    series_no: string,
+    name: string,
+    fond_no: string,
+}
+
+// File item for home page
+export struct FileItem {
+    file_no: string,
+    name: string,
+    series_no: string,
+}
+
+// Item item for home page
+export struct ItemItem {
+    item_no: string,
+    name: string,
+    file_no: string,
+    path: string,
+}
+
+// Schema option for add fonds dialog
+export struct SchemaOption {
+    id: int,
+    schema_no: string,
+    name: string,
+    selected: bool,
+}
+
+// Classification option for add fonds dialog
+export struct ClassificationOption {
+    id: int,
+    code: string,
+    name: string,
+}
+
+// Fonds schema option for transfer box
+export struct FondsSchemaOption {
+    id: int,
+    schema_no: string,
+    name: string,
+}
+
 // ============================================================================
 // Generic CRUD List Data Structures
 // ============================================================================

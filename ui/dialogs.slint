@@ -1,0 +1,384 @@
+import { Button, VerticalBox, HorizontalBox, ComboBox, ScrollView, ListView } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+import { FondsSchemaOption } from "models.slint";
+
+// ============================================================================
+// Custom Button Component with Theme Colors
+// ============================================================================
+
+export component ThemedButton inherits Rectangle {
+    in property <string> text: "";
+    in property <bool> is_primary: false;
+    in property <bool> enabled: true;
+
+    callback clicked <=> touch.clicked;
+
+    width: 80px;
+    height: 32px;
+    border-radius: 4px;
+    opacity: enabled ? 1.0 : 0.5;
+    background: enabled ? (
+        is_primary ?
+            (touch.has-hover ? Theme.brand_secondary : Theme.brand_primary) :
+            (touch.has-hover ? Theme.bg_elevated : Theme.bg_alt)
+    ) : Theme.bg_alt;
+
+    Text {
+        text: root.text;
+        color: root.enabled ?
+            (is_primary ? Theme.text_on_brand : Theme.brand_primary) :
+            #666;
+        font-size: 13px;
+        font-weight: 500;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+
+    touch := TouchArea {
+        enabled: root.enabled;
+    }
+}
+
+// ============================================================================
+// Unified Dialog Buttons Component
+// ============================================================================
+
+export component DialogButtons inherits HorizontalBox {
+    in property <int> current_language: 0;
+    in property <bool> confirm_enabled: true;
+
+    callback confirm();
+    callback cancel();
+
+    spacing: 10px;
+    alignment: end;
+
+    ThemedButton {
+        text: "Cancel";
+        is_primary: false;
+        clicked => {
+            root.cancel();
+        }
+    }
+
+    ThemedButton {
+        text: "Confirm";
+        is_primary: true;
+        enabled: root.confirm_enabled;
+        clicked => {
+            root.confirm();
+        }
+    }
+}
+
+// ============================================================================
+// Add Fonds Dialog Wrapper - for independent window display
+// ============================================================================
+
+export component AddFondsDialogWindow inherits Window {
+    in property <int> current_language: 0;
+    title: "Add Fonds";
+    width: 720px;
+    height: 620px;
+    background: Theme.bg_primary;
+    default-font-family: "Microsoft YaHei";
+    default-font-size: 14px;
+
+    in-out property <string> fonds_name_input: "";
+    in-out property <[string]> primary_classifications: [];
+    in-out property <[[string]]> secondary_classifications: [];
+    in-out property <int> selected_primary_classification: 0;
+    in-out property <int> selected_secondary_classification: 0;
+
+    in-out property <[FondsSchemaOption]> available_schema_items: [];
+    in-out property <[FondsSchemaOption]> chosen_schema_items: [];
+    in-out property <int> highlighted_available_schema: -1;
+    in-out property <int> highlighted_chosen_schema: -1;
+
+    callback confirm();
+    callback cancel();
+    callback move_schema_to_selected(int);
+    callback move_schema_back(int);
+
+    property <bool> can_move_right: root.highlighted_available_schema >= 0;
+    property <bool> can_move_left: root.highlighted_chosen_schema >= 0;
+
+    FocusScope {
+        key-pressed(event) => {
+            if event.text == Key.Escape {
+                root.cancel();
+                return accept;
+            }
+            if event.text == Key.Return {
+                root.confirm();
+                return accept;
+            }
+            return reject;
+        }
+
+        VerticalBox {
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-top: 20px;
+            padding-bottom: 24px;
+            spacing: 16px;
+
+            // First row inputs
+            HorizontalBox {
+                spacing: 12px;
+                alignment: stretch;
+
+                VerticalBox {
+                    horizontal-stretch: 1;
+                    spacing: 6px;
+
+                    Text {
+                        text: "Name";
+                        font-size: 13px;
+                        color: #666;
+                    }
+
+                    Rectangle {
+                        height: 36px;
+                        border-width: 1px;
+                        border-color: Theme.nav_border;
+                        border-radius: 4px;
+                        background: white;
+
+                        TextInput {
+                            text <=> root.fonds_name_input;
+                            font-size: 13px;
+                            vertical-alignment: center;
+                            width: 100%;
+                            height: 100%;
+                            key-pressed(event) => {
+                                if event.text == Key.Return {
+                                    root.confirm();
+                                    return accept;
+                                }
+                                return reject;
+                            }
+                        }
+                    }
+                }
+
+                VerticalBox {
+                    horizontal-stretch: 1;
+                    spacing: 6px;
+
+                    Text {
+                        text: "Primary Classification";
+                        font-size: 13px;
+                        color: #666;
+                    }
+
+                    Rectangle {
+                        height: 36px;
+                        border-width: 1px;
+                        border-color: Theme.nav_border;
+                        border-radius: 4px;
+                        background: white;
+
+                        ComboBox {
+                            width: 100%;
+                            height: 100%;
+                            model: root.primary_classifications;
+                            current-index <=> root.selected_primary_classification;
+                        }
+                    }
+                }
+
+                VerticalBox {
+                    horizontal-stretch: 1;
+                    spacing: 6px;
+
+                    Text {
+                        text: "Secondary Classification";
+                        font-size: 13px;
+                        color: #666;
+                    }
+
+                    Rectangle {
+                        height: 36px;
+                        border-width: 1px;
+                        border-color: Theme.nav_border;
+                        border-radius: 4px;
+                        background: white;
+
+                        ComboBox {
+                            width: 100%;
+                            height: 100%;
+                            model: root.secondary_classifications.length > 0 ?
+                                root.secondary_classifications[Math.min(root.selected_primary_classification, root.secondary_classifications.length - 1)] :
+                                [];
+                            current-index <=> root.selected_secondary_classification;
+                        }
+                    }
+                }
+            }
+
+            // Schema transfer box
+            VerticalBox {
+                spacing: 8px;
+
+                Text {
+                    text: "Select Schemas";
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: Theme.text_primary;
+                }
+
+                HorizontalBox {
+                    spacing: 12px;
+                    height: 320px;
+
+                    // Available list
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        border-width: 1px;
+                        border-color: Theme.nav_border;
+                        border-radius: 6px;
+                        background: Theme.bg_alt;
+
+                        VerticalBox {
+                            padding: 12px;
+                            spacing: 12px;
+
+                            Text {
+                                text: "Available Schemas";
+                                font-size: 12px;
+                                color: #666;
+                            }
+
+                            ScrollView {
+                                VerticalBox {
+                                    spacing: 6px;
+
+                                    for schema_item[index] in root.available_schema_items : Rectangle {
+                                        height: 48px;
+                                        border-width: 1px;
+                                        border-color: root.highlighted_available_schema == index ? Theme.brand_primary : Theme.nav_border;
+                                        border-radius: 4px;
+                                        background: root.highlighted_available_schema == index ? Theme.brand_soft : white;
+
+                                        VerticalBox {
+                                            padding-left: 10px;
+                                            padding-right: 10px;
+                                            padding-top: 6px;
+                                            padding-bottom: 6px;
+                                            spacing: 2px;
+
+                                            Text { text: schema_item.schema_no; font-weight: 600; font-size: 13px; color: Theme.text_primary; }
+                                            Text { text: schema_item.name; font-size: 12px; color: #666; }
+                                        }
+
+                                        TouchArea {
+                                            clicked => {
+                                                root.highlighted_available_schema = index;
+                                                root.highlighted_chosen_schema = -1;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Transfer buttons
+                    VerticalBox {
+                        width: 80px;
+                        spacing: 16px;
+                        alignment: center;
+
+                        ThemedButton {
+                            text: ">>";
+                            is_primary: true;
+                            width: 64px;
+                            enabled: root.can_move_right;
+                            clicked => {
+                                if root.can_move_right {
+                                    root.move_schema_to_selected(root.highlighted_available_schema);
+                                }
+                            }
+                        }
+
+                        ThemedButton {
+                            text: "<<";
+                            is_primary: false;
+                            width: 64px;
+                            enabled: root.can_move_left;
+                            clicked => {
+                                if root.can_move_left {
+                                    root.move_schema_back(root.highlighted_chosen_schema);
+                                }
+                            }
+                        }
+                    }
+
+                    // Selected list
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        border-width: 1px;
+                        border-color: Theme.nav_border;
+                        border-radius: 6px;
+                        background: Theme.bg_alt;
+
+                        VerticalBox {
+                            padding: 12px;
+                            spacing: 12px;
+
+                            Text {
+                                text: "Selected Schemas";
+                                font-size: 12px;
+                                color: #666;
+                            }
+
+                            ScrollView {
+                                VerticalBox {
+                                    spacing: 6px;
+
+                                    for schema_item[index] in root.chosen_schema_items : Rectangle {
+                                        height: 48px;
+                                        border-width: 1px;
+                                        border-color: root.highlighted_chosen_schema == index ? Theme.brand_primary : Theme.nav_border;
+                                        border-radius: 4px;
+                                        background: root.highlighted_chosen_schema == index ? Theme.brand_soft : white;
+
+                                        VerticalBox {
+                                            padding-left: 10px;
+                                            padding-right: 10px;
+                                            padding-top: 6px;
+                                            padding-bottom: 6px;
+                                            spacing: 2px;
+
+                                            Text { text: schema_item.schema_no; font-weight: 600; font-size: 13px; color: Theme.text_primary; }
+                                            Text { text: schema_item.name; font-size: 12px; color: #666; }
+                                        }
+
+                                        TouchArea {
+                                            clicked => {
+                                                root.highlighted_chosen_schema = index;
+                                                root.highlighted_available_schema = -1;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Footer buttons
+            DialogButtons {
+                current_language: root.current_language;
+                confirm => {
+                    root.confirm();
+                }
+                cancel => {
+                    root.cancel();
+                }
+            }
+        }
+    }
+}

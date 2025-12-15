@@ -17,5 +17,5 @@ pub use viewmodels::{AboutViewModel, ArchiveLibraryUIItem, SchemaViewModel, Sche
 // Re-export repositories for convenience
 pub use persistence::{FondsRepository, FondClassificationsRepository, SchemaRepository, SchemaItemRepository};
 
-// Include Slint modules - this exports AppWindow, CrudListItem, DialogField, DialogFieldType, etc.
+// Include Slint modules - this exports AppWindow, CrudListItem, DialogField, DialogFieldType, FondsSchemaOption, etc.
 slint::include_modules!();

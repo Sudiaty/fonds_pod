@@ -841,3 +841,29 @@ pub fn add(&self) {
 - **应用协调**: `src/app.rs`
 
 ---
+
+## 日志级别设置
+
+项目使用 `simple_logger` 进行日志记录，默认从环境变量 `RUST_LOG` 读取日志级别。
+
+### 在 PowerShell 中设置日志级别并运行：
+
+```powershell
+# 设置为 debug 级别（显示所有日志）
+$env:RUST_LOG = "debug"; cargo run
+
+# 设置为 info 级别（默认）
+$env:RUST_LOG = "info"; cargo run
+
+# 设置为 warn 级别
+$env:RUST_LOG = "warn"; cargo run
+```
+
+### 在 Linux/macOS 中：
+
+```bash
+# 设置为 debug 级别
+RUST_LOG=debug cargo run
+```
+
+这对于调试应用程序行为非常有用，特别是查看 ViewModel 中的数据绑定和状态变化。
