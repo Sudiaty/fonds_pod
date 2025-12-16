@@ -106,7 +106,7 @@ export component SchemaPage inherits Rectangle {
         height: 100%;
         title: @tr("" => "dialog_add_schema");
         current_language: 0; // TODO: Get from settings
-        fields: root.add_schema_fields;
+        fields <=> root.add_schema_fields;
 
         confirm(fields) => {
             root.confirm_add_schema(fields);
@@ -127,7 +127,7 @@ export component SchemaPage inherits Rectangle {
         height: 100%;
         title: @tr("" => "dialog_add_schema_item");
         current_language: 0; // TODO: Get from settings
-        fields: root.add_schema_item_fields;
+        fields <=> root.add_schema_item_fields;
 
         confirm(fields) => {
             root.confirm_add_schema_item(fields);

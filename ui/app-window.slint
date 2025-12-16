@@ -70,6 +70,14 @@ export component AppWindow inherits Window {
     in-out property <string> open_file_path: "";
     in-out property <string> open_item_path: "";
     
+    // Add file dialog state
+    in-out property <bool> show_add_file_dialog: false;
+    in-out property <[DialogField]> add_file_fields: [];
+    
+    // Add item dialog state
+    in-out property <bool> show_add_item_dialog: false;
+    in-out property <[DialogField]> add_item_fields: [];
+    
     // Add fonds dialog state
     in-out property <bool> show_add_fonds_dialog: false;
     
@@ -183,7 +191,7 @@ export component AppWindow inherits Window {
     // Home page callbacks
     callback initialize_home_page();
     callback request_add_fonds_dialog();
-    callback confirm_add_fonds(string, string, [string]); // name, classification_code, selected_schema_nos
+    callback confirm_add_fonds(string, string, [FondsSchemaOption]); // name, classification_code, selected_schemas
     callback cancel_add_fonds();
     callback toggle_schema_selection(int);
     callback move_schema_to_selected(int);
@@ -210,6 +218,16 @@ export component AppWindow inherits Window {
     callback open_item();
     callback open_item_at(int);
     callback file_selected(int);
+    
+    // Add file dialog callbacks
+    callback confirm_add_file([DialogField]);
+    callback cancel_add_file();
+    callback browse_file_folder(int);
+    
+    // Add item dialog callbacks
+    callback confirm_add_item([DialogField]);
+    callback cancel_add_item();
+    callback browse_item_folder(int);
     
     show_toast(message) => {
         root.toast_message = message;
@@ -265,6 +283,11 @@ export component AppWindow inherits Window {
                     selected_item <=> root.selected_item;
                     open_file_path <=> root.open_file_path;
                     open_item_path <=> root.open_item_path;
+                    show_add_file_dialog <=> root.show_add_file_dialog;
+                    add_file_fields <=> root.add_file_fields;
+                    show_add_item_dialog <=> root.show_add_item_dialog;
+                    add_item_fields <=> root.add_item_fields;
+                    current_language: root.selected_language;
                     initialize => { root.initialize_home_page(); }
                     archive_selected(index) => { root.archive_selected(index); }
                     request_add_fonds_dialog() => { root.request_add_fonds_dialog(); }
@@ -274,6 +297,12 @@ export component AppWindow inherits Window {
                     rebuild_series() => { root.rebuild_series(); }
                     delete_series() => { root.delete_series(); }
                     add_file() => { root.add_file(); }
+                    confirm_add_file(fields) => { root.confirm_add_file(fields); }
+                    cancel_add_file() => { root.cancel_add_file(); }
+                    browse_file_folder(index) => { root.browse_file_folder(index); }
+                    confirm_add_item(fields) => { root.confirm_add_item(fields); }
+                    cancel_add_item() => { root.cancel_add_item(); }
+                    browse_item_folder(index) => { root.browse_item_folder(index); }
                     delete_file() => { root.delete_file(); }
                     rename_file(index, name) => { root.rename_file(index, name); }
                     file_clicked(index) => { root.file_clicked(index); }
@@ -473,7 +502,7 @@ export component AppWindow inherits Window {
         fonds_name_input <=> root.add_fonds_name;
         
         confirm() => {
-            root.confirm_add_fonds(add_fonds_dialog.fonds_name_input, "", []);
+            root.confirm_add_fonds(add_fonds_dialog.fonds_name_input, "", add_fonds_dialog.chosen_schema_items);
             root.show_add_fonds_dialog = false;
         }
         

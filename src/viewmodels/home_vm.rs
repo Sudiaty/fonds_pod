@@ -1,7 +1,7 @@
 /// Home View Model - MVVM architecture
 /// Manages the state and business logic for the home page (fonds management)
 use crate::services::SettingsService;
-use crate::{AppWindow, CrudListItem};
+use crate::{AppWindow, CrudListItem, DialogField, DialogFieldType};
 use crate::persistence::{
     FondsRepository, SeriesRepository, FilesRepository, ItemsRepository,
     FondSchemasRepository, FondClassificationsRepository, SchemaRepository, SchemaItemRepository,
@@ -13,7 +13,7 @@ use crate::models::file::File;
 use crate::models::item::Item;
 use crate::models::fond_schema::FondSchema;
 use crate::core::GenericRepository;
-use slint::{ComponentHandle, ModelRc, VecModel, SharedString};
+use slint::{ComponentHandle, ModelRc, VecModel, SharedString, Model};
 use crate::slint_generatedAppWindow;
 use std::cell::RefCell;
 use std::error::Error;
@@ -46,6 +46,14 @@ pub struct HomeViewModel {
     pub items_list: Vec<Item>,
     pub selected_item: i32,
     
+    // Dialog states
+    pub show_add_file_dialog: bool,
+    pub new_file_name: String,
+    pub new_file_path: String,
+    pub show_add_item_dialog: bool,
+    pub new_item_name: String,
+    pub new_item_path: String,
+    
     settings_service: Rc<SettingsService>,
     db_connection: Option<Rc<RefCell<SqliteConnection>>>,
     current_db_path: Option<PathBuf>,
@@ -68,6 +76,12 @@ impl Default for HomeViewModel {
             selected_file: 0,
             items_list: Vec::new(),
             selected_item: 0,
+            show_add_file_dialog: false,
+            new_file_name: String::new(),
+            new_file_path: String::new(),
+            show_add_item_dialog: false,
+            new_item_name: String::new(),
+            new_item_path: String::new(),
             settings_service: Rc::new(SettingsService::new()),
             db_connection: None,
             current_db_path: None,
@@ -93,9 +107,26 @@ impl HomeViewModel {
             selected_file: 0,
             items_list: Vec::new(),
             selected_item: 0,
+            show_add_file_dialog: false,
+            new_file_name: String::new(),
+            new_file_path: String::new(),
+            show_add_item_dialog: false,
+            new_item_name: String::new(),
+            new_item_path: String::new(),
             settings_service,
             db_connection: None,
             current_db_path: None,
+        }
+    }
+
+    /// Browse folder and return selected path
+    pub fn browse_folder(&self) -> Option<String> {
+        if let Some(folder_path) = rfd::FileDialog::new()
+            .set_directory("/")
+            .pick_folder() {
+            Some(folder_path.to_string_lossy().to_string())
+        } else {
+            None
         }
     }
 
@@ -217,13 +248,20 @@ impl HomeViewModel {
             self.fonds_list = repo.find_all()?;
             log::info!("HomeViewModel: Loaded {} fonds", self.fonds_list.len());
             
-            // If we have fonds and one is selected, load its series
-            if !self.fonds_list.is_empty() && self.selected_fonds_index >= 0 {
-                let fond_no = self.fonds_list.get(self.selected_fonds_index as usize)
-                    .map(|f| f.fond_no.clone());
-                if let Some(fond_no) = fond_no {
-                    self.load_series(&fond_no)?;
-                }
+            // Reset fonds selection and dependent data
+            if !self.fonds_list.is_empty() {
+                self.selected_fonds_index = 0;
+                let fond_no = self.fonds_list[0].fond_no.clone();
+                self.load_series(&fond_no)?;
+            } else {
+                self.selected_fonds_index = 0;
+                self.series_list.clear();
+                self.selected_series_index = -1;
+                self.selected_series_no.clear();
+                self.files_list.clear();
+                self.selected_file = 0;
+                self.items_list.clear();
+                self.selected_item = 0;
             }
         }
         Ok(())
@@ -238,6 +276,18 @@ impl HomeViewModel {
                 .filter(|s| s.fond_no == fond_no)
                 .collect();
             log::info!("HomeViewModel: Loaded {} series for fond {}", self.series_list.len(), fond_no);
+            
+            // If no series found, try to generate them
+            if self.series_list.is_empty() {
+                log::info!("No series found for fond {}, attempting to generate series", fond_no);
+                self.generate_series(fond_no)?;
+                // Reload series after generation
+                let all_series = repo.find_all()?;
+                self.series_list = all_series.into_iter()
+                    .filter(|s| s.fond_no == fond_no)
+                    .collect();
+                log::info!("After generation: Loaded {} series for fond {}", self.series_list.len(), fond_no);
+            }
             
             // Reset selection and load files for first series
             if !self.series_list.is_empty() {
@@ -297,28 +347,72 @@ impl HomeViewModel {
                 .filter(|fs| fs.fond_no == fond_no)
                 .collect();
             schemas.sort_by_key(|s| s.order_no);
+            log::info!("Found {} fond_schemas for fond {}", schemas.len(), fond_no);
             schemas
         } else {
             return Err("No database connection".into());
         };
 
         if fond_schemas.is_empty() {
-            log::warn!("No fond_schemas found for fond {}", fond_no);
+            log::warn!("No fond_schemas found for fond {} - cannot generate series", fond_no);
             return Ok(());
         }
+
+        // Get the fond to extract created_at year for Year schema special handling
+        let created_year = if let Some(mut fond_repo) = self.get_fonds_repo() {
+            let all_fonds = fond_repo.find_all()?;
+            if let Some(fond) = all_fonds.iter().find(|f| f.fond_no == fond_no) {
+                fond.created_at.format("%Y").to_string().parse::<i32>().unwrap_or(2025)
+            } else {
+                chrono::Utc::now().format("%Y").to_string().parse::<i32>().unwrap_or(2025)
+            }
+        } else {
+            chrono::Utc::now().format("%Y").to_string().parse::<i32>().unwrap_or(2025)
+        };
+        let current_year = chrono::Utc::now().format("%Y").to_string().parse::<i32>().unwrap_or(2025);
 
         // Get schema items for each fond_schema
         let mut dimension_items: Vec<Vec<crate::models::schema_item::SchemaItem>> = Vec::new();
         
         if let Some(mut schema_repo) = self.get_schema_repo() {
             if let Some(mut items_repo) = self.get_schema_items_repo() {
+                let all_schemas = schema_repo.find_all()?;
+                log::info!("Available schemas: {}", all_schemas.iter().map(|s| s.schema_no.as_str()).collect::<Vec<_>>().join(", "));
+                
                 for fond_schema in &fond_schemas {
-                    // Find the schema by schema_no
-                    let all_schemas = schema_repo.find_all()?;
-                    if let Some(schema) = all_schemas.iter().find(|s| s.schema_no == fond_schema.schema_no) {
-                        let items = items_repo.find_by_schema_id(schema.id)?;
-                        if !items.is_empty() {
-                            dimension_items.push(items);
+                    log::debug!("Processing fond_schema: schema_no={}", fond_schema.schema_no);
+                    
+                    // Special handling for "Year" schema
+                    if fond_schema.schema_no == "Year" {
+                        log::info!("Special handling for Year schema: creating year items from {} to {}", created_year, current_year);
+                        let mut year_items: Vec<crate::models::schema_item::SchemaItem> = Vec::new();
+                        for year in created_year..=current_year {
+                            year_items.push(crate::models::schema_item::SchemaItem {
+                                id: 0,
+                                schema_id: 0,
+                                item_no: year.to_string(),
+                                item_name: year.to_string(),
+                                created_by: String::new(),
+                                created_machine: String::new(),
+                                created_at: chrono::Utc::now().naive_utc(),
+                            });
+                        }
+                        log::info!("Generated {} year items for Year schema", year_items.len());
+                        dimension_items.push(year_items);
+                    } else {
+                        // Normal schema: get items from database
+                        // Find the schema by schema_no
+                        if let Some(schema) = all_schemas.iter().find(|s| s.schema_no == fond_schema.schema_no) {
+                            log::debug!("Found schema: id={}, schema_no={}", schema.id, schema.schema_no);
+                            let items = items_repo.find_by_schema_id(schema.id)?;
+                            log::info!("Found {} items for schema {}", items.len(), fond_schema.schema_no);
+                            if items.is_empty() {
+                                log::warn!("No items found for schema {}", fond_schema.schema_no);
+                            } else {
+                                dimension_items.push(items);
+                            }
+                        } else {
+                            log::warn!("Schema not found for schema_no {}", fond_schema.schema_no);
                         }
                     }
                 }
@@ -326,7 +420,7 @@ impl HomeViewModel {
         }
 
         if dimension_items.is_empty() {
-            log::warn!("No schema items found for fond {}", fond_no);
+            log::warn!("No schema items found for fond {} - cannot generate series", fond_no);
             return Ok(());
         }
 
@@ -344,14 +438,18 @@ impl HomeViewModel {
             series_combinations = new_combinations;
         }
 
-        // Delete existing series for this fond
+        log::info!("Generated {} series combinations for fond {}", series_combinations.len(), fond_no);
+
+        // Delete existing series for this fond and recreate them
         if let Some(mut series_repo) = self.get_series_repo() {
+            // First delete existing series
             let existing_series = series_repo.find_all()?;
             for series in existing_series.iter().filter(|s| s.fond_no == fond_no) {
                 series_repo.delete(series.id)?;
             }
+            log::debug!("Deleted existing series for fond {}", fond_no);
 
-            // Create new series
+            // Create new series from combinations
             for (idx, combo) in series_combinations.iter().enumerate() {
                 let series_no = format!("{}-{:03}", fond_no, idx + 1);
                 let name = combo.iter()
@@ -371,7 +469,7 @@ impl HomeViewModel {
                 series_repo.create(series)?;
             }
             
-            log::info!("Generated {} series for fond {}", series_combinations.len(), fond_no);
+            log::info!("Generated and created {} series for fond {}", series_combinations.len(), fond_no);
         }
 
         // Reload series
@@ -644,6 +742,45 @@ impl HomeViewModel {
         ui_handle.set_items_list_items(items_model);
         ui_handle.set_selected_item(self.selected_item);
 
+        // Set dialog states
+        ui_handle.set_show_add_file_dialog(self.show_add_file_dialog);
+        
+        // Initialize add file dialog fields
+        let add_file_fields = vec![
+            DialogField {
+                label: "label_file_name".into(),
+                field_type: DialogFieldType::Text,
+                value: "".into(),
+                placeholder: "placeholder_file_name".into(),
+            },
+            DialogField {
+                label: "label_file_path".into(),
+                field_type: DialogFieldType::Text,
+                value: "".into(),
+                placeholder: "placeholder_file_path".into(),
+            },
+        ];
+        let fields_model = ModelRc::new(VecModel::from(add_file_fields));
+        ui_handle.set_add_file_fields(fields_model);
+
+        // Initialize add item dialog fields
+        let add_item_fields = vec![
+            DialogField {
+                label: "label_item_name".into(),
+                field_type: DialogFieldType::Text,
+                value: "".into(),
+                placeholder: "placeholder_item_name".into(),
+            },
+            DialogField {
+                label: "label_item_path".into(),
+                field_type: DialogFieldType::Text,
+                value: "".into(),
+                placeholder: "placeholder_item_path".into(),
+            },
+        ];
+        let item_fields_model = ModelRc::new(VecModel::from(add_item_fields));
+        ui_handle.set_add_item_fields(item_fields_model);
+
         // Set classification and schema options for add fonds dialog - these are no longer used in UI
         // as the dialog is now independent
     }
@@ -763,9 +900,108 @@ impl HomeViewModel {
                         ui.set_add_fonds_name("".into());
                         ui.set_selected_primary_classification(0);
                         ui.set_selected_secondary_classification(0);
+                        ui.set_highlighted_available_schema(-1);
+                        ui.set_highlighted_chosen_schema(-1);
                         
                         // Show the dialog
                         ui.set_show_add_fonds_dialog(true);
+                    }
+                }
+            }
+        });
+
+        // Confirm add fonds callback
+        ui_handle.on_confirm_add_fonds({
+            let vm = Rc::clone(&vm);
+            let ui_weak = ui_weak.clone();
+            move |fonds_name, classification_code, selected_schemas| {
+                if let Ok(mut vm) = vm.try_borrow_mut() {
+                    // Convert selected_schemas to Vec<String> (extract schema_no)
+                    let schema_nos: Vec<String> = selected_schemas.iter().map(|s| s.schema_no.to_string()).collect();
+                    if let Err(e) = vm.add_fond(&fonds_name, &classification_code, schema_nos) {
+                        if let Some(ui) = ui_weak.upgrade() {
+                            ui.invoke_show_toast(format!("添加全宗失败: {}", e).into());
+                        }
+                    } else if let Some(ui) = ui_weak.upgrade() {
+                        vm.init_ui(&ui);
+                        ui.set_show_add_fonds_dialog(false);
+                        ui.invoke_show_toast("全宗添加成功".into());
+                    }
+                }
+            }
+        });
+
+        // Cancel add fonds callback
+        ui_handle.on_cancel_add_fonds({
+            let ui_weak = ui_weak.clone();
+            move || {
+                if let Some(ui) = ui_weak.upgrade() {
+                    ui.set_show_add_fonds_dialog(false);
+                }
+            }
+        });
+
+        // Move schema to selected callback
+        ui_handle.on_move_schema_to_selected({
+            let ui_weak = ui_weak.clone();
+            move |index| {
+                if let Some(ui) = ui_weak.upgrade() {
+                    let available = ui.get_available_schemas();
+                    let chosen = ui.get_selected_schemas();
+                    
+                    let mut available_vec = Vec::new();
+                    for i in 0..available.row_count() {
+                        if let Some(item) = available.row_data(i) {
+                            available_vec.push(item);
+                        }
+                    }
+                    
+                    let mut chosen_vec = Vec::new();
+                    for i in 0..chosen.row_count() {
+                        if let Some(item) = chosen.row_data(i) {
+                            chosen_vec.push(item);
+                        }
+                    }
+                    
+                    if index >= 0 && (index as usize) < available_vec.len() {
+                        let item = available_vec.remove(index as usize);
+                        chosen_vec.push(item);
+                        ui.set_available_schemas((&available_vec[..]).into());
+                        ui.set_selected_schemas((&chosen_vec[..]).into());
+                        ui.set_highlighted_available_schema(-1);
+                    }
+                }
+            }
+        });
+
+        // Move schema back callback
+        ui_handle.on_move_schema_back({
+            let ui_weak = ui_weak.clone();
+            move |index| {
+                if let Some(ui) = ui_weak.upgrade() {
+                    let available = ui.get_available_schemas();
+                    let chosen = ui.get_selected_schemas();
+                    
+                    let mut available_vec = Vec::new();
+                    for i in 0..available.row_count() {
+                        if let Some(item) = available.row_data(i) {
+                            available_vec.push(item);
+                        }
+                    }
+                    
+                    let mut chosen_vec = Vec::new();
+                    for i in 0..chosen.row_count() {
+                        if let Some(item) = chosen.row_data(i) {
+                            chosen_vec.push(item);
+                        }
+                    }
+                    
+                    if index >= 0 && (index as usize) < chosen_vec.len() {
+                        let item = chosen_vec.remove(index as usize);
+                        available_vec.push(item);
+                        ui.set_available_schemas((&available_vec[..]).into());
+                        ui.set_selected_schemas((&chosen_vec[..]).into());
+                        ui.set_highlighted_chosen_schema(-1);
                     }
                 }
             }
@@ -809,16 +1045,11 @@ impl HomeViewModel {
             let ui_weak = ui_weak.clone();
             move || {
                 if let Ok(mut vm) = vm.try_borrow_mut() {
-                    // Generate a default name
-                    let name = format!("新案卷 {}", vm.files_list.len() + 1);
-                    if let Err(e) = vm.add_file(&name) {
-                        log::error!("Failed to add file: {}", e);
-                        if let Some(ui) = ui_weak.upgrade() {
-                            ui.invoke_show_toast(format!("添加案卷失败: {}", e).into());
-                        }
-                    } else if let Some(ui) = ui_weak.upgrade() {
-                        vm.init_ui(&ui);
-                        ui.invoke_show_toast("案卷添加成功".into());
+                    vm.show_add_file_dialog = true;
+                    vm.new_file_name.clear();
+                    vm.new_file_path.clear();
+                    if let Some(ui) = ui_weak.upgrade() {
+                        ui.set_show_add_file_dialog(true);
                     }
                 }
             }
@@ -848,17 +1079,28 @@ impl HomeViewModel {
             let vm = Rc::clone(&vm);
             let ui_weak = ui_weak.clone();
             move || {
-                if let Ok(mut vm) = vm.try_borrow_mut() {
-                    // Generate a default name
-                    let name = format!("新文件 {}", vm.items_list.len() + 1);
-                    if let Err(e) = vm.add_item(&name, None) {
-                        log::error!("Failed to add item: {}", e);
-                        if let Some(ui) = ui_weak.upgrade() {
-                            ui.invoke_show_toast(format!("添加文件失败: {}", e).into());
+                // Show folder picker dialog
+                use rfd::FileDialog;
+                if let Some(folder_path) = FileDialog::new()
+                    .set_directory("/")
+                    .pick_folder() {
+                    let folder_name = folder_path
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or("新文件")
+                        .to_string();
+                    let path_str = folder_path.to_string_lossy().to_string();
+                    
+                    if let Ok(mut vm) = vm.try_borrow_mut() {
+                        if let Err(e) = vm.add_item(&folder_name, Some(path_str)) {
+                            log::error!("Failed to add item: {}", e);
+                            if let Some(ui) = ui_weak.upgrade() {
+                                ui.invoke_show_toast(format!("添加文件失败: {}", e).into());
+                            }
+                        } else if let Some(ui) = ui_weak.upgrade() {
+                            vm.init_ui(&ui);
+                            ui.invoke_show_toast("文件添加成功".into());
                         }
-                    } else if let Some(ui) = ui_weak.upgrade() {
-                        vm.init_ui(&ui);
-                        ui.invoke_show_toast("文件添加成功".into());
                     }
                 }
             }
@@ -879,6 +1121,210 @@ impl HomeViewModel {
                         vm.init_ui(&ui);
                         ui.invoke_show_toast("文件已删除".into());
                     }
+                }
+            }
+        });
+
+        // Confirm add file callback
+        ui_handle.on_confirm_add_file({
+            let vm = Rc::clone(&vm);
+            let ui_weak = ui_weak.clone();
+            move |fields| {
+                let file_name = if fields.row_count() >= 1 {
+                    fields.row_data(0).unwrap().value.to_string()
+                } else {
+                    String::new()
+                };
+                
+                let file_path = if fields.row_count() >= 2 {
+                    fields.row_data(1).unwrap().value.to_string()
+                } else {
+                    String::new()
+                };
+                
+                log::info!("Adding file: name='{}', path='{}'", file_name, file_path);
+                
+                // Validate input
+                if file_name.trim().is_empty() {
+                    if let Some(ui) = ui_weak.upgrade() {
+                        ui.invoke_show_toast("文件名不能为空".into());
+                    }
+                    return;
+                }
+                
+                if let Ok(mut vm) = vm.try_borrow_mut() {
+                    // Add file
+                    if let Err(e) = vm.add_file(&file_name) {
+                        log::error!("Failed to add file: {}", e);
+                        if let Some(ui) = ui_weak.upgrade() {
+                            ui.invoke_show_toast(format!("添加案卷失败: {}", e).into());
+                        }
+                    } else if let Some(ui) = ui_weak.upgrade() {
+                        vm.init_ui(&ui);
+                        ui.invoke_show_toast("案卷添加成功".into());
+                    }
+                    
+                    vm.show_add_file_dialog = false;
+                    vm.new_file_name.clear();
+                    vm.new_file_path.clear();
+                }
+            }
+        });
+        
+        // Cancel add file callback
+        ui_handle.on_cancel_add_file({
+            let vm = Rc::clone(&vm);
+            move || {
+                if let Ok(mut vm) = vm.try_borrow_mut() {
+                    vm.show_add_file_dialog = false;
+                    vm.new_file_name.clear();
+                    vm.new_file_path.clear();
+                }
+            }
+        });
+        
+        // Browse file folder callback
+        ui_handle.on_browse_file_folder({
+            let vm = Rc::clone(&vm);
+            let ui_weak = ui_weak.clone();
+            move |field_index| {
+                log::info!("Browse file folder requested for field {}", field_index);
+                
+                let vm = vm.borrow();
+                if let Some(path_str) = vm.browse_folder() {
+                    if let Some(ui) = ui_weak.upgrade() {
+                        log::info!("Selected folder: {}", path_str);
+                        
+                        // Update the path field
+                        let fields = ui.get_add_file_fields();
+                        if field_index == 1 && fields.row_count() > 1 {
+                            // Path field
+                            let mut field = fields.row_data(1).unwrap();
+                            field.value = path_str.clone().into();
+                            fields.set_row_data(1, field);
+                            ui.set_add_file_fields(fields);
+                            
+                            // Auto-fill name field with folder name if it's empty
+                            let fields = ui.get_add_file_fields();
+                            if fields.row_count() > 0 {
+                                let name_field = fields.row_data(0).unwrap();
+                                if name_field.value.trim().is_empty() {
+                                    if let Some(folder_name) = std::path::Path::new(&path_str)
+                                        .file_name()
+                                        .and_then(|n| n.to_str()) {
+                                        let mut name_field = fields.row_data(0).unwrap();
+                                        name_field.value = folder_name.into();
+                                        fields.set_row_data(0, name_field);
+                                        ui.set_add_file_fields(fields);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    log::info!("No folder selected");
+                }
+            }
+        });
+        
+        // Confirm add item callback
+        ui_handle.on_confirm_add_item({
+            let vm = Rc::clone(&vm);
+            let ui_weak = ui_weak.clone();
+            move |fields| {
+                let item_name = if fields.row_count() >= 1 {
+                    fields.row_data(0).unwrap().value.to_string()
+                } else {
+                    String::new()
+                };
+                
+                let item_path = if fields.row_count() >= 2 {
+                    fields.row_data(1).unwrap().value.to_string()
+                } else {
+                    String::new()
+                };
+                
+                log::info!("Adding item: name='{}', path='{}'", item_name, item_path);
+                
+                // Validate input
+                if item_name.trim().is_empty() {
+                    if let Some(ui) = ui_weak.upgrade() {
+                        ui.invoke_show_toast("文件名不能为空".into());
+                    }
+                    return;
+                }
+                
+                if let Ok(mut vm) = vm.try_borrow_mut() {
+                    // Add item
+                    if let Err(e) = vm.add_item(&item_name, Some(item_path)) {
+                        log::error!("Failed to add item: {}", e);
+                        if let Some(ui) = ui_weak.upgrade() {
+                            ui.invoke_show_toast(format!("添加文件失败: {}", e).into());
+                        }
+                    } else if let Some(ui) = ui_weak.upgrade() {
+                        vm.init_ui(&ui);
+                        ui.invoke_show_toast("文件添加成功".into());
+                    }
+                    
+                    vm.show_add_item_dialog = false;
+                    vm.new_item_name.clear();
+                    vm.new_item_path.clear();
+                }
+            }
+        });
+        
+        // Cancel add item callback
+        ui_handle.on_cancel_add_item({
+            let vm = Rc::clone(&vm);
+            move || {
+                if let Ok(mut vm) = vm.try_borrow_mut() {
+                    vm.show_add_item_dialog = false;
+                    vm.new_item_name.clear();
+                    vm.new_item_path.clear();
+                }
+            }
+        });
+        
+        // Browse item folder callback
+        ui_handle.on_browse_item_folder({
+            let vm = Rc::clone(&vm);
+            let ui_weak = ui_weak.clone();
+            move |field_index| {
+                log::info!("Browse item folder requested for field {}", field_index);
+                
+                let vm = vm.borrow();
+                if let Some(path_str) = vm.browse_folder() {
+                    if let Some(ui) = ui_weak.upgrade() {
+                        log::info!("Selected folder: {}", path_str);
+                        
+                        // Update the path field
+                        let fields = ui.get_add_item_fields();
+                        if field_index == 1 && fields.row_count() > 1 {
+                            // Path field
+                            let mut field = fields.row_data(1).unwrap();
+                            field.value = path_str.clone().into();
+                            fields.set_row_data(1, field);
+                            ui.set_add_item_fields(fields);
+                            
+                            // Auto-fill name field with folder name if it's empty
+                            let fields = ui.get_add_item_fields();
+                            if fields.row_count() > 0 {
+                                let name_field = fields.row_data(0).unwrap();
+                                if name_field.value.trim().is_empty() {
+                                    if let Some(folder_name) = std::path::Path::new(&path_str)
+                                        .file_name()
+                                        .and_then(|n| n.to_str()) {
+                                        let mut name_field = fields.row_data(0).unwrap();
+                                        name_field.value = folder_name.into();
+                                        fields.set_row_data(0, name_field);
+                                        ui.set_add_item_fields(fields);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    log::info!("No folder selected");
                 }
             }
         });
@@ -940,6 +1386,12 @@ impl Clone for HomeViewModel {
             selected_file: self.selected_file,
             items_list: self.items_list.clone(),
             selected_item: self.selected_item,
+            show_add_file_dialog: self.show_add_file_dialog,
+            new_file_name: self.new_file_name.clone(),
+            new_file_path: self.new_file_path.clone(),
+            show_add_item_dialog: self.show_add_item_dialog,
+            new_item_name: self.new_item_name.clone(),
+            new_item_path: self.new_item_path.clone(),
             settings_service: Rc::clone(&self.settings_service),
             db_connection: self.db_connection.as_ref().map(Rc::clone),
             current_db_path: self.current_db_path.clone(),

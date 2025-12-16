@@ -1,7 +1,8 @@
 import { VerticalBox, HorizontalBox, ComboBox } from "std-widgets.slint";
 import { Theme, Layout } from "../theme.slint";
-import { CrudListItem, QuickAction, SeriesItem, FileItem, ItemItem } from "../models.slint";
+import { CrudListItem, QuickAction, SeriesItem, FileItem, ItemItem, DialogField, DialogFieldType } from "../models.slint";
 import { CrudList } from "../components/crud-list.slint";
+import { FormDialog } from "../components/dialogs.slint";
 
 // ============================================================================
 // Home Page Component - Fonds Management with MVVM Architecture
@@ -36,6 +37,15 @@ export component HomePage inherits Rectangle {
     in-out property <string> open_file_path: "";
     in-out property <string> open_item_path: "";
 
+    // Dialog states
+    in-out property <bool> show_add_file_dialog: false;
+    in-out property <[DialogField]> add_file_fields: [];
+    in-out property <bool> show_add_item_dialog: false;
+    in-out property <[DialogField]> add_item_fields: [];
+
+    // Current language for dialogs
+    in property <int> current_language: 0;
+
     // Toolbar callbacks
     callback request_add_fonds_dialog();
     callback archive_selected(int);
@@ -66,6 +76,14 @@ export component HomePage inherits Rectangle {
     callback open_item_at(int);  // Open item at specific index
 
     callback file_selected(int);
+
+    // Dialog callbacks
+    callback confirm_add_file([DialogField]);
+    callback cancel_add_file();
+    callback browse_file_folder(int);
+    callback confirm_add_item([DialogField]);
+    callback cancel_add_item();
+    callback browse_item_folder(int);
 
     VerticalBox {
         width: parent.width;
@@ -147,8 +165,8 @@ export component HomePage inherits Rectangle {
                 item-clicked(index) => {
                     // Series doesn't support multi-selection, just activate
                     root.selected_series_index = index;
-                    // TODO: Access series data when available
-                    root.select_series(index, "");
+                    // Get series_no from the subtitle field
+                    root.select_series(index, root.series_list_items[index].subtitle);
                 }
 
                 item-activated(index) => {
@@ -184,7 +202,13 @@ export component HomePage inherits Rectangle {
                         { icon: "🔗", tooltip: "Open" }
                     ];
 
-                    add-clicked => { root.add_file(); }
+                    add-clicked => {
+                        root.add_file_fields = [
+                            { label: @tr("label_name"), field_type: DialogFieldType.text, value: "", placeholder: @tr("placeholder_file_name") },
+                            { label: @tr("label_path"), field_type: DialogFieldType.path, value: "", placeholder: @tr("placeholder_file_path") },
+                        ];
+                        root.show_add_file_dialog = true;
+                    }
 
                     item-clicked(index) => {
                         root.file_clicked(index);
@@ -220,7 +244,13 @@ export component HomePage inherits Rectangle {
                         { icon: "🔗", tooltip: "Open" }
                     ];
 
-                    add-clicked => { root.add_item(); }
+                    add-clicked => {
+                        root.add_item_fields = [
+                            { label: @tr("label_name"), field_type: DialogFieldType.text, value: "", placeholder: @tr("placeholder_item_name") },
+                            { label: @tr("label_path"), field_type: DialogFieldType.path, value: "", placeholder: @tr("placeholder_item_path") },
+                        ];
+                        root.show_add_item_dialog = true;
+                    }
 
                     item-clicked(index) => {
                         root.item_clicked(index);
@@ -241,6 +271,56 @@ export component HomePage inherits Rectangle {
                     delete-clicked => { root.delete_item(); }
                 }
             }
+        }
+    }
+
+    // Add File Dialog
+    if root.show_add_file_dialog : FormDialog {
+        x: 0;
+        y: 0;
+        width: 100%;
+        height: 100%;
+        title: @tr("dialog_add_file_title");
+        current_language: root.current_language;
+        fields <=> root.add_file_fields;
+        
+        confirm(fields) => {
+            root.confirm_add_file(fields);
+            root.show_add_file_dialog = false;
+        }
+        
+        cancel() => {
+            root.cancel_add_file();
+            root.show_add_file_dialog = false;
+        }
+        
+        browse_folder(index) => {
+            root.browse_file_folder(index);
+        }
+    }
+
+    // Add Item Dialog
+    if root.show_add_item_dialog : FormDialog {
+        x: 0;
+        y: 0;
+        width: 100%;
+        height: 100%;
+        title: @tr("dialog_add_item_title");
+        current_language: root.current_language;
+        fields <=> root.add_item_fields;
+        
+        confirm(fields) => {
+            root.confirm_add_item(fields);
+            root.show_add_item_dialog = false;
+        }
+        
+        cancel() => {
+            root.cancel_add_item();
+            root.show_add_item_dialog = false;
+        }
+        
+        browse_folder(index) => {
+            root.browse_item_folder(index);
         }
     }
 }

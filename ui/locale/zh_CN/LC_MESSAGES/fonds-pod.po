@@ -178,6 +178,14 @@ msgid "placeholder_child_name"
 msgstr "输入子分类名称"
 
 msgctxt ""
+msgid "placeholder_file_name"
+msgstr "输入案卷名称"
+
+msgctxt ""
+msgid "placeholder_file_path"
+msgstr "选择案卷路径"
+
+msgctxt ""
 msgid "label_top_classifications"
 msgstr "顶级分类"
 
@@ -212,6 +220,22 @@ msgstr "添加档案库"
 msgctxt ""
 msgid "dialog_rename_archive_title"
 msgstr "重命名档案库"
+
+msgctxt ""
+msgid "dialog_add_file_title"
+msgstr "添加案卷"
+
+msgctxt ""
+msgid "dialog_add_item_title"
+msgstr "添加文件"
+
+msgctxt ""
+msgid "placeholder_item_name"
+msgstr "输入文件名称"
+
+msgctxt ""
+msgid "placeholder_item_path"
+msgstr "选择文件路径"
 
 # ============================================================================
 # AppWindow context translations (used with @tr("key") in AppWindow)

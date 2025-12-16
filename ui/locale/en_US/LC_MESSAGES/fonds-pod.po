@@ -190,6 +190,14 @@ msgid "placeholder_child_name"
 msgstr "Enter child classification name"
 
 msgctxt ""
+msgid "placeholder_file_name"
+msgstr "Enter file name"
+
+msgctxt ""
+msgid "placeholder_file_path"
+msgstr "Select file path"
+
+msgctxt ""
 msgid "label_path"
 msgstr "Path"
 
@@ -208,6 +216,22 @@ msgstr "Add Archive Library"
 msgctxt ""
 msgid "dialog_rename_archive_title"
 msgstr "Rename Archive Library"
+
+msgctxt ""
+msgid "dialog_add_file_title"
+msgstr "Add File"
+
+msgctxt ""
+msgid "dialog_add_item_title"
+msgstr "Add Item"
+
+msgctxt ""
+msgid "placeholder_item_name"
+msgstr "Enter item name"
+
+msgctxt ""
+msgid "placeholder_item_path"
+msgstr "Select item path"
 
 # ============================================================================
 # AppWindow context translations (used with @tr("key") in AppWindow)
