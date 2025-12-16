@@ -251,8 +251,8 @@ impl HomeViewModel {
             // Reset fonds selection and dependent data
             if !self.fonds_list.is_empty() {
                 self.selected_fonds_index = 0;
-                let fond_no = self.fonds_list[0].fond_no.clone();
-                self.load_series(&fond_no)?;
+                let fond_id = self.fonds_list[0].id;
+                self.load_series(fond_id)?;
             } else {
                 self.selected_fonds_index = 0;
                 self.series_list.clear();
@@ -268,32 +268,39 @@ impl HomeViewModel {
     }
 
     /// Load series for a specific fond
-    pub fn load_series(&mut self, fond_no: &str) -> Result<(), Box<dyn Error>> {
+    pub fn load_series(&mut self, fond_id: i32) -> Result<(), Box<dyn Error>> {
         if let Some(mut repo) = self.get_series_repo() {
-            // Find series for this fond
+            // Find series for this fond by fond_id
             let all_series = repo.find_all()?;
             self.series_list = all_series.into_iter()
-                .filter(|s| s.fond_no == fond_no)
+                .filter(|s| s.fond_id == fond_id)
                 .collect();
-            log::info!("HomeViewModel: Loaded {} series for fond {}", self.series_list.len(), fond_no);
+            log::info!("HomeViewModel: Loaded {} series for fond_id {}", self.series_list.len(), fond_id);
             
-            // If no series found, try to generate them
+            // If no series found, try to generate them (using fond_no from fonds_list)
             if self.series_list.is_empty() {
-                log::info!("No series found for fond {}, attempting to generate series", fond_no);
-                self.generate_series(fond_no)?;
+                let fond_no = if let Some(fond) = self.fonds_list.iter().find(|f| f.id == fond_id) {
+                    fond.fond_no.clone()
+                } else {
+                    return Ok(());
+                };
+                
+                log::info!("No series found for fond_id {}, attempting to generate series", fond_id);
+                self.generate_series(&fond_no)?;
                 // Reload series after generation
                 let all_series = repo.find_all()?;
                 self.series_list = all_series.into_iter()
-                    .filter(|s| s.fond_no == fond_no)
+                    .filter(|s| s.fond_id == fond_id)
                     .collect();
-                log::info!("After generation: Loaded {} series for fond {}", self.series_list.len(), fond_no);
+                log::info!("After generation: Loaded {} series for fond_id {}", self.series_list.len(), fond_id);
             }
             
             // Reset selection and load files for first series
             if !self.series_list.is_empty() {
                 self.selected_series_index = 0;
+                let series_id = self.series_list[0].id;
                 self.selected_series_no = self.series_list[0].series_no.clone();
-                self.load_files(&self.selected_series_no.clone())?;
+                self.load_files(series_id)?;
             } else {
                 self.selected_series_index = -1;
                 self.selected_series_no.clear();
@@ -305,18 +312,19 @@ impl HomeViewModel {
     }
 
     /// Load files for a specific series
-    pub fn load_files(&mut self, series_no: &str) -> Result<(), Box<dyn Error>> {
+    pub fn load_files(&mut self, series_id: i32) -> Result<(), Box<dyn Error>> {
         if let Some(mut repo) = self.get_files_repo() {
             let all_files = repo.find_all()?;
             self.files_list = all_files.into_iter()
-                .filter(|f| f.series_no == series_no)
+                .filter(|f| f.series_id == series_id)
                 .collect();
-            log::info!("HomeViewModel: Loaded {} files for series {}", self.files_list.len(), series_no);
+            log::info!("HomeViewModel: Loaded {} files for series_id {}", self.files_list.len(), series_id);
             
             // Reset selection and load items for first file
             if !self.files_list.is_empty() {
                 self.selected_file = 0;
-                self.load_items(&self.files_list[0].file_no.clone())?;
+                let file_id = self.files_list[0].id;
+                self.load_items(file_id)?;
             } else {
                 self.selected_file = 0;
                 self.items_list.clear();
@@ -326,13 +334,13 @@ impl HomeViewModel {
     }
 
     /// Load items for a specific file
-    pub fn load_items(&mut self, file_no: &str) -> Result<(), Box<dyn Error>> {
+    pub fn load_items(&mut self, file_id: i32) -> Result<(), Box<dyn Error>> {
         if let Some(mut repo) = self.get_items_repo() {
             let all_items = repo.find_all()?;
             self.items_list = all_items.into_iter()
-                .filter(|i| i.file_no == file_no)
+                .filter(|i| i.file_id == file_id)
                 .collect();
-            log::info!("HomeViewModel: Loaded {} items for file {}", self.items_list.len(), file_no);
+            log::info!("HomeViewModel: Loaded {} items for file_id {}", self.items_list.len(), file_id);
             self.selected_item = 0;
         }
         Ok(())
@@ -340,6 +348,13 @@ impl HomeViewModel {
 
     /// Generate series for a fond based on fond_schemas (cartesian product of schema items)
     pub fn generate_series(&mut self, fond_no: &str) -> Result<(), Box<dyn Error>> {
+        // Get fond_id from fonds_list
+        let fond_id = if let Some(fond) = self.fonds_list.iter().find(|f| f.fond_no == fond_no) {
+            fond.id
+        } else {
+            return Err(format!("Fond with fond_no {} not found", fond_no).into());
+        };
+
         // Get fond_schemas for this fond
         let fond_schemas = if let Some(mut repo) = self.get_fond_schemas_repo() {
             let all_schemas = repo.find_all()?;
@@ -461,6 +476,7 @@ impl HomeViewModel {
                     id: 0,
                     series_no: series_no.clone(),
                     fond_no: fond_no.to_string(),
+                    fond_id,
                     name,
                     created_by: String::new(),
                     created_machine: String::new(),
@@ -473,7 +489,7 @@ impl HomeViewModel {
         }
 
         // Reload series
-        self.load_series(fond_no)?;
+        self.load_series(fond_id)?;
         Ok(())
     }
 
@@ -528,10 +544,11 @@ impl HomeViewModel {
 
     /// Add a new file to the selected series
     pub fn add_file(&mut self, name: &str) -> Result<(), Box<dyn Error>> {
-        if self.selected_series_no.is_empty() {
+        if self.selected_series_index < 0 || self.selected_series_index >= self.series_list.len() as i32 {
             return Err("No series selected".into());
         }
         
+        let series_id = self.series_list[self.selected_series_index as usize].id;
         let file_no = format!("{}-W{:03}", self.selected_series_no, self.files_list.len() + 1);
         
         if let Some(mut repo) = self.get_files_repo() {
@@ -539,6 +556,7 @@ impl HomeViewModel {
                 id: 0,
                 file_no: file_no.clone(),
                 series_no: self.selected_series_no.clone(),
+                series_id,
                 name: name.to_string(),
                 created_by: String::new(),
                 created_machine: String::new(),
@@ -548,7 +566,7 @@ impl HomeViewModel {
             log::info!("Created file: {} - {}", file_no, name);
         }
 
-        self.load_files(&self.selected_series_no.clone())?;
+        self.load_files(series_id)?;
         Ok(())
     }
 
@@ -558,6 +576,7 @@ impl HomeViewModel {
             return Err("No file selected".into());
         }
         
+        let file_id = self.files_list[self.selected_file as usize].id;
         let file_no = self.files_list[self.selected_file as usize].file_no.clone();
         let item_no = format!("{}-D{:03}", file_no, self.items_list.len() + 1);
         
@@ -566,6 +585,7 @@ impl HomeViewModel {
                 id: 0,
                 item_no: item_no.clone(),
                 file_no: file_no.clone(),
+                file_id,
                 name: name.to_string(),
                 path,
                 created_by: String::new(),
@@ -576,7 +596,7 @@ impl HomeViewModel {
             log::info!("Created item: {} - {}", item_no, name);
         }
 
-        self.load_items(&file_no)?;
+        self.load_items(file_id)?;
         Ok(())
     }
 
@@ -587,13 +607,14 @@ impl HomeViewModel {
         }
         
         let file_id = self.files_list[self.selected_file as usize].id;
+        let series_id = self.files_list[self.selected_file as usize].series_id;
         
         if let Some(mut repo) = self.get_files_repo() {
             repo.delete(file_id)?;
             log::info!("Deleted file with id {}", file_id);
         }
 
-        self.load_files(&self.selected_series_no.clone())?;
+        self.load_files(series_id)?;
         Ok(())
     }
 
@@ -604,15 +625,14 @@ impl HomeViewModel {
         }
         
         let item_id = self.items_list[self.selected_item as usize].id;
+        let file_id = self.items_list[self.selected_item as usize].file_id;
         
         if let Some(mut repo) = self.get_items_repo() {
             repo.delete(item_id)?;
             log::info!("Deleted item with id {}", item_id);
         }
 
-        if !self.files_list.is_empty() && self.selected_file >= 0 {
-            self.load_items(&self.files_list[self.selected_file as usize].file_no.clone())?;
-        }
+        self.load_items(file_id)?;
         Ok(())
     }
 
@@ -815,8 +835,8 @@ impl HomeViewModel {
                 if let Ok(mut vm) = vm.try_borrow_mut() {
                     vm.selected_fonds_index = index;
                     if let Some(fond) = vm.fonds_list.get(index as usize) {
-                        let fond_no = fond.fond_no.clone();
-                        if let Err(e) = vm.load_series(&fond_no) {
+                        let fond_id = fond.id;
+                        if let Err(e) = vm.load_series(fond_id) {
                             log::error!("Failed to load series: {}", e);
                         }
                         if let Some(ui) = ui_weak.upgrade() {
@@ -836,7 +856,8 @@ impl HomeViewModel {
                     vm.selected_series_index = index;
                     if let Some(series) = vm.series_list.get(index as usize).cloned() {
                         vm.selected_series_no = series.series_no.clone();
-                        if let Err(e) = vm.load_files(&series.series_no) {
+                        let series_id = series.id;
+                        if let Err(e) = vm.load_files(series_id) {
                             log::error!("Failed to load files: {}", e);
                         }
                         if let Some(ui) = ui_weak.upgrade() {
@@ -1016,8 +1037,8 @@ impl HomeViewModel {
                     vm.selected_file = index;
                     vm.selected_file_index = index;
                     if let Some(file) = vm.files_list.get(index as usize) {
-                        let file_no = file.file_no.clone();
-                        if let Err(e) = vm.load_items(&file_no) {
+                        let file_id = file.id;
+                        if let Err(e) = vm.load_items(file_id) {
                             log::error!("Failed to load items: {}", e);
                         }
                         if let Some(ui) = ui_weak.upgrade() {
