@@ -9,7 +9,7 @@ import { FondClassificationPage } from "pages/fond-classification-page.slint";
 import { FondPage } from "pages/fond-page.slint";
 import { SchemaPage } from "pages/schema-page.slint";
 import { CrudListItem, CrudListRowStyle, DialogField, DialogFieldType, SeriesItem, FileItem, ItemItem, SchemaOption, ClassificationOption, FondsSchemaOption } from "models.slint";
-import { AddFondsDialogWindow } from "dialogs.slint";
+import { AddFondsDialog } from "dialogs.slint";
 
 export component AppWindow inherits Window {
     title: "FondsPod";
@@ -69,6 +69,9 @@ export component AppWindow inherits Window {
     in-out property <int> selected_item: 0;
     in-out property <string> open_file_path: "";
     in-out property <string> open_item_path: "";
+    
+    // Add fonds dialog state
+    in-out property <bool> show_add_fonds_dialog: false;
     
     // Add fonds dialog properties
     in-out property <string> add_fonds_name: "";
@@ -180,7 +183,6 @@ export component AppWindow inherits Window {
     // Home page callbacks
     callback initialize_home_page();
     callback request_add_fonds_dialog();
-    callback show_add_fonds_dialog_window();
     callback confirm_add_fonds(string, string, [string]); // name, classification_code, selected_schema_nos
     callback cancel_add_fonds();
     callback toggle_schema_selection(int);
@@ -457,14 +459,8 @@ export component AppWindow inherits Window {
         }
     }
     
-    // Internal property to control dialog visibility
-    private property <bool> show_add_fonds_dialog: false;
-    
-    // Show dialog when data is updated from request callback
-    private property <int> add_fonds_dialog_trigger: 0;
-    
-    // Independent Add Fonds Dialog
-    add_fonds_dialog := AddFondsDialogWindow {
+    // Add Fonds Dialog Overlay
+    if root.show_add_fonds_dialog: add_fonds_dialog := AddFondsDialog {
         visible: root.show_add_fonds_dialog;
         primary_classifications <=> root.primary_classifications;
         secondary_classifications <=> root.secondary_classifications;
@@ -492,10 +488,5 @@ export component AppWindow inherits Window {
         move_schema_back(index) => {
             root.move_schema_back(index);
         }
-    }
-    
-    // Handler for showing add fonds dialog
-    show_add_fonds_dialog_window() => {
-        root.show_add_fonds_dialog = true;
     }
 }

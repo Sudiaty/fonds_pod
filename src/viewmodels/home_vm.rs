@@ -765,7 +765,7 @@ impl HomeViewModel {
                         ui.set_selected_secondary_classification(0);
                         
                         // Show the dialog
-                        ui.invoke_show_add_fonds_dialog_window();
+                        ui.set_show_add_fonds_dialog(true);
                     }
                 }
             }
