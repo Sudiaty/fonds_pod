@@ -6,6 +6,6 @@ impl_repository!(
     FilesRepository,                                      // 仓储名
     File,                                                  // 实体类型
     files,                                                 // 表模块
-    { file_no, series_no, series_id, name, created_at, created_by, created_machine }, // 插入列（排除 id）
-    { file_no, series_no, series_id, name }                // 更新列
+    { series_id, name, file_no, path, created_at, created_by, created_machine }, // 插入列（排除 id）
+    { series_id, name, file_no, path }                       // 更新列
 );

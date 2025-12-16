@@ -7,6 +7,7 @@ pub mod fond_schema_repository;
 pub mod series_repository;
 pub mod file_repository;
 pub mod item_repository;
+pub mod sequences_repository;
 pub mod config_repository;
 
 // Re-export core traits for convenience
@@ -19,9 +20,9 @@ pub use fond_schema_repository::FondSchemasRepository;
 pub use series_repository::SeriesRepository;
 pub use file_repository::FilesRepository;
 pub use item_repository::ItemsRepository;
+pub use sequences_repository::SequencesRepository;
 pub use config_repository::FileConfigRepository;
 pub use schema_repository::SchemaRepository;
-pub use schema_item_repository::SchemaItemRepository;
 
 use diesel::sqlite::SqliteConnection;
 use diesel::Connection;

@@ -4,7 +4,8 @@ use crate::services::SettingsService;
 use crate::{AppWindow, CrudListItem, DialogField, DialogFieldType};
 use crate::persistence::{
     FondsRepository, SeriesRepository, FilesRepository, ItemsRepository,
-    FondSchemasRepository, FondClassificationsRepository, SchemaRepository, SchemaItemRepository,
+    FondSchemasRepository, FondClassificationsRepository, SchemaRepository, 
+    schema_item_repository::SchemaItemRepository,
     establish_connection,
 };
 use crate::models::fond::Fond;
@@ -20,6 +21,7 @@ use std::error::Error;
 use std::rc::Rc;
 use std::path::PathBuf;
 use diesel::SqliteConnection;
+use open;
 
 /// Home ViewModel - handles state and business logic for fonds management
 pub struct HomeViewModel {
@@ -130,6 +132,18 @@ impl HomeViewModel {
         }
     }
 
+    /// Browse file or folder and return selected path
+    pub fn browse_file_or_folder(&self) -> Option<String> {
+        // Use pick_file() which on many systems allows selecting folders too
+        if let Some(path) = rfd::FileDialog::new()
+            .set_directory("/")
+            .pick_file() {
+            Some(path.to_string_lossy().to_string())
+        } else {
+            None
+        }
+    }
+
     /// Update database connection for the selected archive
     fn update_connection(&mut self, library_path: &str) -> Result<(), Box<dyn Error>> {
         let db_path = PathBuf::from(library_path).join(".fondspod.db");
@@ -177,6 +191,16 @@ impl HomeViewModel {
     /// Get a repository for schema items
     fn get_schema_items_repo(&self) -> Option<SchemaItemRepository> {
         self.db_connection.as_ref().map(|conn| SchemaItemRepository::new(Rc::clone(conn)))
+    }
+
+    /// Get fond_no for a given series by looking up the fond
+    fn get_fond_no_for_series(&self, fond_id: i32) -> Result<String, Box<dyn Error>> {
+        for fond in &self.fonds_list {
+            if fond.id == fond_id {
+                return Ok(fond.fond_no.clone());
+            }
+        }
+        Err(format!("Fond with id {} not found", fond_id).into())
     }
 
     /// Load archive libraries and set up initial state
@@ -277,16 +301,10 @@ impl HomeViewModel {
                 .collect();
             log::info!("HomeViewModel: Loaded {} series for fond_id {}", self.series_list.len(), fond_id);
             
-            // If no series found, try to generate them (using fond_no from fonds_list)
+            // If no series found, try to generate them
             if self.series_list.is_empty() {
-                let fond_no = if let Some(fond) = self.fonds_list.iter().find(|f| f.id == fond_id) {
-                    fond.fond_no.clone()
-                } else {
-                    return Ok(());
-                };
-                
                 log::info!("No series found for fond_id {}, attempting to generate series", fond_id);
-                self.generate_series(&fond_no)?;
+                self.generate_series(fond_id)?;
                 // Reload series after generation
                 let all_series = repo.find_all()?;
                 self.series_list = all_series.into_iter()
@@ -299,7 +317,8 @@ impl HomeViewModel {
             if !self.series_list.is_empty() {
                 self.selected_series_index = 0;
                 let series_id = self.series_list[0].id;
-                self.selected_series_no = self.series_list[0].series_no.clone();
+                // Generate series_no for display purposes (no longer stored in DB)
+                self.selected_series_no = format!("S{:05}", series_id);
                 self.load_files(series_id)?;
             } else {
                 self.selected_series_index = -1;
@@ -347,12 +366,12 @@ impl HomeViewModel {
     }
 
     /// Generate series for a fond based on fond_schemas (cartesian product of schema items)
-    pub fn generate_series(&mut self, fond_no: &str) -> Result<(), Box<dyn Error>> {
-        // Get fond_id from fonds_list
-        let fond_id = if let Some(fond) = self.fonds_list.iter().find(|f| f.fond_no == fond_no) {
-            fond.id
+    pub fn generate_series(&mut self, fond_id: i32) -> Result<(), Box<dyn Error>> {
+        // Get fond_no from fonds_list for logging and fond_schemas filtering
+        let fond_no = if let Some(fond) = self.fonds_list.iter().find(|f| f.id == fond_id) {
+            fond.fond_no.clone()
         } else {
-            return Err(format!("Fond with fond_no {} not found", fond_no).into());
+            return Err(format!("Fond with id {} not found", fond_id).into());
         };
 
         // Get fond_schemas for this fond
@@ -361,7 +380,7 @@ impl HomeViewModel {
             let mut schemas: Vec<_> = all_schemas.into_iter()
                 .filter(|fs| fs.fond_no == fond_no)
                 .collect();
-            schemas.sort_by_key(|s| s.order_no);
+            schemas.sort_by_key(|s| s.sort_order);
             log::info!("Found {} fond_schemas for fond {}", schemas.len(), fond_no);
             schemas
         } else {
@@ -459,24 +478,24 @@ impl HomeViewModel {
         if let Some(mut series_repo) = self.get_series_repo() {
             // First delete existing series
             let existing_series = series_repo.find_all()?;
-            for series in existing_series.iter().filter(|s| s.fond_no == fond_no) {
+            for series in existing_series.iter().filter(|s| s.fond_id == fond_id) {
                 series_repo.delete(series.id)?;
             }
             log::debug!("Deleted existing series for fond {}", fond_no);
 
             // Create new series from combinations
-            for (idx, combo) in series_combinations.iter().enumerate() {
-                let series_no = format!("{}-{:03}", fond_no, idx + 1);
+            for (index, combo) in series_combinations.iter().enumerate() {
                 let name = combo.iter()
                     .map(|item| item.item_name.as_str())
                     .collect::<Vec<_>>()
                     .join("-");
                 
+                let series_no = format!("{}-{:02}", fond_no, index + 1);
+                
                 let series = Series {
                     id: 0,
-                    series_no: series_no.clone(),
-                    fond_no: fond_no.to_string(),
                     fond_id,
+                    series_no,
                     name,
                     created_by: String::new(),
                     created_machine: String::new(),
@@ -495,11 +514,11 @@ impl HomeViewModel {
 
     /// Add a new fond with the given data
     pub fn add_fond(&mut self, name: &str, classification_code: &str, selected_schema_nos: Vec<String>) -> Result<(), Box<dyn Error>> {
-        // Generate fond_no
-        let fond_no = format!("F{:04}", self.fonds_list.len() + 1);
+        // Generate fond_no using sequence
+        let fond_no = self.generate_next_fond_no()?;
         
         // Create the fond
-        if let Some(mut repo) = self.get_fonds_repo() {
+        let fond_id = if let Some(mut repo) = self.get_fonds_repo() {
             let fond = Fond {
                 id: 0,
                 fond_no: fond_no.clone(),
@@ -509,9 +528,12 @@ impl HomeViewModel {
                 created_machine: String::new(),
                 created_at: chrono::Utc::now().naive_utc(),
             };
-            repo.create(fond)?;
+            let id = repo.create(fond)?;
             log::info!("Created fond: {} - {}", fond_no, name);
-        }
+            id
+        } else {
+            return Err("No database connection".into());
+        };
 
         // Create fond_schemas for selected schemas
         if let Some(mut fs_repo) = self.get_fond_schemas_repo() {
@@ -520,7 +542,7 @@ impl HomeViewModel {
                     id: 0,
                     fond_no: fond_no.clone(),
                     schema_no: schema_no.clone(),
-                    order_no: order as i32,
+                    sort_order: order as i32,
                     created_by: String::new(),
                     created_machine: String::new(),
                     created_at: chrono::Utc::now().naive_utc(),
@@ -530,11 +552,11 @@ impl HomeViewModel {
             log::info!("Created {} fond_schemas for fond {}", selected_schema_nos.len(), fond_no);
         }
 
-        // Generate series based on the schemas
-        self.generate_series(&fond_no)?;
-
-        // Reload fonds
+        // Reload fonds immediately so generate_series can find the newly created fond
         self.load_fonds()?;
+
+        // Generate series based on the schemas
+        self.generate_series(fond_id)?;
         
         // Select the newly created fond
         self.selected_fonds_index = self.fonds_list.len() as i32 - 1;
@@ -543,49 +565,104 @@ impl HomeViewModel {
     }
 
     /// Add a new file to the selected series
-    pub fn add_file(&mut self, name: &str) -> Result<(), Box<dyn Error>> {
+    pub fn add_file(&mut self, name: &str, file_no: &str, path: Option<String>) -> Result<(), Box<dyn Error>> {
         if self.selected_series_index < 0 || self.selected_series_index >= self.series_list.len() as i32 {
             return Err("No series selected".into());
         }
         
         let series_id = self.series_list[self.selected_series_index as usize].id;
-        let file_no = format!("{}-W{:03}", self.selected_series_no, self.files_list.len() + 1);
         
         if let Some(mut repo) = self.get_files_repo() {
             let file = File {
                 id: 0,
-                file_no: file_no.clone(),
-                series_no: self.selected_series_no.clone(),
                 series_id,
                 name: name.to_string(),
+                file_no: file_no.to_string(),
+                path: path.clone(),
                 created_by: String::new(),
                 created_machine: String::new(),
                 created_at: chrono::Utc::now().naive_utc(),
             };
             repo.create(file)?;
-            log::info!("Created file: {} - {}", file_no, name);
+            log::info!("Created file: {} - {} (path: {:?})", file_no, name, path);
         }
 
         self.load_files(series_id)?;
         Ok(())
     }
 
-    /// Add a new item to the selected file
+    /// Generate next file number for current series
+    fn generate_next_file_no(&self) -> Result<String, Box<dyn Error>> {
+        if self.selected_series_index < 0 || self.selected_series_index >= self.series_list.len() as i32 {
+            return Err("No series selected".into());
+        }
+        
+        let series = &self.series_list[self.selected_series_index as usize];
+        let fond_no = self.get_fond_no_for_series(series.fond_id)?;
+        
+        // Find the highest file number for this series
+        let mut max_num = 0;
+        for file in &self.files_list {
+            if file.series_id == series.id {
+                // Parse the file_no format: FOND-SERIES-NN
+                if let Some(parts) = file.file_no.split('-').nth(2) {
+                    if let Ok(num) = parts.parse::<i32>() {
+                        if num > max_num {
+                            max_num = num;
+                        }
+                    }
+                }
+            }
+        }
+        
+        Ok(format!("{}-{}-{:02}", fond_no, series.series_no, max_num + 1))
+    }
+    
+    /// Generate next item number
+    fn generate_next_item_no(&self) -> Result<String, Box<dyn Error>> {
+        // Simple implementation: find the highest existing item number and increment
+        let mut max_num = 0;
+        for item in &self.items_list {
+            if item.item_no.starts_with('I') {
+                if let Ok(num) = item.item_no[1..].parse::<i32>() {
+                    if num > max_num {
+                        max_num = num;
+                    }
+                }
+            }
+        }
+        Ok(format!("I{:03}", max_num + 1))
+    }
+    
+    /// Generate next fond number
+    fn generate_next_fond_no(&mut self) -> Result<String, Box<dyn Error>> {
+        // Simple implementation: find the highest existing fond number and increment
+        let mut max_num = 0;
+        for fond in &self.fonds_list {
+            if fond.fond_no.starts_with('F') {
+                if let Ok(num) = fond.fond_no[1..].parse::<i32>() {
+                    if num > max_num {
+                        max_num = num;
+                    }
+                }
+            }
+        }
+        Ok(format!("F{:03}", max_num + 1))
+    }
     pub fn add_item(&mut self, name: &str, path: Option<String>) -> Result<(), Box<dyn Error>> {
         if self.files_list.is_empty() || self.selected_file < 0 {
             return Err("No file selected".into());
         }
         
         let file_id = self.files_list[self.selected_file as usize].id;
-        let file_no = self.files_list[self.selected_file as usize].file_no.clone();
-        let item_no = format!("{}-D{:03}", file_no, self.items_list.len() + 1);
+        // Generate item_no
+        let item_no = self.generate_next_item_no()?;
         
         if let Some(mut repo) = self.get_items_repo() {
             let item = Item {
                 id: 0,
-                item_no: item_no.clone(),
-                file_no: file_no.clone(),
                 file_id,
+                item_no: item_no.clone(),
                 name: name.to_string(),
                 path,
                 created_by: String::new(),
@@ -727,7 +804,7 @@ impl HomeViewModel {
             .map(|s| CrudListItem {
                 id: s.id,
                 title: s.name.clone().into(),
-                subtitle: s.series_no.clone().into(),
+                subtitle: format!("S{:05}", s.id).into(),
                 active: true,
             })
             .collect();
@@ -741,7 +818,7 @@ impl HomeViewModel {
             .map(|f| CrudListItem {
                 id: f.id,
                 title: f.name.clone().into(),
-                subtitle: f.file_no.clone().into(),
+                subtitle: format!("F{:05}", f.id).into(),
                 active: true,
             })
             .collect();
@@ -754,7 +831,7 @@ impl HomeViewModel {
             .map(|i| CrudListItem {
                 id: i.id,
                 title: i.name.clone().into(),
-                subtitle: i.item_no.clone().into(),
+                subtitle: format!("I{:05}", i.id).into(),
                 active: true,
             })
             .collect();
@@ -772,6 +849,12 @@ impl HomeViewModel {
                 field_type: DialogFieldType::Text,
                 value: "".into(),
                 placeholder: "placeholder_file_name".into(),
+            },
+            DialogField {
+                label: "label_file_no".into(),
+                field_type: DialogFieldType::Text,
+                value: "".into(),
+                placeholder: "placeholder_file_no".into(),
             },
             DialogField {
                 label: "label_file_path".into(),
@@ -855,13 +938,16 @@ impl HomeViewModel {
                 if let Ok(mut vm) = vm.try_borrow_mut() {
                     vm.selected_series_index = index;
                     if let Some(series) = vm.series_list.get(index as usize).cloned() {
-                        vm.selected_series_no = series.series_no.clone();
+                        // Generate series_no for display purposes
+                        vm.selected_series_no = format!("S{:05}", series.id);
                         let series_id = series.id;
                         if let Err(e) = vm.load_files(series_id) {
                             log::error!("Failed to load files: {}", e);
-                        }
-                        if let Some(ui) = ui_weak.upgrade() {
-                            vm.init_ui(&ui);
+                        } else {
+                            log::info!("Successfully loaded files for series {}, refreshing UI", series_id);
+                            if let Some(ui) = ui_weak.upgrade() {
+                                vm.init_ui(&ui);
+                            }
                         }
                     }
                 }
@@ -875,7 +961,7 @@ impl HomeViewModel {
             move || {
                 if let Ok(mut vm) = vm.try_borrow_mut() {
                     if let Some(fond) = vm.fonds_list.get(vm.selected_fonds_index as usize).cloned() {
-                        if let Err(e) = vm.generate_series(&fond.fond_no) {
+                        if let Err(e) = vm.generate_series(fond.id) {
                             log::error!("Failed to regenerate series: {}", e);
                             if let Some(ui) = ui_weak.upgrade() {
                                 ui.invoke_show_toast(format!("重新生成系列失败: {}", e).into());
@@ -1127,6 +1213,38 @@ impl HomeViewModel {
             }
         });
 
+        // Add folder item callback
+        ui_handle.on_add_folder_item({
+            let vm = Rc::clone(&vm);
+            let ui_weak = ui_weak.clone();
+            move || {
+                // Show folder picker dialog
+                use rfd::FileDialog;
+                if let Some(folder_path) = FileDialog::new()
+                    .set_directory("/")
+                    .pick_folder() {
+                    let folder_name = folder_path
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or("新文件夹")
+                        .to_string();
+                    let path_str = folder_path.to_string_lossy().to_string();
+                    
+                    if let Ok(mut vm) = vm.try_borrow_mut() {
+                        if let Err(e) = vm.add_item(&folder_name, Some(path_str)) {
+                            log::error!("Failed to add folder item: {}", e);
+                            if let Some(ui) = ui_weak.upgrade() {
+                                ui.invoke_show_toast(format!("添加文件夹失败: {}", e).into());
+                            }
+                        } else if let Some(ui) = ui_weak.upgrade() {
+                            vm.init_ui(&ui);
+                            ui.invoke_show_toast("文件夹添加成功".into());
+                        }
+                    }
+                }
+            }
+        });
+
         // Delete item callback
         ui_handle.on_delete_item({
             let vm = Rc::clone(&vm);
@@ -1157,13 +1275,37 @@ impl HomeViewModel {
                     String::new()
                 };
                 
-                let file_path = if fields.row_count() >= 2 {
-                    fields.row_data(1).unwrap().value.to_string()
+                let file_no = if fields.row_count() >= 2 {
+                    let input_no = fields.row_data(1).unwrap().value.to_string();
+                    if input_no.trim().is_empty() {
+                        // Auto-generate file_no
+                        match vm.borrow().generate_next_file_no() {
+                            Ok(no) => no,
+                            Err(e) => {
+                                log::error!("Failed to generate file number: {}", e);
+                                return;
+                            }
+                        }
+                    } else {
+                        input_no
+                    }
+                } else {
+                    match vm.borrow().generate_next_file_no() {
+                        Ok(no) => no,
+                        Err(e) => {
+                            log::error!("Failed to generate file number: {}", e);
+                            return;
+                        }
+                    }
+                };
+                
+                let file_path = if fields.row_count() >= 3 {
+                    fields.row_data(2).unwrap().value.to_string()
                 } else {
                     String::new()
                 };
                 
-                log::info!("Adding file: name='{}', path='{}'", file_name, file_path);
+                log::info!("Adding file: name='{}', file_no='{}', path='{}'", file_name, file_no, file_path);
                 
                 // Validate input
                 if file_name.trim().is_empty() {
@@ -1173,9 +1315,22 @@ impl HomeViewModel {
                     return;
                 }
                 
+                if file_no.trim().is_empty() {
+                    if let Some(ui) = ui_weak.upgrade() {
+                        ui.invoke_show_toast("文件编号不能为空".into());
+                    }
+                    return;
+                }
+                
+                let path = if file_path.trim().is_empty() {
+                    None
+                } else {
+                    Some(file_path)
+                };
+                
                 if let Ok(mut vm) = vm.try_borrow_mut() {
                     // Add file
-                    if let Err(e) = vm.add_file(&file_name) {
+                    if let Err(e) = vm.add_file(&file_name, &file_no, path) {
                         log::error!("Failed to add file: {}", e);
                         if let Some(ui) = ui_weak.upgrade() {
                             ui.invoke_show_toast(format!("添加案卷失败: {}", e).into());
@@ -1218,11 +1373,11 @@ impl HomeViewModel {
                         
                         // Update the path field
                         let fields = ui.get_add_file_fields();
-                        if field_index == 1 && fields.row_count() > 1 {
-                            // Path field
-                            let mut field = fields.row_data(1).unwrap();
+                        if field_index == 2 && fields.row_count() > 2 {
+                            // Path field (now at index 2)
+                            let mut field = fields.row_data(2).unwrap();
                             field.value = path_str.clone().into();
-                            fields.set_row_data(1, field);
+                            fields.set_row_data(2, field);
                             ui.set_add_file_fields(fields);
                             
                             // Auto-fill name field with folder name if it's empty
@@ -1311,12 +1466,12 @@ impl HomeViewModel {
             let vm = Rc::clone(&vm);
             let ui_weak = ui_weak.clone();
             move |field_index| {
-                log::info!("Browse item folder requested for field {}", field_index);
+                log::info!("Browse item file/folder requested for field {}", field_index);
                 
                 let vm = vm.borrow();
-                if let Some(path_str) = vm.browse_folder() {
+                if let Some(path_str) = vm.browse_file_or_folder() {
                     if let Some(ui) = ui_weak.upgrade() {
-                        log::info!("Selected folder: {}", path_str);
+                        log::info!("Selected path: {}", path_str);
                         
                         // Update the path field
                         let fields = ui.get_add_item_fields();
@@ -1327,16 +1482,16 @@ impl HomeViewModel {
                             fields.set_row_data(1, field);
                             ui.set_add_item_fields(fields);
                             
-                            // Auto-fill name field with folder name if it's empty
+                            // Auto-fill name field with file/folder name if it's empty
                             let fields = ui.get_add_item_fields();
                             if fields.row_count() > 0 {
                                 let name_field = fields.row_data(0).unwrap();
                                 if name_field.value.trim().is_empty() {
-                                    if let Some(folder_name) = std::path::Path::new(&path_str)
+                                    if let Some(name) = std::path::Path::new(&path_str)
                                         .file_name()
                                         .and_then(|n| n.to_str()) {
                                         let mut name_field = fields.row_data(0).unwrap();
-                                        name_field.value = folder_name.into();
+                                        name_field.value = name.into();
                                         fields.set_row_data(0, name_field);
                                         ui.set_add_item_fields(fields);
                                     }
@@ -1345,7 +1500,7 @@ impl HomeViewModel {
                         }
                     }
                 } else {
-                    log::info!("No folder selected");
+                    log::info!("No path selected");
                 }
             }
         });
@@ -1362,6 +1517,46 @@ impl HomeViewModel {
                             return;
                         }
                         vm.init_ui(&ui);
+                    }
+                }
+            }
+        });
+
+        // Open file at index callback
+        ui_handle.on_open_file_at({
+            let vm = Rc::clone(&vm);
+            move |index| {
+                if let Ok(vm_ref) = vm.try_borrow() {
+                    if let Some(file) = vm_ref.files_list.get(index as usize) {
+                        if let Some(ref path) = file.path {
+                            if let Err(e) = open::that(path) {
+                                log::error!("Failed to open file at path {}: {}", path, e);
+                            } else {
+                                log::info!("Opened file: {}", path);
+                            }
+                        } else {
+                            log::warn!("Cannot open file '{}' - no path available", file.name);
+                        }
+                    }
+                }
+            }
+        });
+
+        // Open item at index callback
+        ui_handle.on_open_item_at({
+            let vm = Rc::clone(&vm);
+            move |index| {
+                if let Ok(vm_ref) = vm.try_borrow() {
+                    if let Some(item) = vm_ref.items_list.get(index as usize) {
+                        if let Some(ref path) = item.path {
+                            if let Err(e) = open::that(path) {
+                                log::error!("Failed to open item at path {}: {}", path, e);
+                            } else {
+                                log::info!("Opened item: {}", path);
+                            }
+                        } else {
+                            log::warn!("Cannot open item '{}' - no path available", item.name);
+                        }
                     }
                 }
             }

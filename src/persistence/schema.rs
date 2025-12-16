@@ -80,7 +80,7 @@ pub fn init_schema(conn: &mut SqliteConnection) -> Result<(), Box<dyn Error>> {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             fond_no TEXT NOT NULL,
             schema_no TEXT NOT NULL,
-            order_no INTEGER NOT NULL,
+            sort_order INTEGER NOT NULL,
             created_by TEXT NOT NULL,
             created_machine TEXT NOT NULL,
             created_at TEXT NOT NULL,
@@ -97,13 +97,13 @@ pub fn init_schema(conn: &mut SqliteConnection) -> Result<(), Box<dyn Error>> {
         r#"
         CREATE TABLE IF NOT EXISTS series (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            series_no TEXT NOT NULL UNIQUE,
-            fond_no TEXT NOT NULL,
+            fond_id INTEGER NOT NULL,
+            series_no TEXT NOT NULL DEFAULT '',
             name TEXT NOT NULL,
             created_by TEXT NOT NULL,
             created_machine TEXT NOT NULL,
             created_at TEXT NOT NULL,
-            FOREIGN KEY (fond_no) REFERENCES fonds(fond_no)
+            FOREIGN KEY (fond_id) REFERENCES fonds(id)
         )
         "#,
     )
@@ -114,13 +114,14 @@ pub fn init_schema(conn: &mut SqliteConnection) -> Result<(), Box<dyn Error>> {
         r#"
         CREATE TABLE IF NOT EXISTS files (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            file_no TEXT NOT NULL UNIQUE,
-            series_no TEXT NOT NULL,
+            series_id INTEGER NOT NULL,
             name TEXT NOT NULL,
+            file_no TEXT NOT NULL DEFAULT '',
+            path TEXT,
             created_by TEXT NOT NULL,
             created_machine TEXT NOT NULL,
             created_at TEXT NOT NULL,
-            FOREIGN KEY (series_no) REFERENCES series(series_no)
+            FOREIGN KEY (series_id) REFERENCES series(id)
         )
         "#,
     )
@@ -131,14 +132,14 @@ pub fn init_schema(conn: &mut SqliteConnection) -> Result<(), Box<dyn Error>> {
         r#"
         CREATE TABLE IF NOT EXISTS items (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            item_no TEXT NOT NULL UNIQUE,
-            file_no TEXT NOT NULL,
+            file_id INTEGER NOT NULL,
+            item_no TEXT NOT NULL DEFAULT '',
             name TEXT NOT NULL,
             path TEXT,
             created_by TEXT NOT NULL,
             created_machine TEXT NOT NULL,
             created_at TEXT NOT NULL,
-            FOREIGN KEY (file_no) REFERENCES files(file_no)
+            FOREIGN KEY (file_id) REFERENCES files(id)
         )
         "#,
     )
@@ -163,6 +164,15 @@ pub fn init_schema(conn: &mut SqliteConnection) -> Result<(), Box<dyn Error>> {
         "#,
     )
     .execute(conn)?;
+
+    // Add file_no and path columns to files table if they don't exist
+    // Using PRAGMA table_info to check if columns exist before adding them
+    let _ = sql_query("ALTER TABLE files ADD COLUMN file_no TEXT NOT NULL DEFAULT ''").execute(conn);
+    let _ = sql_query("ALTER TABLE files ADD COLUMN path TEXT").execute(conn);
+
+    // Add series_no and item_no columns if they don't exist
+    let _ = sql_query("ALTER TABLE series ADD COLUMN series_no TEXT NOT NULL DEFAULT ''").execute(conn);
+    let _ = sql_query("ALTER TABLE items ADD COLUMN item_no TEXT NOT NULL DEFAULT ''").execute(conn);
 
     Ok(())
 }

@@ -49,10 +49,11 @@ export component HomePage inherits Rectangle {
     // Toolbar callbacks
     callback request_add_fonds_dialog();
     callback archive_selected(int);
-    callback open_fonds(string);
+    callback fonds_selected(int);
 
     // Series callbacks
     callback select_series(int, string);
+    callback series_selected(int);
     callback series_activated(int);
     callback rebuild_series();
     callback delete_series();
@@ -68,6 +69,7 @@ export component HomePage inherits Rectangle {
 
     // Item callbacks
     callback add_item();
+    callback add_folder_item();
     callback delete_item();
     callback rename_item(int, string);
     callback item_clicked(int);
@@ -118,9 +120,8 @@ export component HomePage inherits Rectangle {
                     model: root.fonds_names;
                     current-index <=> root.selected_fonds;
                     selected(value) => {
-                        if root.selected_fonds >= 0 && root.selected_fonds < root.fonds_names.length {
-                            root.open_fonds(root.fonds_names[root.selected_fonds]);
-                        }
+                        // Use index-based callback (historical implementation)
+                        root.fonds_selected(root.selected_fonds);
                     }
                 }
 
@@ -165,8 +166,8 @@ export component HomePage inherits Rectangle {
                 item-clicked(index) => {
                     // Series doesn't support multi-selection, just activate
                     root.selected_series_index = index;
-                    // Get series_no from the subtitle field
-                    root.select_series(index, root.series_list_items[index].subtitle);
+                    // Trigger series selection to load corresponding files
+                    root.series_selected(index);
                 }
 
                 item-activated(index) => {
@@ -240,6 +241,9 @@ export component HomePage inherits Rectangle {
                     active-index <=> root.selected_item;
                     activate-first-on-load: false;
                     show-rename-menu: true;
+                    toolbar-actions: [
+                        { icon: "📁", tooltip: "Add Folder" }
+                    ];
                     quick-actions: [
                         { icon: "🔗", tooltip: "Open" }
                     ];
@@ -264,6 +268,13 @@ export component HomePage inherits Rectangle {
                         // action_idx 0 = open item
                         if action_idx == 0 {
                             root.open_item_at(item_idx);
+                        }
+                    }
+
+                    toolbar-action-clicked(action_idx) => {
+                        if action_idx == 0 {
+                            // Add folder action
+                            root.add_folder_item();
                         }
                     }
 

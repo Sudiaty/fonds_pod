@@ -198,7 +198,6 @@ export component AppWindow inherits Window {
     callback move_schema_back(int);
     callback fonds_selected(int);  // index
     callback series_selected(int); // index
-    callback open_fonds(string);
     callback select_series(int, string);
     callback series_activated(int);
     callback rebuild_series();
@@ -211,6 +210,7 @@ export component AppWindow inherits Window {
     callback open_file();
     callback open_file_at(int);
     callback add_item();  // Will generate default name
+    callback add_folder_item();  // Will generate default name for folder
     callback delete_item();
     callback rename_item(int, string);
     callback item_clicked(int);
@@ -291,8 +291,9 @@ export component AppWindow inherits Window {
                     initialize => { root.initialize_home_page(); }
                     archive_selected(index) => { root.archive_selected(index); }
                     request_add_fonds_dialog() => { root.request_add_fonds_dialog(); }
-                    open_fonds(fonds) => { root.open_fonds(fonds); }
+                    fonds_selected(index) => { root.fonds_selected(index); }
                     select_series(index, series_no) => { root.select_series(index, series_no); }
+                    series_selected(index) => { root.series_selected(index); }
                     series_activated(index) => { root.series_activated(index); }
                     rebuild_series() => { root.rebuild_series(); }
                     delete_series() => { root.delete_series(); }
@@ -310,6 +311,7 @@ export component AppWindow inherits Window {
                     open_file() => { root.open_file(); }
                     open_file_at(index) => { root.open_file_at(index); }
                     add_item() => { root.add_item(); }
+                    add_folder_item() => { root.add_folder_item(); }
                     delete_item() => { root.delete_item(); }
                     rename_item(index, name) => { root.rename_item(index, name); }
                     item_clicked(index) => { root.item_clicked(index); }
