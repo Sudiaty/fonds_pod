@@ -6,8 +6,8 @@ impl_repository!(
     FondSchemasRepository,                                // 仓储名
     FondSchema,                                            // 实体类型
     fond_schemas,                                          // 表模块
-    { fond_no, schema_no, sort_order, created_at, created_by, created_machine }, // 插入列（排除 id）
-    { fond_no, schema_no, sort_order }                       // 更新列
+    { fond_id, schema_id, schema_item_id, sort_order, created_at, created_by, created_machine }, // 插入列（排除 id）
+    { fond_id, schema_id, schema_item_id, sort_order }                       // 更新列
 );
 
 // 额外实现 SortableRepository

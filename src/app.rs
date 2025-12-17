@@ -79,7 +79,7 @@ impl App {
 
         // Initialize Schema ViewModel
         let schema_vm = Rc::new(RefCell::new(Self::initialize_schema_vm(&settings_service)));
-        schema_vm.borrow().load();
+        schema_vm.borrow_mut().load();
 
         // Initialize Schema Item ViewModel
         let schema_item_vm = Rc::new(RefCell::new(Self::initialize_schema_item_vm(&settings_service)));
@@ -123,9 +123,14 @@ impl App {
         let conn = Self::get_database_connection(settings_service);
 
         let schema_repo = Rc::new(RefCell::new(
-            fonds_pod_lib::SchemaRepository::new(conn),
+            fonds_pod_lib::SchemaRepository::new(Rc::clone(&conn)),
         ));
-        SchemaViewModel::new(schema_repo)
+        let schema_items_repo = Rc::new(RefCell::new(
+            fonds_pod_lib::SchemaItemRepository::new(Rc::clone(&conn)),
+        ));
+        let mut vm = SchemaViewModel::new(schema_repo, schema_items_repo);
+        vm.load();
+        vm
     }
 
     /// 初始化Schema Item ViewModel和数据库连接
@@ -237,7 +242,7 @@ impl App {
                                         ui.set_child_crud_items(child_items);
                                     }
                                     "schema" => {
-                                        schema_vm.borrow().update_connection(new_conn.clone());
+                                        schema_vm.borrow_mut().update_connection(new_conn.clone());
                                         let schema_items = schema_vm.borrow().get_items();
                                         ui.set_schema_list_items(schema_items);
                                         schema_item_vm.borrow().update_connection(new_conn);

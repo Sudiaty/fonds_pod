@@ -84,7 +84,9 @@ export component AppWindow inherits Window {
     // Add fonds dialog properties
     in-out property <string> add_fonds_name: "";
     in-out property <[string]> primary_classifications: [];
+    in-out property <[string]> primary_codes: [];
     in-out property <[[string]]> secondary_classifications: [];
+    in-out property <[[string]]> secondary_codes: [];
     in-out property <int> selected_primary_classification: 0;
     in-out property <int> selected_secondary_classification: 0;
     in-out property <[FondsSchemaOption]> available_schemas: [];
@@ -191,7 +193,7 @@ export component AppWindow inherits Window {
     // Home page callbacks
     callback initialize_home_page();
     callback request_add_fonds_dialog();
-    callback confirm_add_fonds(string, string, [FondsSchemaOption]); // name, classification_code, selected_schemas
+    callback confirm_add_fonds(string, int, int, [FondsSchemaOption]); // name, selected_primary, selected_secondary, selected_schemas
     callback cancel_add_fonds();
     callback toggle_schema_selection(int);
     callback move_schema_to_selected(int);
@@ -494,7 +496,9 @@ export component AppWindow inherits Window {
     if root.show_add_fonds_dialog: add_fonds_dialog := AddFondsDialog {
         visible: root.show_add_fonds_dialog;
         primary_classifications <=> root.primary_classifications;
+        primary_codes <=> root.primary_codes;
         secondary_classifications <=> root.secondary_classifications;
+        secondary_codes <=> root.secondary_codes;
         selected_primary_classification <=> root.selected_primary_classification;
         selected_secondary_classification <=> root.selected_secondary_classification;
         available_schema_items <=> root.available_schemas;
@@ -504,7 +508,7 @@ export component AppWindow inherits Window {
         fonds_name_input <=> root.add_fonds_name;
         
         confirm() => {
-            root.confirm_add_fonds(add_fonds_dialog.fonds_name_input, "", add_fonds_dialog.chosen_schema_items);
+            root.confirm_add_fonds(add_fonds_dialog.fonds_name_input, root.selected_primary_classification, root.selected_secondary_classification, add_fonds_dialog.chosen_schema_items);
             root.show_add_fonds_dialog = false;
         }
         

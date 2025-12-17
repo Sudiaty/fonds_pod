@@ -5,7 +5,7 @@ use crate::{AppWindow, CrudListItem, DialogField, DialogFieldType};
 use crate::persistence::{
     FondsRepository, SeriesRepository, FilesRepository, ItemsRepository,
     FondSchemasRepository, FondClassificationsRepository, SchemaRepository, 
-    schema_item_repository::SchemaItemRepository,
+    schema_item_repository::SchemaItemRepository, SequencesRepository,
     establish_connection,
 };
 use crate::models::fond::Fond;
@@ -59,6 +59,7 @@ pub struct HomeViewModel {
     settings_service: Rc<SettingsService>,
     db_connection: Option<Rc<RefCell<SqliteConnection>>>,
     current_db_path: Option<PathBuf>,
+    sequences_repo: Option<SequencesRepository>,
 }
 
 impl Default for HomeViewModel {
@@ -87,6 +88,7 @@ impl Default for HomeViewModel {
             settings_service: Rc::new(SettingsService::new()),
             db_connection: None,
             current_db_path: None,
+            sequences_repo: None,
         }
     }
 }
@@ -118,6 +120,7 @@ impl HomeViewModel {
             settings_service,
             db_connection: None,
             current_db_path: None,
+            sequences_repo: None,
         }
     }
 
@@ -148,8 +151,9 @@ impl HomeViewModel {
     fn update_connection(&mut self, library_path: &str) -> Result<(), Box<dyn Error>> {
         let db_path = PathBuf::from(library_path).join(".fondspod.db");
         let conn = establish_connection(&db_path)?;
-        self.db_connection = Some(conn);
+        self.db_connection = Some(Rc::clone(&conn));
         self.current_db_path = Some(db_path);
+        self.sequences_repo = Some(SequencesRepository::new(conn));
         Ok(())
     }
 
@@ -378,7 +382,7 @@ impl HomeViewModel {
         let fond_schemas = if let Some(mut repo) = self.get_fond_schemas_repo() {
             let all_schemas = repo.find_all()?;
             let mut schemas: Vec<_> = all_schemas.into_iter()
-                .filter(|fs| fs.fond_no == fond_no)
+                .filter(|fs| fs.fond_id == fond_id)
                 .collect();
             schemas.sort_by_key(|s| s.sort_order);
             log::info!("Found {} fond_schemas for fond {}", schemas.len(), fond_no);
@@ -411,42 +415,43 @@ impl HomeViewModel {
         if let Some(mut schema_repo) = self.get_schema_repo() {
             if let Some(mut items_repo) = self.get_schema_items_repo() {
                 let all_schemas = schema_repo.find_all()?;
+                let all_items = items_repo.find_all()?;
                 log::info!("Available schemas: {}", all_schemas.iter().map(|s| s.schema_no.as_str()).collect::<Vec<_>>().join(", "));
                 
                 for fond_schema in &fond_schemas {
-                    log::debug!("Processing fond_schema: schema_no={}", fond_schema.schema_no);
+                    log::debug!("Processing fond_schema: schema_item_id={:?}", fond_schema.schema_item_id);
                     
-                    // Special handling for "Year" schema
-                    if fond_schema.schema_no == "Year" {
-                        log::info!("Special handling for Year schema: creating year items from {} to {}", created_year, current_year);
-                        let mut year_items: Vec<crate::models::schema_item::SchemaItem> = Vec::new();
-                        for year in created_year..=current_year {
-                            year_items.push(crate::models::schema_item::SchemaItem {
-                                id: 0,
-                                schema_id: 0,
-                                item_no: year.to_string(),
-                                item_name: year.to_string(),
-                                created_by: String::new(),
-                                created_machine: String::new(),
-                                created_at: chrono::Utc::now().naive_utc(),
-                            });
-                        }
-                        log::info!("Generated {} year items for Year schema", year_items.len());
-                        dimension_items.push(year_items);
-                    } else {
-                        // Normal schema: get items from database
-                        // Find the schema by schema_no
-                        if let Some(schema) = all_schemas.iter().find(|s| s.schema_no == fond_schema.schema_no) {
-                            log::debug!("Found schema: id={}, schema_no={}", schema.id, schema.schema_no);
-                            let items = items_repo.find_by_schema_id(schema.id)?;
-                            log::info!("Found {} items for schema {}", items.len(), fond_schema.schema_no);
-                            if items.is_empty() {
-                                log::warn!("No items found for schema {}", fond_schema.schema_no);
+                    if let Some(schema) = all_schemas.iter().find(|s| s.id == fond_schema.schema_id) {
+                        if schema.schema_no == "Year" {
+                            // Special handling for Year schema: generate years from created_year to current_year
+                            // Year schema has no pre-defined items, generate them dynamically
+                            let mut year_items = Vec::new();
+                            for year in created_year..=current_year {
+                                year_items.push(crate::models::schema_item::SchemaItem {
+                                    id: 0, // dummy id for cartesian product
+                                    schema_id: schema.id,
+                                    item_no: year.to_string(),
+                                    item_name: year.to_string(),
+                                    created_by: "system".into(),
+                                    created_machine: "system".into(),
+                                    created_at: chrono::Utc::now().naive_utc(),
+                                });
+                            }
+                            dimension_items.push(year_items);
+                        } else if let Some(item_id) = fond_schema.schema_item_id {
+                            // Normal schema with specific item
+                            if let Some(item) = all_items.iter().find(|i| i.id == item_id) {
+                                dimension_items.push(vec![item.clone()]);
                             } else {
-                                dimension_items.push(items);
+                                log::warn!("Schema item not found for id {}", item_id);
                             }
                         } else {
-                            log::warn!("Schema not found for schema_no {}", fond_schema.schema_no);
+                            // Normal schema: collect all existing items for this schema
+                            let schema_items: Vec<_> = all_items.iter()
+                                .filter(|i| i.schema_id == schema.id)
+                                .cloned()
+                                .collect();
+                            dimension_items.push(schema_items);
                         }
                     }
                 }
@@ -490,7 +495,10 @@ impl HomeViewModel {
                     .collect::<Vec<_>>()
                     .join("-");
                 
-                let series_no = format!("{}-{:02}", fond_no, index + 1);
+                let series_no = combo.iter()
+                    .map(|item| item.item_no.as_str())
+                    .collect::<Vec<_>>()
+                    .join("-");
                 
                 let series = Series {
                     id: 0,
@@ -515,7 +523,7 @@ impl HomeViewModel {
     /// Add a new fond with the given data
     pub fn add_fond(&mut self, name: &str, classification_code: &str, selected_schema_nos: Vec<String>) -> Result<(), Box<dyn Error>> {
         // Generate fond_no using sequence
-        let fond_no = self.generate_next_fond_no()?;
+        let fond_no = self.generate_next_fond_no(classification_code)?;
         
         // Create the fond
         let fond_id = if let Some(mut repo) = self.get_fonds_repo() {
@@ -537,19 +545,29 @@ impl HomeViewModel {
 
         // Create fond_schemas for selected schemas
         if let Some(mut fs_repo) = self.get_fond_schemas_repo() {
-            for (order, schema_no) in selected_schema_nos.iter().enumerate() {
-                let fond_schema = FondSchema {
-                    id: 0,
-                    fond_no: fond_no.clone(),
-                    schema_no: schema_no.clone(),
-                    sort_order: order as i32,
-                    created_by: String::new(),
-                    created_machine: String::new(),
-                    created_at: chrono::Utc::now().naive_utc(),
-                };
-                fs_repo.create(fond_schema)?;
+            if let Some(mut schema_repo) = self.get_schema_repo() {
+                if let Some(mut items_repo) = self.get_schema_items_repo() {
+                    let all_schemas = schema_repo.find_all()?;
+                    let all_items = items_repo.find_all()?;
+                    for (order, schema_no) in selected_schema_nos.iter().enumerate() {
+                        if let Some(schema) = all_schemas.iter().find(|s| s.schema_no == *schema_no) {
+                            // For all schemas, set schema_item_id to None to allow cartesian product of all items
+                            let fond_schema = FondSchema {
+                                id: 0,
+                                fond_id,
+                                schema_id: schema.id,
+                                schema_item_id: None,
+                                sort_order: order as i32,
+                                created_by: String::new(),
+                                created_machine: String::new(),
+                                created_at: chrono::Utc::now().naive_utc(),
+                            };
+                            fs_repo.create(fond_schema)?;
+                        }
+                    }
+                    log::info!("Created {} fond_schemas for fond {}", selected_schema_nos.len(), fond_no);
+                }
             }
-            log::info!("Created {} fond_schemas for fond {}", selected_schema_nos.len(), fond_no);
         }
 
         // Reload fonds immediately so generate_series can find the newly created fond
@@ -592,7 +610,7 @@ impl HomeViewModel {
     }
 
     /// Generate next file number for current series
-    fn generate_next_file_no(&self) -> Result<String, Box<dyn Error>> {
+    fn generate_next_file_no(&mut self) -> Result<String, Box<dyn Error>> {
         if self.selected_series_index < 0 || self.selected_series_index >= self.series_list.len() as i32 {
             return Err("No series selected".into());
         }
@@ -600,22 +618,12 @@ impl HomeViewModel {
         let series = &self.series_list[self.selected_series_index as usize];
         let fond_no = self.get_fond_no_for_series(series.fond_id)?;
         
-        // Find the highest file number for this series
-        let mut max_num = 0;
-        for file in &self.files_list {
-            if file.series_id == series.id {
-                // Parse the file_no format: FOND-SERIES-NN
-                if let Some(parts) = file.file_no.split('-').nth(2) {
-                    if let Ok(num) = parts.parse::<i32>() {
-                        if num > max_num {
-                            max_num = num;
-                        }
-                    }
-                }
-            }
+        let prefix = format!("{}-{}", fond_no, series.series_no);
+        if let Some(mut repo) = self.sequences_repo.as_mut() {
+            repo.get_next_number(&prefix, Some(2))
+        } else {
+            Err("No database connection".into())
         }
-        
-        Ok(format!("{}-{}-{:02}", fond_no, series.series_no, max_num + 1))
     }
     
     /// Generate next item number
@@ -635,19 +643,12 @@ impl HomeViewModel {
     }
     
     /// Generate next fond number
-    fn generate_next_fond_no(&mut self) -> Result<String, Box<dyn Error>> {
-        // Simple implementation: find the highest existing fond number and increment
-        let mut max_num = 0;
-        for fond in &self.fonds_list {
-            if fond.fond_no.starts_with('F') {
-                if let Ok(num) = fond.fond_no[1..].parse::<i32>() {
-                    if num > max_num {
-                        max_num = num;
-                    }
-                }
-            }
+    fn generate_next_fond_no(&mut self, classification_code: &str) -> Result<String, Box<dyn Error>> {
+        if let Some(repo) = self.sequences_repo.as_mut() {
+            repo.get_next_number(classification_code, Some(2))
+        } else {
+            Err("No database connection".into())
         }
-        Ok(format!("F{:03}", max_num + 1))
     }
     pub fn add_item(&mut self, name: &str, path: Option<String>) -> Result<(), Box<dyn Error>> {
         if self.files_list.is_empty() || self.selected_file < 0 {
@@ -739,6 +740,19 @@ impl HomeViewModel {
         Vec::new()
     }
 
+    /// Get primary codes for the add fonds dialog
+    pub fn get_primary_codes(&self) -> Vec<SharedString> {
+        if let Some(mut repo) = self.get_classifications_repo() {
+            if let Ok(classifications) = repo.find_by_parent_id(None) {
+                return classifications.into_iter()
+                    .filter(|c| c.active)
+                    .map(|c| SharedString::from(c.code))
+                    .collect();
+            }
+        }
+        Vec::new()
+    }
+
     /// Get secondary classifications for the add fonds dialog
     pub fn get_secondary_classifications(&self) -> Vec<Vec<SharedString>> {
         if let Some(mut repo) = self.get_classifications_repo() {
@@ -749,6 +763,28 @@ impl HomeViewModel {
                         let secondary_list = secondary_classifications.into_iter()
                             .filter(|c| c.active)
                             .map(|c| SharedString::from(format!("{} - {}", c.code, c.name)))
+                            .collect();
+                        secondary_lists.push(secondary_list);
+                    } else {
+                        secondary_lists.push(Vec::new());
+                    }
+                }
+                return secondary_lists;
+            }
+        }
+        Vec::new()
+    }
+
+    /// Get secondary codes for the add fonds dialog
+    pub fn get_secondary_codes(&self) -> Vec<Vec<SharedString>> {
+        if let Some(mut repo) = self.get_classifications_repo() {
+            if let Ok(primary_classifications) = repo.find_by_parent_id(None) {
+                let mut secondary_lists = Vec::new();
+                for primary in primary_classifications.into_iter().filter(|c| c.active) {
+                    if let Ok(secondary_classifications) = repo.find_by_parent_id(Some(primary.id)) {
+                        let secondary_list = secondary_classifications.into_iter()
+                            .filter(|c| c.active)
+                            .map(|c| SharedString::from(c.code))
                             .collect();
                         secondary_lists.push(secondary_list);
                     } else {
@@ -991,17 +1027,25 @@ impl HomeViewModel {
                         }).collect();
                         
                         let primary_classifications = vm_ref.get_primary_classifications();
+                        let primary_codes = vm_ref.get_primary_codes();
                         let secondary_classifications = vm_ref.get_secondary_classifications();
+                        let secondary_codes = vm_ref.get_secondary_codes();
                         
                         // Set dialog data via app-window properties
                         ui.set_available_schemas(ModelRc::new(VecModel::from(available)));
                         ui.set_selected_schemas(ModelRc::new(VecModel::from(Vec::new())));
                         ui.set_primary_classifications(ModelRc::new(VecModel::from(primary_classifications.clone())));
+                        ui.set_primary_codes(ModelRc::new(VecModel::from(primary_codes.clone())));
                         
                         let secondary_models: Vec<ModelRc<SharedString>> = secondary_classifications.into_iter()
                             .map(|vec| ModelRc::new(VecModel::from(vec)))
                             .collect();
                         ui.set_secondary_classifications(ModelRc::new(VecModel::from(secondary_models)));
+                        
+                        let secondary_code_models: Vec<ModelRc<SharedString>> = secondary_codes.into_iter()
+                            .map(|vec| ModelRc::new(VecModel::from(vec)))
+                            .collect();
+                        ui.set_secondary_codes(ModelRc::new(VecModel::from(secondary_code_models)));
                         
                         // Clear input
                         ui.set_add_fonds_name("".into());
@@ -1021,11 +1065,47 @@ impl HomeViewModel {
         ui_handle.on_confirm_add_fonds({
             let vm = Rc::clone(&vm);
             let ui_weak = ui_weak.clone();
-            move |fonds_name, classification_code, selected_schemas| {
+            move |fonds_name, selected_primary, selected_secondary, selected_schemas| {
                 if let Ok(mut vm) = vm.try_borrow_mut() {
+                    // Calculate actual classification_code from selections
+                    let actual_code = if let Some(ui) = ui_weak.upgrade() {
+                        let primary_codes = ui.get_primary_codes();
+                        let secondary_codes = ui.get_secondary_codes();
+                        let selected_primary = selected_primary as usize;
+                        let selected_secondary = selected_secondary as usize;
+                        
+                        if selected_primary < primary_codes.row_count() {
+                            if let Some(secondary_for_primary) = secondary_codes.row_data(selected_primary) {
+                                if secondary_for_primary.row_count() > 0 && selected_secondary < secondary_for_primary.row_count() {
+                                    if let Some(code) = secondary_for_primary.row_data(selected_secondary) {
+                                        code.to_string()
+                                    } else {
+                                        "".to_string()
+                                    }
+                                } else {
+                                    if let Some(code) = primary_codes.row_data(selected_primary) {
+                                        code.to_string()
+                                    } else {
+                                        "".to_string()
+                                    }
+                                }
+                            } else {
+                                if let Some(code) = primary_codes.row_data(selected_primary) {
+                                    code.to_string()
+                                } else {
+                                    "".to_string()
+                                }
+                            }
+                        } else {
+                            "".to_string()
+                        }
+                    } else {
+                        "".to_string()
+                    };
+                    
                     // Convert selected_schemas to Vec<String> (extract schema_no)
                     let schema_nos: Vec<String> = selected_schemas.iter().map(|s| s.schema_no.to_string()).collect();
-                    if let Err(e) = vm.add_fond(&fonds_name, &classification_code, schema_nos) {
+                    if let Err(e) = vm.add_fond(&fonds_name, &actual_code, schema_nos) {
                         if let Some(ui) = ui_weak.upgrade() {
                             ui.invoke_show_toast(format!("添加全宗失败: {}", e).into());
                         }
@@ -1275,32 +1355,20 @@ impl HomeViewModel {
                     String::new()
                 };
                 
-                let file_no = if fields.row_count() >= 2 {
-                    let input_no = fields.row_data(1).unwrap().value.to_string();
-                    if input_no.trim().is_empty() {
-                        // Auto-generate file_no
-                        match vm.borrow().generate_next_file_no() {
-                            Ok(no) => no,
-                            Err(e) => {
-                                log::error!("Failed to generate file number: {}", e);
-                                return;
-                            }
+                // File number is always auto-generated
+                let file_no = match vm.borrow_mut().generate_next_file_no() {
+                    Ok(no) => no,
+                    Err(e) => {
+                        log::error!("Failed to generate file number: {}", e);
+                        if let Some(ui) = ui_weak.upgrade() {
+                            ui.invoke_show_toast("生成文件编号失败".into());
                         }
-                    } else {
-                        input_no
-                    }
-                } else {
-                    match vm.borrow().generate_next_file_no() {
-                        Ok(no) => no,
-                        Err(e) => {
-                            log::error!("Failed to generate file number: {}", e);
-                            return;
-                        }
+                        return;
                     }
                 };
                 
-                let file_path = if fields.row_count() >= 3 {
-                    fields.row_data(2).unwrap().value.to_string()
+                let file_path = if fields.row_count() >= 2 {
+                    fields.row_data(1).unwrap().value.to_string()
                 } else {
                     String::new()
                 };
@@ -1311,13 +1379,6 @@ impl HomeViewModel {
                 if file_name.trim().is_empty() {
                     if let Some(ui) = ui_weak.upgrade() {
                         ui.invoke_show_toast("文件名不能为空".into());
-                    }
-                    return;
-                }
-                
-                if file_no.trim().is_empty() {
-                    if let Some(ui) = ui_weak.upgrade() {
-                        ui.invoke_show_toast("文件编号不能为空".into());
                     }
                     return;
                 }
@@ -1373,11 +1434,11 @@ impl HomeViewModel {
                         
                         // Update the path field
                         let fields = ui.get_add_file_fields();
-                        if field_index == 2 && fields.row_count() > 2 {
-                            // Path field (now at index 2)
-                            let mut field = fields.row_data(2).unwrap();
+                        if field_index == 1 && fields.row_count() > 1 {
+                            // Path field (index 1)
+                            let mut field = fields.row_data(1).unwrap();
                             field.value = path_str.clone().into();
-                            fields.set_row_data(2, field);
+                            fields.set_row_data(1, field);
                             ui.set_add_file_fields(fields);
                             
                             // Auto-fill name field with folder name if it's empty
@@ -1611,6 +1672,7 @@ impl Clone for HomeViewModel {
             settings_service: Rc::clone(&self.settings_service),
             db_connection: self.db_connection.as_ref().map(Rc::clone),
             current_db_path: self.current_db_path.clone(),
+            sequences_repo: self.sequences_repo.as_ref().map(|repo| repo.clone_with_conn(Rc::clone(self.db_connection.as_ref().unwrap()))),
         }
     }
 }

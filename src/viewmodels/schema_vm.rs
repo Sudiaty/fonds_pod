@@ -14,15 +14,21 @@ use chrono;
 /// 此ViewModel通过复用CrudViewModelBase trait和宏，提供了极简的实现。
 /// 只需实现 `create_default()` 方法来定义新项的默认值。
 pub struct SchemaViewModel {
-    inner: CrudViewModel<Schema, SchemaRepository>,
+    inner: Rc<RefCell<CrudViewModel<Schema, SchemaRepository>>>,
+    schema_items_repo: Rc<RefCell<SchemaItemRepository>>,
+    schemas: Vec<Schema>,
+    schema_items: Vec<SchemaItem>,
     selected_index: Option<usize>,
 }
 
 impl SchemaViewModel {
-    pub fn new(repo: Rc<RefCell<SchemaRepository>>) -> Self {
-        let inner = CrudViewModel::new(repo);
+    pub fn new(repo: Rc<RefCell<SchemaRepository>>, schema_items_repo: Rc<RefCell<SchemaItemRepository>>) -> Self {
+        let inner = Rc::new(RefCell::new(CrudViewModel::new(repo)));
         Self { 
             inner,
+            schema_items_repo,
+            schemas: Vec::new(),
+            schema_items: Vec::new(),
             selected_index: None,
         }
     }
@@ -42,15 +48,31 @@ impl SchemaViewModel {
         }
     }
 
-    /// 根据索引获取Schema项
-    pub fn get_by_index(&self, index: usize) -> Option<CrudListItem> {
-        self.inner.items.row_data(index)
+    /// 获取UI列表项
+    pub fn get_items(&self) -> slint::ModelRc<crate::CrudListItem> {
+        self.inner.borrow().get_items()
     }
 
     /// 更新数据库连接并重新加载数据
-    pub fn update_connection(&self, new_conn: Rc<RefCell<diesel::SqliteConnection>>) {
-        self.inner.get_repo().borrow_mut().update_connection(new_conn);
+    pub fn update_connection(&mut self, new_conn: Rc<RefCell<diesel::SqliteConnection>>) {
+        self.inner.borrow().get_repo().borrow_mut().update_connection(new_conn);
         self.load();
+    }
+
+    /// 加载数据
+    pub fn load(&mut self) {
+        // Load schemas
+        self.inner.borrow_mut().load();
+        self.schemas = self.inner.borrow().get_repo().borrow_mut().find_all().unwrap_or_default();
+
+        // Load schema items
+        let items_result = self.schema_items_repo.borrow_mut().find_all();
+        if let Ok(items) = items_result {
+            self.schema_items = items;
+            log::info!("SchemaViewModel: Loaded {} schema items", self.schema_items.len());
+        } else {
+            log::error!("SchemaViewModel: Failed to load schema items");
+        }
     }
 
     /// 设置选中的索引
@@ -109,10 +131,10 @@ impl SchemaViewModel {
                     };
 
                     // 添加到数据库
-                    _vm_clone.borrow().inner.add(&mut new_schema);
+                    _vm_clone.borrow_mut().inner.borrow_mut().add(&mut new_schema);
                     log::info!("Successfully added new schema with id {}", new_schema.id);
                     // 重新加载数据
-                    _vm_clone.borrow().load();
+                    _vm_clone.borrow_mut().load();
                     let items = _vm_clone.borrow().get_items();
                     ui.set_schema_list_items(items);
 
@@ -223,21 +245,44 @@ impl SchemaViewModel {
         let index_usize = index as usize;
         
         // 获取要删除的项
-        if let Some(item) = self.inner.items.row_data(index_usize) {
+        if let Some(item) = self.inner.borrow().items.row_data(index_usize) {
             // 检查是否是Year Schema
-            if let Ok(Some(schema)) = self.inner.get_repo().borrow_mut().find_by_id(item.id) {
+            if let Ok(Some(schema)) = self.inner.borrow().get_repo().borrow_mut().find_by_id(item.id) {
                 if schema.schema_no == "Year" {
                     return Err("Cannot delete the schema with code 'Year'".to_string());
                 }
             }
         }
         
-        self.inner.delete(index_usize)
+        self.inner.borrow_mut().delete(index_usize)
     }
 }
 
 // 使用宏自动生成 CrudViewModelBase trait 实现
-crate::impl_crud_vm_base!(SchemaViewModel, "SchemaViewModel", Schema);
+// crate::impl_crud_vm_base!(SchemaViewModel, "SchemaViewModel", Schema);
+
+// impl crate::CrudViewModelBase for SchemaViewModel {
+//     fn vm_name() -> &'static str {
+//         "SchemaViewModel"
+//     }
+
+//     fn load(&self) {
+//         // Do nothing, we have custom load
+//     }
+
+//     fn get_items(&self) -> slint::ModelRc<crate::CrudListItem> {
+//         self.inner.borrow().get_items()
+//     }
+
+//     fn add(&self) {
+//         let mut item = Self::create_default();
+//         self.inner.borrow_mut().add(&mut item);
+//     }
+
+//     fn delete(&self, index: i32) -> Result<(), String> {
+//         self.delete(index)
+//     }
+// }
 
 use crate::models::schema_item::SchemaItem;
 use crate::persistence::schema_item_repository::SchemaItemRepository;

@@ -78,15 +78,17 @@ pub fn init_schema(conn: &mut SqliteConnection) -> Result<(), Box<dyn Error>> {
         r#"
         CREATE TABLE IF NOT EXISTS fond_schemas (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            fond_no TEXT NOT NULL,
-            schema_no TEXT NOT NULL,
+            fond_id INTEGER NOT NULL,
+            schema_id INTEGER NOT NULL,
+            schema_item_id INTEGER,  -- Nullable for dynamic schemas like Year
             sort_order INTEGER NOT NULL,
             created_by TEXT NOT NULL,
             created_machine TEXT NOT NULL,
             created_at TEXT NOT NULL,
-            UNIQUE (fond_no, schema_no),
-            FOREIGN KEY (fond_no) REFERENCES fonds(fond_no),
-            FOREIGN KEY (schema_no) REFERENCES schemas(schema_no)
+            UNIQUE (fond_id, schema_id, schema_item_id),
+            FOREIGN KEY (fond_id) REFERENCES fonds(id),
+            FOREIGN KEY (schema_id) REFERENCES schemas(id),
+            FOREIGN KEY (schema_item_id) REFERENCES schema_items(id)
         )
         "#,
     )
@@ -145,12 +147,18 @@ pub fn init_schema(conn: &mut SqliteConnection) -> Result<(), Box<dyn Error>> {
     )
     .execute(conn)?;
 
-    // Create sequences table
+    // Create sequences table (drop and recreate to update schema)
+    let _ = sql_query("DROP TABLE IF EXISTS sequences").execute(conn);
     sql_query(
         r#"
-        CREATE TABLE IF NOT EXISTS sequences (
-            prefix TEXT PRIMARY KEY,
-            current_value INTEGER NOT NULL DEFAULT 0
+        CREATE TABLE sequences (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            prefix TEXT NOT NULL,
+            next_value INTEGER NOT NULL DEFAULT 1,
+            digits INTEGER NOT NULL DEFAULT 2,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(prefix)
         )
         "#,
     )
