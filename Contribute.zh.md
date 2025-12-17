@@ -229,14 +229,17 @@ ui/locale/
 
 ## 🛠️ 推荐工具
 
-### Poedit (推荐)
-- **下载**: https://poedit.net/
-- **功能**: 图形化 PO 文件编辑器，支持实时翻译检查
-- **优势**: 自动生成 MO 文件，翻译记忆，拼写检查
+### 命令行工具 (推荐)
+- **slint-tr-extractor**: 提取 Slint 文件中的 @tr 字符串到 pot 文件
+- **msgmerge**: 从 pot 文件更新 po 文件
+- **msgfmt**: 从 po 文件生成 mo 文件
+- **优势**: 自动化、可脚本化、版本控制友好
 
-### 替代工具
+### 可选工具
+- **Poedit**: 图形化 PO 文件编辑器，支持实时翻译检查
+  - **下载**: https://poedit.net/
+  - **优势**: 自动生成 MO 文件，翻译记忆，拼写检查
 - **VS Code**: 安装 "gettext" 扩展
-- **命令行**: `msgfmt` (用于生成 MO 文件)
 
 ## 📝 日常维护流程
 
@@ -246,19 +249,51 @@ ui/locale/
 Text { text: @tr("save_button"); }
 ```
 
-### 2. 更新翻译 (使用 Poedit)
+### 2. 提取翻译字符串 (生成 pot 文件)
+```bash
+# Linux bash 提取所有 Slint 文件中的 @tr 到 pot 文件
+find -name \*.slint | xargs slint-tr-extractor -o MY_PROJECT.pot
+```
+
+### 3. 更新翻译文件 (从 pot 更新 po)
+```bash
+# 更新中文 po 文件
+msgmerge --update ui/locale/zh_CN/LC_MESSAGES/fonds-pod.po ui/locale/fonds_pod.pot
+
+# 更新英文 po 文件
+msgmerge --update ui/locale/en_US/LC_MESSAGES/fonds-pod.po ui/locale/fonds_pod.pot
+```
+
+### 4. 生成二进制翻译文件 (po 到 mo)
+```bash
+# 生成中文 mo 文件
+msgfmt --output-file=ui/locale/zh_CN/LC_MESSAGES/fonds-pod.mo ui/locale/zh_CN/LC_MESSAGES/fonds-pod.po
+
+# 生成英文 mo 文件
+msgfmt --output-file=ui/locale/en_US/LC_MESSAGES/fonds-pod.mo ui/locale/en_US/LC_MESSAGES/fonds-pod.po
+```
+
+### 5. 编译应用
+```bash
+cargo build
+```
+
+### 可选方式：使用 Poedit 图形化工具
 1. 打开 `ui/locale/zh_CN/LC_MESSAGES/fonds-pod.po`
 2. Poedit 会自动检测新增的翻译键
 3. 填写中文翻译
 4. 保存时自动生成 `.mo` 文件
 
-### 3. 编译应用
-```bash
-cargo build
-```
-
 ## 🌐 添加新语言
 
+### 推荐方式：命令行工具
+1. **创建目录**: `mkdir -p ui/locale/ja_JP/LC_MESSAGES`
+2. **复制模板**: `cp ui/locale/zh_CN/LC_MESSAGES/fonds-pod.po ui/locale/ja_JP/LC_MESSAGES/`
+3. **编辑翻译**: 使用文本编辑器或命令行工具填写日语翻译
+4. **生成 mo 文件**: `msgfmt --output-file=ui/locale/ja_JP/LC_MESSAGES/fonds-pod.mo ui/locale/ja_JP/LC_MESSAGES/fonds-pod.po`
+5. **更新应用设置**添加语言选项
+
+### 可选方式：使用 Poedit
 1. **创建目录**: `mkdir -p ui/locale/ja_JP/LC_MESSAGES`
 2. **复制模板**: `cp ui/locale/zh_CN/LC_MESSAGES/fonds-pod.po ui/locale/ja_JP/LC_MESSAGES/`
 3. **使用 Poedit 编辑**日语翻译

@@ -14,12 +14,13 @@ use std::rc::Rc;
 /// 只需实现 `create_default()` 方法来定义新项的默认值。
 pub struct FondViewModel {
     inner: CrudViewModel<Fond, FondsRepository>,
+    library_path: Option<String>,
 }
 impl FondViewModel {
     /// 创建新的FondViewModel实例
-    pub fn new(repo: Rc<RefCell<FondsRepository>>) -> Self {
+    pub fn new(repo: Rc<RefCell<FondsRepository>>, library_path: Option<String>) -> Self {
         let inner = CrudViewModel::new(repo);
-        Self { inner }
+        Self { inner, library_path }
     }
 
     /// 创建默认的Fond实例 - 由 `impl_crud_vm_base!` 宏使用
@@ -46,6 +47,17 @@ impl FondViewModel {
     pub fn update_connection(&self, new_conn: Rc<RefCell<diesel::SqliteConnection>>) {
         self.inner.get_repo().borrow_mut().update_connection(new_conn);
         self.load();
+    }
+
+    /// 更新数据库连接和library路径
+    pub fn update_connection_with_library(&mut self, new_conn: Rc<RefCell<diesel::SqliteConnection>>, library_path: Option<String>) {
+        self.library_path = library_path;
+        self.update_connection(new_conn);
+    }
+
+    /// 设置library路径
+    pub fn set_library_path(&mut self, path: Option<String>) {
+        self.library_path = path;
     }
 
     /// 为UI设置CRUD回调 - 标准实现在这里
@@ -89,5 +101,87 @@ impl FondViewModel {
     }
 }
 
-// 使用宏自动生成 CrudViewModelBase trait 实现
-crate::impl_crud_vm_base!(FondViewModel, "FondViewModel", Fond);
+// 实现自定义的CrudViewModelBase trait，覆盖宏生成的版本
+impl CrudViewModelBase for FondViewModel {
+    fn vm_name() -> &'static str {
+        "FondViewModel"
+    }
+
+    fn load(&self) {
+        log::info!("{}: Loading data", Self::vm_name());
+        self.inner.load();
+        log::info!(
+            "{}: Loaded {} items",
+            Self::vm_name(),
+            self.inner.items.row_count()
+        );
+    }
+
+    fn get_items(&self) -> slint::ModelRc<crate::CrudListItem> {
+        self.inner.get_items()
+    }
+
+    fn add(&self) {
+        log::info!("{}: Adding new item", Self::vm_name());
+        let mut new_item = Self::create_default();
+        self.inner.add(&mut new_item);
+        
+        // 创建全宗文件夹
+        if let Some(library_path) = &self.library_path {
+            let fond_dir = std::path::Path::new(library_path).join(&new_item.fond_no);
+            if let Err(e) = std::fs::create_dir_all(&fond_dir) {
+                log::error!("Failed to create fond directory {:?}: {}", fond_dir, e);
+            } else {
+                log::info!("Created fond directory: {:?}", fond_dir);
+            }
+        }
+        
+        log::info!(
+            "{}: Added item, total count: {}",
+            Self::vm_name(),
+            self.inner.items.row_count()
+        );
+    }
+
+    fn delete(&self, index: i32) -> Result<(), String> {
+        log::info!("{}: Deleting item at index {}", Self::vm_name(), index);
+        if index >= 0 {
+            match self.inner.delete(index as usize) {
+                Ok(_) => {
+                    log::info!(
+                        "{}: Deleted item, remaining count: {}",
+                        Self::vm_name(),
+                        self.inner.items.row_count()
+                    );
+                    Ok(())
+                }
+                Err(e) => {
+                    log::error!("{}: Failed to delete item: {}", Self::vm_name(), e);
+                    Err(e)
+                }
+            }
+        } else {
+            Err("无效索引".to_string())
+        }
+    }
+
+    fn activate(&self, id: i32) {
+        log::info!("{}: Activating item with id {}", Self::vm_name(), id);
+        self.inner.activate(id);
+        log::info!(
+            "{}: Activated item, current count: {}",
+            Self::vm_name(),
+            self.inner.items.row_count()
+        );
+    }
+
+    fn deactivate(&self, id: i32) {
+        log::info!("{}: Deactivating item with id {}", Self::vm_name(), id);
+        self.inner.deactivate(id);
+        log::info!(
+            "{}: Deactivated item, current count: {}",
+            Self::vm_name(),
+            self.inner.items.row_count()
+        );
+    }
+}

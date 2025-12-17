@@ -1,4 +1,4 @@
-use crate::models::sequence::{sequences, Sequence};
+use crate::models::sequence::{sequences, Sequence, NewSequence};
 use std::cell::RefCell;
 use std::rc::Rc;
 use diesel::prelude::*;
@@ -34,9 +34,17 @@ impl SequencesRepository {
     }
 
     /// 插入新序列
-    pub fn insert(&mut self, sequence: &Sequence) -> Result<i32, Box<dyn std::error::Error>> {
+    pub fn insert(&mut self, prefix: &str, next_value: i32, digits: i32) -> Result<i32, Box<dyn std::error::Error>> {
+        let now = Utc::now().naive_utc();
+        let new_seq = NewSequence {
+            prefix: prefix.to_string(),
+            next_value,
+            digits,
+            created_at: now,
+            updated_at: now,
+        };
         let result = diesel::insert_into(sequences::table)
-            .values(sequence)
+            .values(&new_seq)
             .execute(&mut *self.conn.borrow_mut())?;
         Ok(result as i32)
     }
@@ -55,7 +63,7 @@ impl SequencesRepository {
     /// 获取下一个编号
     /// 如果序列不存在，会自动创建
     pub fn get_next_number(&mut self, prefix: &str, digits: Option<i32>) -> Result<String, Box<dyn std::error::Error>> {
-        let digits = digits.unwrap_or(2);
+        let digits = digits.unwrap_or(2) as usize;
         
         // 尝试查找现有序列
         if let Some(mut seq) = self.find_by_prefix(prefix)? {
@@ -64,24 +72,14 @@ impl SequencesRepository {
             seq.next_value += 1;
             self.update(&seq)?;
             
-            // 格式化编号
-            Ok(format!("{}{:0width$}", prefix, current_value, width = digits as usize))
+            // 只返回格式化的序列号部分
+            Ok(format!("{:0width$}", current_value, width = digits))
         } else {
             // 创建新序列
-            let now = Utc::now().naive_utc();
-            let new_seq = Sequence {
-                id: 0, // 会被自动设置
-                prefix: prefix.to_string(),
-                next_value: 2, // 下次使用2
-                digits,
-                created_at: now,
-                updated_at: now,
-            };
+            self.insert(prefix, 2, digits as i32)?;
             
-            self.insert(&new_seq)?;
-            
-            // 返回第一个编号
-            Ok(format!("{}{:0width$}", prefix, 1, width = digits as usize))
+            // 返回第一个编号（只返回序列号部分）
+            Ok(format!("{:0width$}", 1, width = digits))
         }
     }
 
@@ -91,16 +89,7 @@ impl SequencesRepository {
             seq.next_value = start_value;
             self.update(&seq)?;
         } else {
-            let now = Utc::now().naive_utc();
-            let new_seq = Sequence {
-                id: 0,
-                prefix: prefix.to_string(),
-                next_value: start_value,
-                digits: 2,
-                created_at: now,
-                updated_at: now,
-            };
-            self.insert(&new_seq)?;
+            self.insert(prefix, start_value, 2)?;
         }
         Ok(())
     }

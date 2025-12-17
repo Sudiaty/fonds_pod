@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: FondsPod 1.0\n"
-"POT-Creation-Date: 2025-12-09 12:00+0800\n"
-"PO-Revision-Date: 2025-12-09 12:02+0800\n"
+"POT-Creation-Date: 2025-12-17 08:54+0000\n"
+"PO-Revision-Date: 2025-12-17 16:57+0800\n"
 "Last-Translator: Sudiaty\n"
 "Language-Team: Chinese (Simplified)\n"
 "Language: zh_CN\n"
@@ -12,303 +12,880 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 3.8\n"
 
-# ============================================================================
-# Empty context translations (used with @tr("" => "key"))
-# ============================================================================
-
-# Navigation
-msgctxt ""
-msgid "nav_home"
-msgstr "首页"
-
-msgctxt ""
-msgid "nav_fonds"
-msgstr "全宗管理"
-
-msgctxt ""
-msgid "nav_schema"
-msgstr "方案管理"
-
-msgctxt ""
-msgid "nav_classification"
-msgstr "分类管理"
-
-msgctxt ""
-msgid "nav_settings"
-msgstr "系统设置"
-
-msgctxt ""
-msgid "nav_about"
-msgstr "关于"
-
-# Home page
-msgctxt ""
-msgid "home_welcome"
-msgstr "欢迎使用 FondsPod"
-
-msgctxt ""
-msgid "home_description"
-msgstr "您的现代化档案管理系统。选择左侧导航开始管理您的档案资料。"
-
-# About page
-msgctxt ""
-msgid "about_title"
-msgstr "FondsPod 档案管理系统"
-
-msgctxt ""
-msgid "about_description"
-msgstr "FondsPod 是一个现代化的档案管理系统，采用 Rust 和 Slint 构建。它提供了完整的档案分类、方案管理和全宗管理功能，帮助您高效地组织和管理档案资料。"
-
-msgctxt ""
-msgid "about_version"
-msgstr "版本:"
-
-msgctxt ""
-msgid "about_author"
-msgstr "作者:"
-
-msgctxt ""
-msgid "about_license"
-msgstr "许可证:"
-
-msgctxt ""
-msgid "about_website"
-msgstr "项目地址:"
-
-msgctxt ""
-msgid "check_update"
-msgstr "检查更新"
-
 # Common UI messages
-msgctxt ""
+#. Translation properties
+#: fonds_pod-legacy/ui/app-window.slint:54
+#, fuzzy
+msgctxt "AppWindow"
 msgid "language_applied"
 msgstr "语言已应用"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:55
+#, fuzzy
+msgctxt "AppWindow"
 msgid "code_exists"
 msgstr "代码已存在"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:56
+#, fuzzy
+msgctxt "AppWindow"
 msgid "create_failed"
 msgstr "创建失败"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:57
+#, fuzzy
+msgctxt "AppWindow"
 msgid "tray_show_window"
 msgstr "显示窗口"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:58
+#, fuzzy
+msgctxt "AppWindow"
 msgid "tray_quit"
 msgstr "退出"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:59
+#, fuzzy
+msgctxt "AppWindow"
 msgid "delete_failed"
 msgstr "删除失败"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:60
+#, fuzzy
+msgctxt "AppWindow"
 msgid "cannot_delete"
 msgstr "无法删除"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:61
+#, fuzzy
+msgctxt "AppWindow"
 msgid "activate_failed"
 msgstr "激活失败"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:62
+#, fuzzy
+msgctxt "AppWindow"
 msgid "deactivate_failed"
 msgstr "停用失败"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:63
+#, fuzzy
+msgctxt "AppWindow"
 msgid "export_failed"
 msgstr "导出失败"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:64
+#, fuzzy
+msgctxt "AppWindow"
 msgid "import_failed"
 msgstr "导入失败"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:65
+#, fuzzy
+msgctxt "AppWindow"
 msgid "no_archive_selected"
 msgstr "未选择档案库"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:66
+#, fuzzy
+msgctxt "AppWindow"
 msgid "import_success"
 msgstr "导入成功"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:67
+#, fuzzy
+msgctxt "AppWindow"
 msgid "export_success"
 msgstr "导出成功"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:68
+#, fuzzy
+msgctxt "AppWindow"
 msgid "read_file_failed"
 msgstr "读取文件失败"
 
-# Settings page
-msgctxt ""
-msgid "label_language"
-msgstr "语言"
+#: fonds_pod-legacy/ui/app-window.slint:69
+#, fuzzy
+msgctxt "AppWindow"
+msgid "confirm_delete"
+msgstr "无法删除"
 
-msgctxt ""
-msgid "label_archive_libraries"
-msgstr "档案库"
+#: fonds_pod-legacy/ui/app-window.slint:70
+#, fuzzy
+msgctxt "AppWindow"
+msgid "confirm_delete_classification"
+msgstr "分类管理"
 
-msgctxt ""
-msgid "label_name"
-msgstr "名称"
-
-msgctxt ""
-msgid "label_path"
-msgstr "路径"
-
-msgctxt ""
-msgid "label_code"
-msgstr "代码"
-
-msgctxt ""
-msgid "placeholder_code"
-msgstr "输入分类代码"
-
-msgctxt ""
-msgid "placeholder_name"
-msgstr "输入分类名称"
-
-msgctxt ""
-msgid "placeholder_child_code"
-msgstr "输入子分类代码"
-
-msgctxt ""
-msgid "placeholder_child_name"
-msgstr "输入子分类名称"
-
-msgctxt ""
-msgid "placeholder_file_name"
-msgstr "输入案卷名称"
-
-msgctxt ""
-msgid "placeholder_file_path"
-msgstr "选择案卷路径"
-
-msgctxt ""
-msgid "label_top_classifications"
-msgstr "顶级分类"
-
-msgctxt ""
-msgid "tooltip_export"
-msgstr "导出分类"
-
-msgctxt ""
-msgid "tooltip_import"
-msgstr "导入分类"
-
-msgctxt ""
-msgid "label_child_classifications"
+#: fonds_pod-legacy/ui/app-window.slint:71
+#, fuzzy
+msgctxt "AppWindow"
+msgid "confirm_delete_selected_classifications"
 msgstr "子分类"
 
-msgctxt ""
-msgid "dialog_add_classification"
-msgstr "添加分类"
+#: fonds_pod-legacy/ui/app-window.slint:72
+#, fuzzy
+msgctxt "AppWindow"
+msgid "confirm_delete_child_classification"
+msgstr "子分类"
 
-msgctxt ""
-msgid "btn_cancel"
-msgstr "取消"
+#: fonds_pod-legacy/ui/app-window.slint:73
+msgctxt "AppWindow"
+msgid "confirm_delete_selected_children"
+msgstr ""
 
-msgctxt ""
-msgid "btn_apply"
-msgstr "应用"
+#: fonds_pod-legacy/ui/app-window.slint:74
+msgctxt "AppWindow"
+msgid "confirm_delete_series"
+msgstr ""
 
-msgctxt ""
-msgid "dialog_add_archive_title"
-msgstr "添加档案库"
-
-msgctxt ""
-msgid "dialog_rename_archive_title"
-msgstr "重命名档案库"
-
-msgctxt ""
-msgid "dialog_add_file_title"
-msgstr "添加案卷"
-
-msgctxt ""
-msgid "dialog_add_item_title"
-msgstr "添加文件"
-
-msgctxt ""
-msgid "placeholder_item_name"
-msgstr "输入文件名称"
-
-msgctxt ""
-msgid "placeholder_item_path"
-msgstr "选择文件路径"
+#: fonds_pod-legacy/ui/app-window.slint:75
+#, fuzzy
+msgctxt "AppWindow"
+msgid "cannot_delete_series_has_files"
+msgstr "无法删除"
 
 # ============================================================================
 # AppWindow context translations (used with @tr("key") in AppWindow)
 # ============================================================================
-
+#. Tooltips for navigation (positioned to the right of nav buttons)
+#: fonds_pod-legacy/ui/app-window.slint:452 ui/app-window.slint:468
 msgctxt "AppWindow"
 msgid "nav_fonds"
 msgstr "全宗管理"
 
+#: fonds_pod-legacy/ui/app-window.slint:453 ui/app-window.slint:474
 msgctxt "AppWindow"
 msgid "nav_schema"
 msgstr "方案管理"
 
+#: fonds_pod-legacy/ui/app-window.slint:454 ui/app-window.slint:481
 msgctxt "AppWindow"
 msgid "nav_classification"
 msgstr "分类管理"
 
+#: fonds_pod-legacy/ui/app-window.slint:455 ui/app-window.slint:487
 msgctxt "AppWindow"
 msgid "nav_settings"
 msgstr "系统设置"
 
+#: fonds_pod-legacy/ui/app-window.slint:456 ui/app-window.slint:493
 msgctxt "AppWindow"
 msgid "nav_about"
 msgstr "关于"
 
 # ============================================================================
+# CrudList context translations
+# ============================================================================
+#: fonds_pod-legacy/ui/crud-list.slint:305 ui/components/crud-list.slint:313
+msgctxt "CrudList"
+msgid "menu_rename"
+msgstr "重命名"
+
+#: fonds_pod-legacy/ui/crud-list.slint:318 ui/components/crud-list.slint:326
+msgctxt "CrudList"
+msgid "menu_delete"
+msgstr "删除"
+
+#: fonds_pod-legacy/ui/crud-list.slint:335 ui/components/crud-list.slint:339
+msgctxt "CrudList"
+msgid "menu_activate"
+msgstr "激活"
+
+#: fonds_pod-legacy/ui/crud-list.slint:345 ui/components/crud-list.slint:349
+msgctxt "CrudList"
+msgid "menu_deactivate"
+msgstr "停用"
+
+#: fonds_pod-legacy/ui/crud-list.slint:377 ui/components/crud-list.slint:381
+msgctxt "CrudList"
+msgid "empty_list"
+msgstr "列表为空"
+
+# ============================================================================
 # DialogButtons context translations
 # ============================================================================
-
+#: fonds_pod-legacy/ui/dialogs.slint:61 ui/components/dialogs.slint:57
 msgctxt "DialogButtons"
 msgid "btn_cancel"
 msgstr "取消"
 
+#: fonds_pod-legacy/ui/dialogs.slint:69 ui/components/dialogs.slint:65
 msgctxt "DialogButtons"
 msgid "btn_confirm"
 msgstr "确定"
 
+#: fonds_pod-legacy/ui/dialogs.slint:86
+#, fuzzy
+msgctxt "SchemaInputDialog"
+msgid "dialog_add_schema_title"
+msgstr "添加文件"
+
+#: fonds_pod-legacy/ui/dialogs.slint:128
+#, fuzzy
+msgctxt "SchemaInputDialog"
+msgid "label_code"
+msgstr "代码"
+
+#: fonds_pod-legacy/ui/dialogs.slint:165
+#, fuzzy
+msgctxt "SchemaInputDialog"
+msgid "label_name"
+msgstr "名称"
+
+#: fonds_pod-legacy/ui/dialogs.slint:222
+#, fuzzy
+msgctxt "RenameArchiveDialog"
+msgid "dialog_rename_archive_title"
+msgstr "重命名档案库"
+
+#: fonds_pod-legacy/ui/dialogs.slint:263
+#, fuzzy
+msgctxt "RenameArchiveDialog"
+msgid "label_name"
+msgstr "名称"
+
+#: fonds_pod-legacy/ui/dialogs.slint:316
+#, fuzzy
+msgctxt "FileInputDialog"
+msgid "dialog_add_file_title"
+msgstr "添加案卷"
+
+#: fonds_pod-legacy/ui/dialogs.slint:351
+#, fuzzy
+msgctxt "FileInputDialog"
+msgid "label_name"
+msgstr "名称"
+
+#: fonds_pod-legacy/ui/dialogs.slint:393
+#, fuzzy
+msgctxt "SchemaItemInputDialog"
+msgid "dialog_add_schema_item_title"
+msgstr "添加文件"
+
+#: fonds_pod-legacy/ui/dialogs.slint:435
+#, fuzzy
+msgctxt "SchemaItemInputDialog"
+msgid "label_code"
+msgstr "代码"
+
+#: fonds_pod-legacy/ui/dialogs.slint:471
+#, fuzzy
+msgctxt "SchemaItemInputDialog"
+msgid "label_name"
+msgstr "名称"
+
+# ============================================================================
+# ConfirmDialog context translations
+# ============================================================================
+#: fonds_pod-legacy/ui/dialogs.slint:527 ui/components/dialogs.slint:241
+msgctxt "ConfirmDialog"
+msgid "dialog_confirm_title"
+msgstr "确认"
+
+#: fonds_pod-legacy/ui/dialogs.slint:593
+#, fuzzy
+msgctxt "ClassificationInputDialog"
+msgid "dialog_add_classification_title"
+msgstr "添加分类"
+
+#: fonds_pod-legacy/ui/dialogs.slint:629
+#, fuzzy
+msgctxt "ClassificationInputDialog"
+msgid "label_code"
+msgstr "代码"
+
+#: fonds_pod-legacy/ui/dialogs.slint:649
+#, fuzzy
+msgctxt "ClassificationInputDialog"
+msgid "label_name"
+msgstr "名称"
+
+#. e.g., parent code-name for context
+#: fonds_pod-legacy/ui/dialogs.slint:690
+#, fuzzy
+msgctxt "ClassificationChildInputDialog"
+msgid "dialog_add_child_classification_title"
+msgstr "添加分类"
+
+#: fonds_pod-legacy/ui/dialogs.slint:726
+#, fuzzy
+msgctxt "ClassificationChildInputDialog"
+msgid "label_parent"
+msgstr "路径"
+
+#: fonds_pod-legacy/ui/dialogs.slint:731
+#, fuzzy
+msgctxt "ClassificationChildInputDialog"
+msgid "label_code"
+msgstr "代码"
+
+#: fonds_pod-legacy/ui/dialogs.slint:751
+#, fuzzy
+msgctxt "ClassificationChildInputDialog"
+msgid "label_name"
+msgstr "名称"
+
+#: fonds_pod-legacy/ui/dialogs.slint:791
+#, fuzzy
+msgctxt "AddFondsDialog"
+msgid "dialog_add_fonds_title"
+msgstr "添加案卷"
+
+#: fonds_pod-legacy/ui/dialogs.slint:857
+#, fuzzy
+msgctxt "AddFondsDialog"
+msgid "label_fonds_name"
+msgstr "名称"
+
+#: fonds_pod-legacy/ui/dialogs.slint:891
+#, fuzzy
+msgctxt "AddFondsDialog"
+msgid "label_primary_classification"
+msgstr "顶级分类"
+
+#: fonds_pod-legacy/ui/dialogs.slint:917
+#, fuzzy
+msgctxt "AddFondsDialog"
+msgid "label_secondary_classification"
+msgstr "子分类"
+
+#: fonds_pod-legacy/ui/dialogs.slint:946
+msgctxt "AddFondsDialog"
+msgid "label_select_schemas"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:969
+msgctxt "AddFondsDialog"
+msgid "label_available_schemas"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:1052
+msgctxt "AddFondsDialog"
+msgid "label_selected_schemas"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:1122
+msgctxt "AddItemDialog"
+msgid "add_item"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:1160
+#, fuzzy
+msgctxt "AddItemDialog"
+msgid "label_name"
+msgstr "名称"
+
+#: fonds_pod-legacy/ui/dialogs.slint:1199
+#, fuzzy
+msgctxt "AddItemDialog"
+msgid "label_path"
+msgstr "路径"
+
+#: fonds_pod-legacy/ui/dialogs.slint:1220
+#, fuzzy
+msgctxt "AddItemDialog"
+msgid "no_file_selected"
+msgstr "未选择档案库"
+
+#: fonds_pod-legacy/ui/layout/navigation.slint:27
+#, fuzzy
+msgctxt "NavigationPanel"
+msgid "nav_fonds"
+msgstr "全宗管理"
+
+#: fonds_pod-legacy/ui/layout/navigation.slint:34
+#, fuzzy
+msgctxt "NavigationPanel"
+msgid "nav_schema"
+msgstr "方案管理"
+
+#: fonds_pod-legacy/ui/layout/navigation.slint:41
+#, fuzzy
+msgctxt "NavigationPanel"
+msgid "nav_classification"
+msgstr "分类管理"
+
+#: fonds_pod-legacy/ui/layout/navigation.slint:48
+#, fuzzy
+msgctxt "NavigationPanel"
+msgid "nav_settings"
+msgstr "系统设置"
+
+#: fonds_pod-legacy/ui/layout/navigation.slint:55
+#, fuzzy
+msgctxt "NavigationPanel"
+msgid "nav_about"
+msgstr "关于"
+
+# About page
+#: fonds_pod-legacy/ui/pages/about-page.slint:19
+#, fuzzy
+msgctxt "AboutPage"
+msgid "about_title"
+msgstr "FondsPod 档案管理系统"
+
+#: fonds_pod-legacy/ui/pages/about-page.slint:42
+#, fuzzy
+msgctxt "AboutPage"
+msgid "about_description"
+msgstr ""
+"FondsPod 是一个现代化的档案管理系统，采用 Rust 和 Slint 构建。它提供了完整的"
+"档案分类、方案管理和全宗管理功能，帮助您高效地组织和管理档案资料。"
+
+#: fonds_pod-legacy/ui/pages/about-page.slint:49
+#, fuzzy
+msgctxt "AboutPage"
+msgid "about_version"
+msgstr "版本:"
+
+#: fonds_pod-legacy/ui/pages/about-page.slint:55
+#, fuzzy
+msgctxt "AboutPage"
+msgid "about_author"
+msgstr "作者:"
+
+#: fonds_pod-legacy/ui/pages/about-page.slint:61
+#, fuzzy
+msgctxt "AboutPage"
+msgid "about_license"
+msgstr "许可证:"
+
+#: fonds_pod-legacy/ui/pages/about-page.slint:67
+#, fuzzy
+msgctxt "AboutPage"
+msgid "about_website"
+msgstr "项目地址:"
+
+#: fonds_pod-legacy/ui/pages/classification-page.slint:48
+#, fuzzy
+msgctxt "ClassificationPage"
+msgid "label_top_classifications"
+msgstr "顶级分类"
+
+#: fonds_pod-legacy/ui/pages/classification-page.slint:59
+#, fuzzy
+msgctxt "ClassificationPage"
+msgid "tooltip_export"
+msgstr "导出分类"
+
+#: fonds_pod-legacy/ui/pages/classification-page.slint:60
+#, fuzzy
+msgctxt "ClassificationPage"
+msgid "tooltip_import"
+msgstr "导入分类"
+
+#: fonds_pod-legacy/ui/pages/classification-page.slint:97
+#, fuzzy
+msgctxt "ClassificationPage"
+msgid "label_child_classifications"
+msgstr "子分类"
+
+#: fonds_pod-legacy/ui/pages/fonds-page.slint:126
+#, fuzzy
+msgctxt "FondsPage"
+msgid "label_series"
+msgstr "系列"
+
+#: fonds_pod-legacy/ui/pages/fonds-page.slint:170
+#, fuzzy
+msgctxt "FondsPage"
+msgid "label_files"
+msgstr "案卷"
+
+#: fonds_pod-legacy/ui/pages/fonds-page.slint:207
+#, fuzzy
+msgctxt "FondsPage"
+msgid "label_items"
+msgstr "文件"
+
+#: fonds_pod-legacy/ui/pages/schema-page.slint:38 ui/pages/schema-page.slint:61
+#, fuzzy
+msgctxt "SchemaPage"
+msgid "label_schema"
+msgstr "方案管理"
+
+#: fonds_pod-legacy/ui/pages/schema-page.slint:63 ui/pages/schema-page.slint:86
+#, fuzzy
+msgctxt "SchemaPage"
+msgid "label_items"
+msgstr "项目"
+
+# Settings page
+#: fonds_pod-legacy/ui/pages/settings-page.slint:29
+#: fonds_pod-legacy/ui/pages/settings-page.slint:35
+#, fuzzy
+msgctxt "SettingsPage"
+msgid "label_language"
+msgstr "语言"
+
+#: fonds_pod-legacy/ui/pages/settings-page.slint:52
+#, fuzzy
+msgctxt "SettingsPage"
+msgid "label_archive_libraries"
+msgstr "档案库"
+
+#: fonds_pod-legacy/ui/pages/settings-page.slint:76
+#, fuzzy
+msgctxt "SettingsPage"
+msgid "btn_cancel"
+msgstr "取消"
+
+#: fonds_pod-legacy/ui/pages/settings-page.slint:84
+#, fuzzy
+msgctxt "SettingsPage"
+msgid "btn_apply"
+msgstr "应用"
+
+# Common UI messages
+#. Translation properties for common UI messages using gettext
+#: ui/app-window.slint:27
+#, fuzzy
+msgid "language_applied"
+msgstr "语言已应用"
+
+#: ui/app-window.slint:28
+#, fuzzy
+msgid "code_exists"
+msgstr "代码已存在"
+
+#: ui/app-window.slint:29
+#, fuzzy
+msgid "create_failed"
+msgstr "创建失败"
+
+#: ui/app-window.slint:30
+#, fuzzy
+msgid "tray_show_window"
+msgstr "显示窗口"
+
+#: ui/app-window.slint:31
+#, fuzzy
+msgid "tray_quit"
+msgstr "退出"
+
+#: ui/app-window.slint:32
+#, fuzzy
+msgid "delete_failed"
+msgstr "删除失败"
+
+#: ui/app-window.slint:33
+#, fuzzy
+msgid "cannot_delete"
+msgstr "无法删除"
+
+#: ui/app-window.slint:34
+#, fuzzy
+msgid "activate_failed"
+msgstr "激活失败"
+
+#: ui/app-window.slint:35
+#, fuzzy
+msgid "deactivate_failed"
+msgstr "停用失败"
+
+#: ui/app-window.slint:36
+#, fuzzy
+msgid "export_failed"
+msgstr "导出失败"
+
+#: ui/app-window.slint:37
+#, fuzzy
+msgid "import_failed"
+msgstr "导入失败"
+
+#: ui/app-window.slint:38
+#, fuzzy
+msgid "no_archive_selected"
+msgstr "未选择档案库"
+
+#: ui/app-window.slint:39
+#, fuzzy
+msgid "import_success"
+msgstr "导入成功"
+
+#: ui/app-window.slint:40
+#, fuzzy
+msgid "export_success"
+msgstr "导出成功"
+
+#: ui/app-window.slint:41
+#, fuzzy
+msgid "read_file_failed"
+msgstr "读取文件失败"
+
+#: ui/pages/schema-page.slint:25
+#, fuzzy
+msgid "placeholder_code"
+msgstr "输入分类代码"
+
+#: ui/pages/schema-page.slint:26
+#, fuzzy
+msgid "placeholder_name"
+msgstr "输入分类名称"
+
+#: ui/pages/fond-classification-page.slint:31
+#, fuzzy
+msgid "placeholder_child_code"
+msgstr "输入子分类代码"
+
+#: ui/pages/fond-classification-page.slint:32
+#, fuzzy
+msgid "placeholder_child_name"
+msgstr "输入子分类名称"
+
+# ============================================================================
+# Empty context translations (used with @tr("" => "key"))
+# ============================================================================
+# Navigation
+#: ui/app-window.slint:462
+#, fuzzy
+msgctxt "AppWindow"
+msgid "nav_home"
+msgstr "首页"
+
 # ============================================================================
 # FormDialog context translations
 # ============================================================================
-
+#: ui/components/dialogs.slint:205
 msgctxt "FormDialog"
 msgid "btn_browse"
 msgstr "浏览"
 
 # ============================================================================
-# ConfirmDialog context translations
+# Empty context translations (used with @tr("" => "key"))
 # ============================================================================
+# Navigation
+#: ui/layout/navigation.slint:23
+#, fuzzy
+msgid "nav_home"
+msgstr "首页"
 
-msgctxt "ConfirmDialog"
-msgid "dialog_confirm_title"
-msgstr "确认"
+#: ui/layout/navigation.slint:29
+#, fuzzy
+msgid "nav_fonds"
+msgstr "全宗管理"
 
-# ============================================================================
-# CrudList context translations
-# ============================================================================
+#: ui/layout/navigation.slint:35
+#, fuzzy
+msgid "nav_schema"
+msgstr "方案管理"
 
-msgctxt "CrudList"
-msgid "menu_rename"
-msgstr "重命名"
+#: ui/layout/navigation.slint:41
+#, fuzzy
+msgid "nav_classification"
+msgstr "分类管理"
 
-msgctxt "CrudList"
-msgid "menu_delete"
-msgstr "删除"
+#: ui/layout/navigation.slint:47
+#, fuzzy
+msgid "nav_settings"
+msgstr "系统设置"
 
-msgctxt "CrudList"
-msgid "menu_activate"
-msgstr "激活"
+#: ui/layout/navigation.slint:53
+#, fuzzy
+msgid "nav_about"
+msgstr "关于"
 
-msgctxt "CrudList"
-msgid "menu_deactivate"
-msgstr "停用"
+# About page
+#: ui/pages/about-page.slint:23
+#, fuzzy
+msgid "about_title"
+msgstr "FondsPod 档案管理系统"
 
-msgctxt "CrudList"
-msgid "empty_list"
-msgstr "列表为空"
+#: ui/pages/about-page.slint:35
+#, fuzzy
+msgid "check_update"
+msgstr "检查更新"
+
+#: ui/pages/about-page.slint:52
+#, fuzzy
+msgid "about_description"
+msgstr ""
+"FondsPod 是一个现代化的档案管理系统，采用 Rust 和 Slint 构建。它提供了完整的"
+"档案分类、方案管理和全宗管理功能，帮助您高效地组织和管理档案资料。"
+
+#: ui/pages/about-page.slint:59
+#, fuzzy
+msgid "about_version"
+msgstr "版本:"
+
+#: ui/pages/about-page.slint:65
+#, fuzzy
+msgid "about_author"
+msgstr "作者:"
+
+#: ui/pages/about-page.slint:71
+#, fuzzy
+msgid "about_license"
+msgstr "许可证:"
+
+#: ui/pages/about-page.slint:77
+#, fuzzy
+msgid "about_website"
+msgstr "项目地址:"
+
+#: ui/pages/fond-classification-page.slint:73
+#, fuzzy
+msgid "label_top_classifications"
+msgstr "顶级分类"
+
+#: ui/pages/fond-classification-page.slint:83
+#, fuzzy
+msgid "tooltip_export"
+msgstr "导出分类"
+
+#: ui/pages/fond-classification-page.slint:84
+#, fuzzy
+msgid "tooltip_import"
+msgstr "导入分类"
+
+#: ui/pages/fond-classification-page.slint:120
+#, fuzzy
+msgid "label_child_classifications"
+msgstr "子分类"
+
+#: ui/pages/fond-classification-page.slint:161
+#, fuzzy
+msgid "dialog_add_classification"
+msgstr "添加分类"
+
+#: ui/pages/fond-page.slint:9
+msgctxt "FondPage"
+msgid "fond_page_title"
+msgstr ""
+
+#: ui/pages/home-page.slint:168
+#, fuzzy
+msgctxt "HomePage"
+msgid "label_series"
+msgstr "系列"
+
+#: ui/pages/home-page.slint:208
+#, fuzzy
+msgctxt "HomePage"
+msgid "label_files"
+msgstr "案卷"
+
+#: ui/pages/home-page.slint:218 ui/pages/home-page.slint:241
+#: ui/pages/home-page.slint:268 ui/pages/home-page.slint:299
+#, fuzzy
+msgctxt "HomePage"
+msgid "label_name"
+msgstr "名称"
+
+#: ui/pages/home-page.slint:218 ui/pages/home-page.slint:241
+#, fuzzy
+msgctxt "HomePage"
+msgid "placeholder_file_name"
+msgstr "输入案卷名称"
+
+#: ui/pages/home-page.slint:254
+#, fuzzy
+msgctxt "HomePage"
+msgid "label_items"
+msgstr "文件"
+
+#: ui/pages/home-page.slint:268 ui/pages/home-page.slint:299
+#, fuzzy
+msgctxt "HomePage"
+msgid "placeholder_item_name"
+msgstr "输入文件名称"
+
+#: ui/pages/home-page.slint:269
+#, fuzzy
+msgctxt "HomePage"
+msgid "label_path"
+msgstr "路径"
+
+#: ui/pages/home-page.slint:269
+#, fuzzy
+msgctxt "HomePage"
+msgid "placeholder_item_path"
+msgstr "选择文件路径"
+
+#: ui/pages/home-page.slint:315
+#, fuzzy
+msgctxt "HomePage"
+msgid "dialog_add_file_title"
+msgstr "添加案卷"
+
+#: ui/pages/home-page.slint:340
+#, fuzzy
+msgctxt "HomePage"
+msgid "dialog_add_item_title"
+msgstr "添加文件"
+
+#: ui/pages/home-page.slint:365
+#, fuzzy
+msgctxt "HomePage"
+msgid "dialog_rename_file_title"
+msgstr "重命名案卷"
+
+#: ui/pages/home-page.slint:386
+#, fuzzy
+msgctxt "HomePage"
+msgid "dialog_rename_item_title"
+msgstr "重命名文件"
+
+#: ui/pages/schema-page.slint:107
+#, fuzzy
+msgid "dialog_add_schema"
+msgstr "添加文件"
+
+#: ui/pages/schema-page.slint:128
+#, fuzzy
+msgid "dialog_add_schema_item"
+msgstr "添加文件"
+
+# Settings page
+#: ui/pages/settings-page.slint:52
+#, fuzzy
+msgid "label_language"
+msgstr "语言"
+
+#: ui/pages/settings-page.slint:71
+#, fuzzy
+msgid "label_archive_libraries"
+msgstr "档案库"
+
+#: ui/pages/settings-page.slint:93
+#, fuzzy
+msgid "label_name"
+msgstr "名称"
+
+#: ui/pages/settings-page.slint:80
+#, fuzzy
+msgid "label_path"
+msgstr "路径"
+
+#: ui/pages/settings-page.slint:112
+#, fuzzy
+msgid "btn_cancel"
+msgstr "取消"
+
+#: ui/pages/settings-page.slint:120
+#, fuzzy
+msgid "btn_apply"
+msgstr "应用"
+
+#: ui/pages/settings-page.slint:135
+#, fuzzy
+msgid "dialog_add_archive_title"
+msgstr "添加档案库"
+
+#: ui/pages/settings-page.slint:161
+#, fuzzy
+msgid "dialog_rename_archive_title"
+msgstr "重命名档案库"
+
+# Home page
+#~ msgctxt ""
+#~ msgid "home_welcome"
+#~ msgstr "欢迎使用 FondsPod"
+
+#~ msgctxt ""
+#~ msgid "home_description"
+#~ msgstr "您的现代化档案管理系统。选择左侧导航开始管理您的档案资料。"
+
+#~ msgctxt ""
+#~ msgid "placeholder_file_path"
+#~ msgstr "选择案卷路径"

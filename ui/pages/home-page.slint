@@ -42,6 +42,10 @@ export component HomePage inherits Rectangle {
     in-out property <[DialogField]> add_file_fields: [];
     in-out property <bool> show_add_item_dialog: false;
     in-out property <[DialogField]> add_item_fields: [];
+    in-out property <bool> show_rename_file_dialog: false;
+    in-out property <[DialogField]> rename_file_fields: [];
+    in-out property <bool> show_rename_item_dialog: false;
+    in-out property <[DialogField]> rename_item_fields: [];
 
     // Current language for dialogs
     in property <int> current_language: 0;
@@ -86,6 +90,12 @@ export component HomePage inherits Rectangle {
     callback confirm_add_item([DialogField]);
     callback cancel_add_item();
     callback browse_item_folder(int);
+    callback confirm_rename_file([DialogField]);
+    callback cancel_rename_file();
+    callback confirm_rename_item([DialogField]);
+    callback cancel_rename_item();
+    callback set_rename_file_index(int);
+    callback set_rename_item_index(int);
 
     VerticalBox {
         width: parent.width;
@@ -206,7 +216,6 @@ export component HomePage inherits Rectangle {
                     add-clicked => {
                         root.add_file_fields = [
                             { label: @tr("label_name"), field_type: DialogFieldType.text, value: "", placeholder: @tr("placeholder_file_name") },
-                            { label: @tr("label_path"), field_type: DialogFieldType.path, value: "", placeholder: @tr("placeholder_file_path") },
                         ];
                         root.show_add_file_dialog = true;
                     }
@@ -226,7 +235,13 @@ export component HomePage inherits Rectangle {
                         }
                     }
 
-                    rename-clicked(index, old_name) => { root.rename_file(index, old_name); }
+                    rename-clicked(index, old_name) => {
+                        root.set_rename_file_index(index);
+                        root.rename_file_fields = [
+                            { label: @tr("label_name"), field_type: DialogFieldType.text, value: old_name, placeholder: @tr("placeholder_file_name") },
+                        ];
+                        root.show_rename_file_dialog = true;
+                    }
                     delete-clicked => { root.delete_file(); }
                 }
 
@@ -278,7 +293,13 @@ export component HomePage inherits Rectangle {
                         }
                     }
 
-                    rename-clicked(index, old_name) => { root.rename_item(index, old_name); }
+                    rename-clicked(index, old_name) => {
+                        root.set_rename_item_index(index);
+                        root.rename_item_fields = [
+                            { label: @tr("label_name"), field_type: DialogFieldType.text, value: old_name, placeholder: @tr("placeholder_item_name") },
+                        ];
+                        root.show_rename_item_dialog = true;
+                    }
                     delete-clicked => { root.delete_item(); }
                 }
             }
@@ -332,6 +353,48 @@ export component HomePage inherits Rectangle {
         
         browse_folder(index) => {
             root.browse_item_folder(index);
+        }
+    }
+
+    // Rename File Dialog
+    if root.show_rename_file_dialog : FormDialog {
+        x: 0;
+        y: 0;
+        width: 100%;
+        height: 100%;
+        title: @tr("dialog_rename_file_title");
+        current_language: root.current_language;
+        fields <=> root.rename_file_fields;
+        
+        confirm(fields) => {
+            root.confirm_rename_file(fields);
+            root.show_rename_file_dialog = false;
+        }
+        
+        cancel() => {
+            root.cancel_rename_file();
+            root.show_rename_file_dialog = false;
+        }
+    }
+
+    // Rename Item Dialog
+    if root.show_rename_item_dialog : FormDialog {
+        x: 0;
+        y: 0;
+        width: 100%;
+        height: 100%;
+        title: @tr("dialog_rename_item_title");
+        current_language: root.current_language;
+        fields <=> root.rename_item_fields;
+        
+        confirm(fields) => {
+            root.confirm_rename_item(fields);
+            root.show_rename_item_dialog = false;
+        }
+        
+        cancel() => {
+            root.cancel_rename_item();
+            root.show_rename_item_dialog = false;
         }
     }
 }

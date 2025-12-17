@@ -103,7 +103,9 @@ impl App {
         let repo = Rc::new(RefCell::new(
             fonds_pod_lib::FondsRepository::new(conn),
         ));
-        FondViewModel::new(repo)
+        
+        let library_path = settings_service.get_last_opened_library().ok().flatten();
+        FondViewModel::new(repo, library_path)
     }
 
     /// 初始化Fond Classification ViewModel和数据库连接
@@ -145,6 +147,8 @@ impl App {
 
     /// Setup all UI callbacks - 由各个 ViewModel 负责自己的回调
     pub fn setup_ui_callbacks(&self, ui_handle: &AppWindow) {
+        // Setup about page callbacks
+        AboutViewModel::setup_callbacks(Rc::clone(&self.about_vm), ui_handle);
         // Initialize ViewModel UIs
         self.settings_vm.borrow().init_ui(ui_handle);
 
@@ -228,8 +232,9 @@ impl App {
 
                                 match page_name.as_str() {
                                     "fonds" => {
-                                        fond_vm.borrow().update_connection(new_conn);
-                                        let items = fond_vm.borrow().get_items();
+                                        let mut vm = fond_vm.borrow_mut();
+                                        vm.update_connection_with_library(new_conn, Some(last_opened_library.clone()));
+                                        let items = vm.get_items();
                                         ui.set_fond_items(items);
                                     }
                                     "classification" => {

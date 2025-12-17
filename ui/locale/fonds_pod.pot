@@ -1,111 +1,716 @@
-# POT Template for FondsPod
-# Copyright (C) 2025 Sudiaty
-# This file is distributed under the MIT License.
-#
-#, fuzzy
+
 msgid ""
 msgstr ""
-"Project-Id-Version: FondsPod 1.0\n"
-"Report-Msgid-Bugs-To: https://github.com/Sudiaty/fonds_pod/issues\n"
-"POT-Creation-Date: 2025-12-08 12:00+0800\n"
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2025-12-17 08:54+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: \n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
-# Navigation
-msgid "nav_home"
-msgstr ""
-
-msgid "nav_fonds"
-msgstr ""
-
-msgid "nav_schema"
-msgstr ""
-
-msgid "nav_classification"
-msgstr ""
-
-msgid "nav_settings"
-msgstr ""
-
-msgid "nav_about"
-msgstr ""
-
-# Home page
-msgid "home_welcome"
-msgstr ""
-
-msgid "home_description"
-msgstr ""
-
-# About page
-msgid "about_title"
-msgstr ""
-
-msgid "about_description"
-msgstr ""
-
-msgid "about_version"
-msgstr ""
-
-msgid "about_author"
-msgstr ""
-
-msgid "about_license"
-msgstr ""
-
-msgid "about_website"
-msgstr ""
-
-msgid "check_update"
-msgstr ""
-
-# Common UI messages
+#. Translation properties
+#: fonds_pod-legacy/ui/app-window.slint:54
+msgctxt "AppWindow"
 msgid "language_applied"
 msgstr ""
 
+#: fonds_pod-legacy/ui/app-window.slint:55
+msgctxt "AppWindow"
 msgid "code_exists"
 msgstr ""
 
+#: fonds_pod-legacy/ui/app-window.slint:56
+msgctxt "AppWindow"
 msgid "create_failed"
 msgstr ""
 
+#: fonds_pod-legacy/ui/app-window.slint:57
+msgctxt "AppWindow"
 msgid "tray_show_window"
 msgstr ""
 
+#: fonds_pod-legacy/ui/app-window.slint:58
+msgctxt "AppWindow"
 msgid "tray_quit"
 msgstr ""
 
+#: fonds_pod-legacy/ui/app-window.slint:59
+msgctxt "AppWindow"
 msgid "delete_failed"
 msgstr ""
 
+#: fonds_pod-legacy/ui/app-window.slint:60
+msgctxt "AppWindow"
 msgid "cannot_delete"
 msgstr ""
 
+#: fonds_pod-legacy/ui/app-window.slint:61
+msgctxt "AppWindow"
 msgid "activate_failed"
 msgstr ""
 
+#: fonds_pod-legacy/ui/app-window.slint:62
+msgctxt "AppWindow"
 msgid "deactivate_failed"
 msgstr ""
 
+#: fonds_pod-legacy/ui/app-window.slint:63
+msgctxt "AppWindow"
 msgid "export_failed"
 msgstr ""
 
+#: fonds_pod-legacy/ui/app-window.slint:64
+msgctxt "AppWindow"
 msgid "import_failed"
 msgstr ""
 
+#: fonds_pod-legacy/ui/app-window.slint:65
+msgctxt "AppWindow"
 msgid "no_archive_selected"
 msgstr ""
 
+#: fonds_pod-legacy/ui/app-window.slint:66
+msgctxt "AppWindow"
 msgid "import_success"
 msgstr ""
 
+#: fonds_pod-legacy/ui/app-window.slint:67
+msgctxt "AppWindow"
 msgid "export_success"
 msgstr ""
 
+#: fonds_pod-legacy/ui/app-window.slint:68
+msgctxt "AppWindow"
 msgid "read_file_failed"
 msgstr ""
+
+#: fonds_pod-legacy/ui/app-window.slint:69
+msgctxt "AppWindow"
+msgid "confirm_delete"
+msgstr ""
+
+#: fonds_pod-legacy/ui/app-window.slint:70
+msgctxt "AppWindow"
+msgid "confirm_delete_classification"
+msgstr ""
+
+#: fonds_pod-legacy/ui/app-window.slint:71
+msgctxt "AppWindow"
+msgid "confirm_delete_selected_classifications"
+msgstr ""
+
+#: fonds_pod-legacy/ui/app-window.slint:72
+msgctxt "AppWindow"
+msgid "confirm_delete_child_classification"
+msgstr ""
+
+#: fonds_pod-legacy/ui/app-window.slint:73
+msgctxt "AppWindow"
+msgid "confirm_delete_selected_children"
+msgstr ""
+
+#: fonds_pod-legacy/ui/app-window.slint:74
+msgctxt "AppWindow"
+msgid "confirm_delete_series"
+msgstr ""
+
+#: fonds_pod-legacy/ui/app-window.slint:75
+msgctxt "AppWindow"
+msgid "cannot_delete_series_has_files"
+msgstr ""
+
+#. Tooltips for navigation (positioned to the right of nav buttons)
+#: fonds_pod-legacy/ui/app-window.slint:452 ui/app-window.slint:468
+msgctxt "AppWindow"
+msgid "nav_fonds"
+msgstr ""
+
+#: fonds_pod-legacy/ui/app-window.slint:453 ui/app-window.slint:474
+msgctxt "AppWindow"
+msgid "nav_schema"
+msgstr ""
+
+#: fonds_pod-legacy/ui/app-window.slint:454 ui/app-window.slint:481
+msgctxt "AppWindow"
+msgid "nav_classification"
+msgstr ""
+
+#: fonds_pod-legacy/ui/app-window.slint:455 ui/app-window.slint:487
+msgctxt "AppWindow"
+msgid "nav_settings"
+msgstr ""
+
+#: fonds_pod-legacy/ui/app-window.slint:456 ui/app-window.slint:493
+msgctxt "AppWindow"
+msgid "nav_about"
+msgstr ""
+
+#: fonds_pod-legacy/ui/crud-list.slint:305 ui/components/crud-list.slint:313
+msgctxt "CrudList"
+msgid "menu_rename"
+msgstr ""
+
+#: fonds_pod-legacy/ui/crud-list.slint:318 ui/components/crud-list.slint:326
+msgctxt "CrudList"
+msgid "menu_delete"
+msgstr ""
+
+#: fonds_pod-legacy/ui/crud-list.slint:335 ui/components/crud-list.slint:339
+msgctxt "CrudList"
+msgid "menu_activate"
+msgstr ""
+
+#: fonds_pod-legacy/ui/crud-list.slint:345 ui/components/crud-list.slint:349
+msgctxt "CrudList"
+msgid "menu_deactivate"
+msgstr ""
+
+#: fonds_pod-legacy/ui/crud-list.slint:377 ui/components/crud-list.slint:381
+msgctxt "CrudList"
+msgid "empty_list"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:61 ui/components/dialogs.slint:57
+msgctxt "DialogButtons"
+msgid "btn_cancel"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:69 ui/components/dialogs.slint:65
+msgctxt "DialogButtons"
+msgid "btn_confirm"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:86
+msgctxt "SchemaInputDialog"
+msgid "dialog_add_schema_title"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:128
+msgctxt "SchemaInputDialog"
+msgid "label_code"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:165
+msgctxt "SchemaInputDialog"
+msgid "label_name"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:222
+msgctxt "RenameArchiveDialog"
+msgid "dialog_rename_archive_title"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:263
+msgctxt "RenameArchiveDialog"
+msgid "label_name"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:316
+msgctxt "FileInputDialog"
+msgid "dialog_add_file_title"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:351
+msgctxt "FileInputDialog"
+msgid "label_name"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:393
+msgctxt "SchemaItemInputDialog"
+msgid "dialog_add_schema_item_title"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:435
+msgctxt "SchemaItemInputDialog"
+msgid "label_code"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:471
+msgctxt "SchemaItemInputDialog"
+msgid "label_name"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:527 ui/components/dialogs.slint:241
+msgctxt "ConfirmDialog"
+msgid "dialog_confirm_title"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:593
+msgctxt "ClassificationInputDialog"
+msgid "dialog_add_classification_title"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:629
+msgctxt "ClassificationInputDialog"
+msgid "label_code"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:649
+msgctxt "ClassificationInputDialog"
+msgid "label_name"
+msgstr ""
+
+#. e.g., parent code-name for context
+#: fonds_pod-legacy/ui/dialogs.slint:690
+msgctxt "ClassificationChildInputDialog"
+msgid "dialog_add_child_classification_title"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:726
+msgctxt "ClassificationChildInputDialog"
+msgid "label_parent"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:731
+msgctxt "ClassificationChildInputDialog"
+msgid "label_code"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:751
+msgctxt "ClassificationChildInputDialog"
+msgid "label_name"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:791
+msgctxt "AddFondsDialog"
+msgid "dialog_add_fonds_title"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:857
+msgctxt "AddFondsDialog"
+msgid "label_fonds_name"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:891
+msgctxt "AddFondsDialog"
+msgid "label_primary_classification"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:917
+msgctxt "AddFondsDialog"
+msgid "label_secondary_classification"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:946
+msgctxt "AddFondsDialog"
+msgid "label_select_schemas"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:969
+msgctxt "AddFondsDialog"
+msgid "label_available_schemas"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:1052
+msgctxt "AddFondsDialog"
+msgid "label_selected_schemas"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:1122
+msgctxt "AddItemDialog"
+msgid "add_item"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:1160
+msgctxt "AddItemDialog"
+msgid "label_name"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:1199
+msgctxt "AddItemDialog"
+msgid "label_path"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:1220
+msgctxt "AddItemDialog"
+msgid "no_file_selected"
+msgstr ""
+
+#: fonds_pod-legacy/ui/layout/navigation.slint:27
+msgctxt "NavigationPanel"
+msgid "nav_fonds"
+msgstr ""
+
+#: fonds_pod-legacy/ui/layout/navigation.slint:34
+msgctxt "NavigationPanel"
+msgid "nav_schema"
+msgstr ""
+
+#: fonds_pod-legacy/ui/layout/navigation.slint:41
+msgctxt "NavigationPanel"
+msgid "nav_classification"
+msgstr ""
+
+#: fonds_pod-legacy/ui/layout/navigation.slint:48
+msgctxt "NavigationPanel"
+msgid "nav_settings"
+msgstr ""
+
+#: fonds_pod-legacy/ui/layout/navigation.slint:55
+msgctxt "NavigationPanel"
+msgid "nav_about"
+msgstr ""
+
+#: fonds_pod-legacy/ui/pages/about-page.slint:19
+msgctxt "AboutPage"
+msgid "about_title"
+msgstr ""
+
+#: fonds_pod-legacy/ui/pages/about-page.slint:42
+msgctxt "AboutPage"
+msgid "about_description"
+msgstr ""
+
+#: fonds_pod-legacy/ui/pages/about-page.slint:49
+msgctxt "AboutPage"
+msgid "about_version"
+msgstr ""
+
+#: fonds_pod-legacy/ui/pages/about-page.slint:55
+msgctxt "AboutPage"
+msgid "about_author"
+msgstr ""
+
+#: fonds_pod-legacy/ui/pages/about-page.slint:61
+msgctxt "AboutPage"
+msgid "about_license"
+msgstr ""
+
+#: fonds_pod-legacy/ui/pages/about-page.slint:67
+msgctxt "AboutPage"
+msgid "about_website"
+msgstr ""
+
+#: fonds_pod-legacy/ui/pages/classification-page.slint:48
+msgctxt "ClassificationPage"
+msgid "label_top_classifications"
+msgstr ""
+
+#: fonds_pod-legacy/ui/pages/classification-page.slint:59
+msgctxt "ClassificationPage"
+msgid "tooltip_export"
+msgstr ""
+
+#: fonds_pod-legacy/ui/pages/classification-page.slint:60
+msgctxt "ClassificationPage"
+msgid "tooltip_import"
+msgstr ""
+
+#: fonds_pod-legacy/ui/pages/classification-page.slint:97
+msgctxt "ClassificationPage"
+msgid "label_child_classifications"
+msgstr ""
+
+#: fonds_pod-legacy/ui/pages/fonds-page.slint:126
+msgctxt "FondsPage"
+msgid "label_series"
+msgstr ""
+
+#: fonds_pod-legacy/ui/pages/fonds-page.slint:170
+msgctxt "FondsPage"
+msgid "label_files"
+msgstr ""
+
+#: fonds_pod-legacy/ui/pages/fonds-page.slint:207
+msgctxt "FondsPage"
+msgid "label_items"
+msgstr ""
+
+#: fonds_pod-legacy/ui/pages/schema-page.slint:38 ui/pages/schema-page.slint:61
+msgctxt "SchemaPage"
+msgid "label_schema"
+msgstr ""
+
+#: fonds_pod-legacy/ui/pages/schema-page.slint:63 ui/pages/schema-page.slint:86
+msgctxt "SchemaPage"
+msgid "label_items"
+msgstr ""
+
+#: fonds_pod-legacy/ui/pages/settings-page.slint:29 fonds_pod-legacy/ui/pages/settings-page.slint:35
+msgctxt "SettingsPage"
+msgid "label_language"
+msgstr ""
+
+#: fonds_pod-legacy/ui/pages/settings-page.slint:52
+msgctxt "SettingsPage"
+msgid "label_archive_libraries"
+msgstr ""
+
+#: fonds_pod-legacy/ui/pages/settings-page.slint:76
+msgctxt "SettingsPage"
+msgid "btn_cancel"
+msgstr ""
+
+#: fonds_pod-legacy/ui/pages/settings-page.slint:84
+msgctxt "SettingsPage"
+msgid "btn_apply"
+msgstr ""
+
+#. Translation properties for common UI messages using gettext
+#: ui/app-window.slint:27
+msgid "language_applied"
+msgstr ""
+
+#: ui/app-window.slint:28
+msgid "code_exists"
+msgstr ""
+
+#: ui/app-window.slint:29
+msgid "create_failed"
+msgstr ""
+
+#: ui/app-window.slint:30
+msgid "tray_show_window"
+msgstr ""
+
+#: ui/app-window.slint:31
+msgid "tray_quit"
+msgstr ""
+
+#: ui/app-window.slint:32
+msgid "delete_failed"
+msgstr ""
+
+#: ui/app-window.slint:33
+msgid "cannot_delete"
+msgstr ""
+
+#: ui/app-window.slint:34
+msgid "activate_failed"
+msgstr ""
+
+#: ui/app-window.slint:35
+msgid "deactivate_failed"
+msgstr ""
+
+#: ui/app-window.slint:36
+msgid "export_failed"
+msgstr ""
+
+#: ui/app-window.slint:37
+msgid "import_failed"
+msgstr ""
+
+#: ui/app-window.slint:38
+msgid "no_archive_selected"
+msgstr ""
+
+#: ui/app-window.slint:39
+msgid "import_success"
+msgstr ""
+
+#: ui/app-window.slint:40
+msgid "export_success"
+msgstr ""
+
+#: ui/app-window.slint:41
+msgid "read_file_failed"
+msgstr ""
+
+#: ui/pages/schema-page.slint:25
+msgid "placeholder_code"
+msgstr ""
+
+#: ui/pages/schema-page.slint:26
+msgid "placeholder_name"
+msgstr ""
+
+#: ui/pages/fond-classification-page.slint:31
+msgid "placeholder_child_code"
+msgstr ""
+
+#: ui/pages/fond-classification-page.slint:32
+msgid "placeholder_child_name"
+msgstr ""
+
+#: ui/app-window.slint:462
+msgctxt "AppWindow"
+msgid "nav_home"
+msgstr ""
+
+#: ui/components/dialogs.slint:205
+msgctxt "FormDialog"
+msgid "btn_browse"
+msgstr ""
+
+#: ui/layout/navigation.slint:23
+msgid "nav_home"
+msgstr ""
+
+#: ui/layout/navigation.slint:29
+msgid "nav_fonds"
+msgstr ""
+
+#: ui/layout/navigation.slint:35
+msgid "nav_schema"
+msgstr ""
+
+#: ui/layout/navigation.slint:41
+msgid "nav_classification"
+msgstr ""
+
+#: ui/layout/navigation.slint:47
+msgid "nav_settings"
+msgstr ""
+
+#: ui/layout/navigation.slint:53
+msgid "nav_about"
+msgstr ""
+
+#: ui/pages/about-page.slint:23
+msgid "about_title"
+msgstr ""
+
+#: ui/pages/about-page.slint:35
+msgid "check_update"
+msgstr ""
+
+#: ui/pages/about-page.slint:52
+msgid "about_description"
+msgstr ""
+
+#: ui/pages/about-page.slint:59
+msgid "about_version"
+msgstr ""
+
+#: ui/pages/about-page.slint:65
+msgid "about_author"
+msgstr ""
+
+#: ui/pages/about-page.slint:71
+msgid "about_license"
+msgstr ""
+
+#: ui/pages/about-page.slint:77
+msgid "about_website"
+msgstr ""
+
+#: ui/pages/fond-classification-page.slint:73
+msgid "label_top_classifications"
+msgstr ""
+
+#: ui/pages/fond-classification-page.slint:83
+msgid "tooltip_export"
+msgstr ""
+
+#: ui/pages/fond-classification-page.slint:84
+msgid "tooltip_import"
+msgstr ""
+
+#: ui/pages/fond-classification-page.slint:120
+msgid "label_child_classifications"
+msgstr ""
+
+#: ui/pages/fond-classification-page.slint:161
+msgid "dialog_add_classification"
+msgstr ""
+
+#: ui/pages/fond-page.slint:9
+msgctxt "FondPage"
+msgid "fond_page_title"
+msgstr ""
+
+#: ui/pages/home-page.slint:168
+msgctxt "HomePage"
+msgid "label_series"
+msgstr ""
+
+#: ui/pages/home-page.slint:208
+msgctxt "HomePage"
+msgid "label_files"
+msgstr ""
+
+#: ui/pages/home-page.slint:218 ui/pages/home-page.slint:241 ui/pages/home-page.slint:268 ui/pages/home-page.slint:299
+msgctxt "HomePage"
+msgid "label_name"
+msgstr ""
+
+#: ui/pages/home-page.slint:218 ui/pages/home-page.slint:241
+msgctxt "HomePage"
+msgid "placeholder_file_name"
+msgstr ""
+
+#: ui/pages/home-page.slint:254
+msgctxt "HomePage"
+msgid "label_items"
+msgstr ""
+
+#: ui/pages/home-page.slint:268 ui/pages/home-page.slint:299
+msgctxt "HomePage"
+msgid "placeholder_item_name"
+msgstr ""
+
+#: ui/pages/home-page.slint:269
+msgctxt "HomePage"
+msgid "label_path"
+msgstr ""
+
+#: ui/pages/home-page.slint:269
+msgctxt "HomePage"
+msgid "placeholder_item_path"
+msgstr ""
+
+#: ui/pages/home-page.slint:315
+msgctxt "HomePage"
+msgid "dialog_add_file_title"
+msgstr ""
+
+#: ui/pages/home-page.slint:340
+msgctxt "HomePage"
+msgid "dialog_add_item_title"
+msgstr ""
+
+#: ui/pages/home-page.slint:365
+msgctxt "HomePage"
+msgid "dialog_rename_file_title"
+msgstr ""
+
+#: ui/pages/home-page.slint:386
+msgctxt "HomePage"
+msgid "dialog_rename_item_title"
+msgstr ""
+
+#: ui/pages/schema-page.slint:107
+msgid "dialog_add_schema"
+msgstr ""
+
+#: ui/pages/schema-page.slint:128
+msgid "dialog_add_schema_item"
+msgstr ""
+
+#: ui/pages/settings-page.slint:52
+msgid "label_language"
+msgstr ""
+
+#: ui/pages/settings-page.slint:71
+msgid "label_archive_libraries"
+msgstr ""
+
+#: ui/pages/settings-page.slint:93
+msgid "label_name"
+msgstr ""
+
+#: ui/pages/settings-page.slint:80
+msgid "label_path"
+msgstr ""
+
+#: ui/pages/settings-page.slint:112
+msgid "btn_cancel"
+msgstr ""
+
+#: ui/pages/settings-page.slint:120
+msgid "btn_apply"
+msgstr ""
+
+#: ui/pages/settings-page.slint:135
+msgid "dialog_add_archive_title"
+msgstr ""
+
+#: ui/pages/settings-page.slint:161
+msgid "dialog_rename_archive_title"
+msgstr ""
+

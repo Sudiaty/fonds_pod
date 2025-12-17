@@ -24,10 +24,22 @@ table! {
 /// - `digits`: 流水号位数，缺省为2
 /// - `created_at`: 创建时间
 /// - `updated_at`: 更新时间
-#[derive(Debug, Clone, Serialize, Deserialize, Queryable, Insertable, AsChangeset)]
+#[derive(Debug, Clone, Serialize, Deserialize, Queryable, AsChangeset)]
 #[diesel(table_name = sequences)]
 pub struct Sequence {
     pub id: i32,
+    pub prefix: String,
+    pub next_value: i32,
+    pub digits: i32,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+}
+
+/// NewSequence 用于插入新序列记录
+/// 不包含 id 字段，让 SQLite 自动生成
+#[derive(Debug, Clone, Insertable)]
+#[diesel(table_name = sequences)]
+pub struct NewSequence {
     pub prefix: String,
     pub next_value: i32,
     pub digits: i32,

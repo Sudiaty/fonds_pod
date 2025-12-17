@@ -147,11 +147,10 @@ pub fn init_schema(conn: &mut SqliteConnection) -> Result<(), Box<dyn Error>> {
     )
     .execute(conn)?;
 
-    // Create sequences table (drop and recreate to update schema)
-    let _ = sql_query("DROP TABLE IF EXISTS sequences").execute(conn);
+    // Create sequences table (only create if not exists)
     sql_query(
         r#"
-        CREATE TABLE sequences (
+        CREATE TABLE IF NOT EXISTS sequences (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             prefix TEXT NOT NULL,
             next_value INTEGER NOT NULL DEFAULT 1,

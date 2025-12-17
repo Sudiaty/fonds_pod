@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: FondsPod 1.0\n"
-"POT-Creation-Date: 2025-12-09 12:00+0800\n"
+"POT-Creation-Date: 2025-12-17 08:54+0000\n"
 "PO-Revision-Date: 2025-12-09 12:01+0800\n"
 "Last-Translator: Sudiaty\n"
 "Language-Team: English\n"
@@ -12,300 +12,886 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 3.8\n"
 
-# ============================================================================
-# Empty context translations (used with @tr("" => "key"))
-# ============================================================================
-
-# Navigation
-msgctxt ""
-msgid "nav_home"
-msgstr "Home"
-
-msgctxt ""
-msgid "nav_fonds"
-msgstr "Fonds Management"
-
-msgctxt ""
-msgid "nav_schema"
-msgstr "Schema Management"
-
-msgctxt ""
-msgid "nav_classification"
-msgstr "Classification Management"
-
-msgctxt ""
-msgid "nav_settings"
-msgstr "Settings"
-
-msgctxt ""
-msgid "nav_about"
-msgstr "About"
-
-# Home page
-msgctxt ""
-msgid "home_welcome"
-msgstr "Welcome to FondsPod"
-
-msgctxt ""
-msgid "home_description"
-msgstr "Your modern archive management system. Choose from the navigation on the left to start managing your archival materials."
-
-# About page
-msgctxt ""
-msgid "about_title"
-msgstr "FondsPod Archive Management System"
-
-msgctxt ""
-msgid "about_description"
-msgstr "FondsPod is a modern archive management system built with Rust and Slint. It provides comprehensive archive classification, schema management, and fonds management features to help you efficiently organize and manage archival materials."
-
-msgctxt ""
-msgid "about_version"
-msgstr "Version:"
-
-msgctxt ""
-msgid "about_author"
-msgstr "Author:"
-
-msgctxt ""
-msgid "about_license"
-msgstr "License:"
-
-msgctxt ""
-msgid "about_website"
-msgstr "Website:"
-
-msgctxt ""
-msgid "check_update"
-msgstr "Check Update"
-
 # Common UI messages
-msgctxt ""
+#. Translation properties
+#: fonds_pod-legacy/ui/app-window.slint:54
+#, fuzzy
+msgctxt "AppWindow"
 msgid "language_applied"
 msgstr "Language Applied"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:55
+#, fuzzy
+msgctxt "AppWindow"
 msgid "code_exists"
 msgstr "Code Already Exists"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:56
+#, fuzzy
+msgctxt "AppWindow"
 msgid "create_failed"
 msgstr "Create Failed"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:57
+#, fuzzy
+msgctxt "AppWindow"
 msgid "tray_show_window"
 msgstr "Show Window"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:58
+#, fuzzy
+msgctxt "AppWindow"
 msgid "tray_quit"
 msgstr "Quit"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:59
+#, fuzzy
+msgctxt "AppWindow"
 msgid "delete_failed"
 msgstr "Delete Failed"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:60
+#, fuzzy
+msgctxt "AppWindow"
 msgid "cannot_delete"
 msgstr "Cannot Delete"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:61
+#, fuzzy
+msgctxt "AppWindow"
 msgid "activate_failed"
 msgstr "Activate Failed"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:62
+#, fuzzy
+msgctxt "AppWindow"
 msgid "deactivate_failed"
 msgstr "Deactivate Failed"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:63
+#, fuzzy
+msgctxt "AppWindow"
 msgid "export_failed"
 msgstr "Export Failed"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:64
+#, fuzzy
+msgctxt "AppWindow"
 msgid "import_failed"
 msgstr "Import Failed"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:65
+#, fuzzy
+msgctxt "AppWindow"
 msgid "no_archive_selected"
 msgstr "No Archive Selected"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:66
+#, fuzzy
+msgctxt "AppWindow"
 msgid "import_success"
 msgstr "Import Success"
 
-msgctxt ""
+#: fonds_pod-legacy/ui/app-window.slint:67
+#, fuzzy
+msgctxt "AppWindow"
 msgid "export_success"
 msgstr "Export Success"
 
-msgctxt ""
-msgid "dialog_add_classification"
-msgstr "Add Classification"
+#: fonds_pod-legacy/ui/app-window.slint:68
+#, fuzzy
+msgctxt "AppWindow"
+msgid "read_file_failed"
+msgstr "Create Failed"
 
-msgctxt ""
-msgid "tooltip_export"
-msgstr "Export Classifications"
+#: fonds_pod-legacy/ui/app-window.slint:69
+#, fuzzy
+msgctxt "AppWindow"
+msgid "confirm_delete"
+msgstr "Cannot Delete"
 
-msgctxt ""
-msgid "tooltip_import"
-msgstr "Import Classifications"
+#: fonds_pod-legacy/ui/app-window.slint:70
+#, fuzzy
+msgctxt "AppWindow"
+msgid "confirm_delete_classification"
+msgstr "Classification Management"
 
-msgctxt ""
-msgid "label_top_classifications"
-msgstr "Top Classifications"
-
-msgctxt ""
-msgid "label_child_classifications"
+#: fonds_pod-legacy/ui/app-window.slint:71
+#, fuzzy
+msgctxt "AppWindow"
+msgid "confirm_delete_selected_classifications"
 msgstr "Child Classifications"
 
-# Settings page
-msgctxt ""
-msgid "label_language"
-msgstr "Language"
+#: fonds_pod-legacy/ui/app-window.slint:72
+#, fuzzy
+msgctxt "AppWindow"
+msgid "confirm_delete_child_classification"
+msgstr "Child Classifications"
 
-msgctxt ""
-msgid "label_archive_libraries"
-msgstr "Archive Libraries"
+#: fonds_pod-legacy/ui/app-window.slint:73
+msgctxt "AppWindow"
+msgid "confirm_delete_selected_children"
+msgstr ""
 
-msgctxt ""
-msgid "label_name"
-msgstr "Name"
+#: fonds_pod-legacy/ui/app-window.slint:74
+msgctxt "AppWindow"
+msgid "confirm_delete_series"
+msgstr ""
 
-msgctxt ""
-msgid "label_code"
-msgstr "Code"
-
-msgctxt ""
-msgid "placeholder_code"
-msgstr "Enter classification code"
-
-msgctxt ""
-msgid "placeholder_name"
-msgstr "Enter classification name"
-
-msgctxt ""
-msgid "placeholder_child_code"
-msgstr "Enter child classification code"
-
-msgctxt ""
-msgid "placeholder_child_name"
-msgstr "Enter child classification name"
-
-msgctxt ""
-msgid "placeholder_file_name"
-msgstr "Enter file name"
-
-msgctxt ""
-msgid "placeholder_file_path"
-msgstr "Select file path"
-
-msgctxt ""
-msgid "label_path"
-msgstr "Path"
-
-msgctxt ""
-msgid "btn_cancel"
-msgstr "Cancel"
-
-msgctxt ""
-msgid "btn_apply"
-msgstr "Apply"
-
-msgctxt ""
-msgid "dialog_add_archive_title"
-msgstr "Add Archive Library"
-
-msgctxt ""
-msgid "dialog_rename_archive_title"
-msgstr "Rename Archive Library"
-
-msgctxt ""
-msgid "dialog_add_file_title"
-msgstr "Add File"
-
-msgctxt ""
-msgid "dialog_add_item_title"
-msgstr "Add Item"
-
-msgctxt ""
-msgid "placeholder_item_name"
-msgstr "Enter item name"
-
-msgctxt ""
-msgid "placeholder_item_path"
-msgstr "Select item path"
+#: fonds_pod-legacy/ui/app-window.slint:75
+#, fuzzy
+msgctxt "AppWindow"
+msgid "cannot_delete_series_has_files"
+msgstr "Cannot Delete"
 
 # ============================================================================
 # AppWindow context translations (used with @tr("key") in AppWindow)
 # ============================================================================
-
+#. Tooltips for navigation (positioned to the right of nav buttons)
+#: fonds_pod-legacy/ui/app-window.slint:452 ui/app-window.slint:468
 msgctxt "AppWindow"
 msgid "nav_fonds"
 msgstr "Fonds Management"
 
+#: fonds_pod-legacy/ui/app-window.slint:453 ui/app-window.slint:474
 msgctxt "AppWindow"
 msgid "nav_schema"
 msgstr "Schema Management"
 
+#: fonds_pod-legacy/ui/app-window.slint:454 ui/app-window.slint:481
 msgctxt "AppWindow"
 msgid "nav_classification"
 msgstr "Classification Management"
 
+#: fonds_pod-legacy/ui/app-window.slint:455 ui/app-window.slint:487
 msgctxt "AppWindow"
 msgid "nav_settings"
 msgstr "Settings"
 
+#: fonds_pod-legacy/ui/app-window.slint:456 ui/app-window.slint:493
 msgctxt "AppWindow"
 msgid "nav_about"
 msgstr "About"
 
 # ============================================================================
+# CrudList context translations
+# ============================================================================
+#: fonds_pod-legacy/ui/crud-list.slint:305 ui/components/crud-list.slint:313
+msgctxt "CrudList"
+msgid "menu_rename"
+msgstr "Rename"
+
+#: fonds_pod-legacy/ui/crud-list.slint:318 ui/components/crud-list.slint:326
+msgctxt "CrudList"
+msgid "menu_delete"
+msgstr "Delete"
+
+#: fonds_pod-legacy/ui/crud-list.slint:335 ui/components/crud-list.slint:339
+msgctxt "CrudList"
+msgid "menu_activate"
+msgstr "Activate"
+
+#: fonds_pod-legacy/ui/crud-list.slint:345 ui/components/crud-list.slint:349
+msgctxt "CrudList"
+msgid "menu_deactivate"
+msgstr "Deactivate"
+
+#: fonds_pod-legacy/ui/crud-list.slint:377 ui/components/crud-list.slint:381
+msgctxt "CrudList"
+msgid "empty_list"
+msgstr "Empty List"
+
+# ============================================================================
 # DialogButtons context translations
 # ============================================================================
-
+#: fonds_pod-legacy/ui/dialogs.slint:61 ui/components/dialogs.slint:57
 msgctxt "DialogButtons"
 msgid "btn_cancel"
 msgstr "Cancel"
 
+#: fonds_pod-legacy/ui/dialogs.slint:69 ui/components/dialogs.slint:65
 msgctxt "DialogButtons"
 msgid "btn_confirm"
 msgstr "Confirm"
 
+#: fonds_pod-legacy/ui/dialogs.slint:86
+#, fuzzy
+msgctxt "SchemaInputDialog"
+msgid "dialog_add_schema_title"
+msgstr "Add Item"
+
+#: fonds_pod-legacy/ui/dialogs.slint:128
+#, fuzzy
+msgctxt "SchemaInputDialog"
+msgid "label_code"
+msgstr "Code"
+
+#: fonds_pod-legacy/ui/dialogs.slint:165
+#, fuzzy
+msgctxt "SchemaInputDialog"
+msgid "label_name"
+msgstr "Name"
+
+#: fonds_pod-legacy/ui/dialogs.slint:222
+#, fuzzy
+msgctxt "RenameArchiveDialog"
+msgid "dialog_rename_archive_title"
+msgstr "Rename Archive Library"
+
+#: fonds_pod-legacy/ui/dialogs.slint:263
+#, fuzzy
+msgctxt "RenameArchiveDialog"
+msgid "label_name"
+msgstr "Name"
+
+#: fonds_pod-legacy/ui/dialogs.slint:316
+#, fuzzy
+msgctxt "FileInputDialog"
+msgid "dialog_add_file_title"
+msgstr "Add File"
+
+#: fonds_pod-legacy/ui/dialogs.slint:351
+#, fuzzy
+msgctxt "FileInputDialog"
+msgid "label_name"
+msgstr "Name"
+
+#: fonds_pod-legacy/ui/dialogs.slint:393
+#, fuzzy
+msgctxt "SchemaItemInputDialog"
+msgid "dialog_add_schema_item_title"
+msgstr "Add Item"
+
+#: fonds_pod-legacy/ui/dialogs.slint:435
+#, fuzzy
+msgctxt "SchemaItemInputDialog"
+msgid "label_code"
+msgstr "Code"
+
+#: fonds_pod-legacy/ui/dialogs.slint:471
+#, fuzzy
+msgctxt "SchemaItemInputDialog"
+msgid "label_name"
+msgstr "Name"
+
+# ============================================================================
+# ConfirmDialog context translations
+# ============================================================================
+#: fonds_pod-legacy/ui/dialogs.slint:527 ui/components/dialogs.slint:241
+msgctxt "ConfirmDialog"
+msgid "dialog_confirm_title"
+msgstr "Confirm"
+
+#: fonds_pod-legacy/ui/dialogs.slint:593
+#, fuzzy
+msgctxt "ClassificationInputDialog"
+msgid "dialog_add_classification_title"
+msgstr "Add Classification"
+
+#: fonds_pod-legacy/ui/dialogs.slint:629
+#, fuzzy
+msgctxt "ClassificationInputDialog"
+msgid "label_code"
+msgstr "Code"
+
+#: fonds_pod-legacy/ui/dialogs.slint:649
+#, fuzzy
+msgctxt "ClassificationInputDialog"
+msgid "label_name"
+msgstr "Name"
+
+#. e.g., parent code-name for context
+#: fonds_pod-legacy/ui/dialogs.slint:690
+#, fuzzy
+msgctxt "ClassificationChildInputDialog"
+msgid "dialog_add_child_classification_title"
+msgstr "Add Classification"
+
+#: fonds_pod-legacy/ui/dialogs.slint:726
+#, fuzzy
+msgctxt "ClassificationChildInputDialog"
+msgid "label_parent"
+msgstr "Path"
+
+#: fonds_pod-legacy/ui/dialogs.slint:731
+#, fuzzy
+msgctxt "ClassificationChildInputDialog"
+msgid "label_code"
+msgstr "Code"
+
+#: fonds_pod-legacy/ui/dialogs.slint:751
+#, fuzzy
+msgctxt "ClassificationChildInputDialog"
+msgid "label_name"
+msgstr "Name"
+
+#: fonds_pod-legacy/ui/dialogs.slint:791
+#, fuzzy
+msgctxt "AddFondsDialog"
+msgid "dialog_add_fonds_title"
+msgstr "Add File"
+
+#: fonds_pod-legacy/ui/dialogs.slint:857
+#, fuzzy
+msgctxt "AddFondsDialog"
+msgid "label_fonds_name"
+msgstr "Name"
+
+#: fonds_pod-legacy/ui/dialogs.slint:891
+#, fuzzy
+msgctxt "AddFondsDialog"
+msgid "label_primary_classification"
+msgstr "Top Classifications"
+
+#: fonds_pod-legacy/ui/dialogs.slint:917
+#, fuzzy
+msgctxt "AddFondsDialog"
+msgid "label_secondary_classification"
+msgstr "Child Classifications"
+
+#: fonds_pod-legacy/ui/dialogs.slint:946
+msgctxt "AddFondsDialog"
+msgid "label_select_schemas"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:969
+msgctxt "AddFondsDialog"
+msgid "label_available_schemas"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:1052
+msgctxt "AddFondsDialog"
+msgid "label_selected_schemas"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:1122
+msgctxt "AddItemDialog"
+msgid "add_item"
+msgstr ""
+
+#: fonds_pod-legacy/ui/dialogs.slint:1160
+#, fuzzy
+msgctxt "AddItemDialog"
+msgid "label_name"
+msgstr "Name"
+
+#: fonds_pod-legacy/ui/dialogs.slint:1199
+#, fuzzy
+msgctxt "AddItemDialog"
+msgid "label_path"
+msgstr "Path"
+
+#: fonds_pod-legacy/ui/dialogs.slint:1220
+#, fuzzy
+msgctxt "AddItemDialog"
+msgid "no_file_selected"
+msgstr "No Archive Selected"
+
+#: fonds_pod-legacy/ui/layout/navigation.slint:27
+#, fuzzy
+msgctxt "NavigationPanel"
+msgid "nav_fonds"
+msgstr "Fonds Management"
+
+#: fonds_pod-legacy/ui/layout/navigation.slint:34
+#, fuzzy
+msgctxt "NavigationPanel"
+msgid "nav_schema"
+msgstr "Schema Management"
+
+#: fonds_pod-legacy/ui/layout/navigation.slint:41
+#, fuzzy
+msgctxt "NavigationPanel"
+msgid "nav_classification"
+msgstr "Classification Management"
+
+#: fonds_pod-legacy/ui/layout/navigation.slint:48
+#, fuzzy
+msgctxt "NavigationPanel"
+msgid "nav_settings"
+msgstr "Settings"
+
+#: fonds_pod-legacy/ui/layout/navigation.slint:55
+#, fuzzy
+msgctxt "NavigationPanel"
+msgid "nav_about"
+msgstr "About"
+
+# About page
+#: fonds_pod-legacy/ui/pages/about-page.slint:19
+#, fuzzy
+msgctxt "AboutPage"
+msgid "about_title"
+msgstr "FondsPod Archive Management System"
+
+#: fonds_pod-legacy/ui/pages/about-page.slint:42
+#, fuzzy
+msgctxt "AboutPage"
+msgid "about_description"
+msgstr ""
+"FondsPod is a modern archive management system built with Rust and Slint. It "
+"provides comprehensive archive classification, schema management, and fonds "
+"management features to help you efficiently organize and manage archival "
+"materials."
+
+#: fonds_pod-legacy/ui/pages/about-page.slint:49
+#, fuzzy
+msgctxt "AboutPage"
+msgid "about_version"
+msgstr "Version:"
+
+#: fonds_pod-legacy/ui/pages/about-page.slint:55
+#, fuzzy
+msgctxt "AboutPage"
+msgid "about_author"
+msgstr "Author:"
+
+#: fonds_pod-legacy/ui/pages/about-page.slint:61
+#, fuzzy
+msgctxt "AboutPage"
+msgid "about_license"
+msgstr "License:"
+
+#: fonds_pod-legacy/ui/pages/about-page.slint:67
+#, fuzzy
+msgctxt "AboutPage"
+msgid "about_website"
+msgstr "Website:"
+
+#: fonds_pod-legacy/ui/pages/classification-page.slint:48
+#, fuzzy
+msgctxt "ClassificationPage"
+msgid "label_top_classifications"
+msgstr "Top Classifications"
+
+#: fonds_pod-legacy/ui/pages/classification-page.slint:59
+#, fuzzy
+msgctxt "ClassificationPage"
+msgid "tooltip_export"
+msgstr "Export Classifications"
+
+#: fonds_pod-legacy/ui/pages/classification-page.slint:60
+#, fuzzy
+msgctxt "ClassificationPage"
+msgid "tooltip_import"
+msgstr "Import Classifications"
+
+#: fonds_pod-legacy/ui/pages/classification-page.slint:97
+#, fuzzy
+msgctxt "ClassificationPage"
+msgid "label_child_classifications"
+msgstr "Child Classifications"
+
+#: fonds_pod-legacy/ui/pages/fonds-page.slint:126
+#, fuzzy
+msgctxt "FondsPage"
+msgid "label_series"
+msgstr "Series"
+
+#: fonds_pod-legacy/ui/pages/fonds-page.slint:170
+#, fuzzy
+msgctxt "FondsPage"
+msgid "label_files"
+msgstr "Files"
+
+#: fonds_pod-legacy/ui/pages/fonds-page.slint:207
+#, fuzzy
+msgctxt "FondsPage"
+msgid "label_items"
+msgstr "Items"
+
+#: fonds_pod-legacy/ui/pages/schema-page.slint:38 ui/pages/schema-page.slint:61
+#, fuzzy
+msgctxt "SchemaPage"
+msgid "label_schema"
+msgstr "Schema Management"
+
+#: fonds_pod-legacy/ui/pages/schema-page.slint:63 ui/pages/schema-page.slint:86
+#, fuzzy
+msgctxt "SchemaPage"
+msgid "label_items"
+msgstr "Items"
+
+# Settings page
+#: fonds_pod-legacy/ui/pages/settings-page.slint:29
+#: fonds_pod-legacy/ui/pages/settings-page.slint:35
+#, fuzzy
+msgctxt "SettingsPage"
+msgid "label_language"
+msgstr "Language"
+
+#: fonds_pod-legacy/ui/pages/settings-page.slint:52
+#, fuzzy
+msgctxt "SettingsPage"
+msgid "label_archive_libraries"
+msgstr "Archive Libraries"
+
+#: fonds_pod-legacy/ui/pages/settings-page.slint:76
+#, fuzzy
+msgctxt "SettingsPage"
+msgid "btn_cancel"
+msgstr "Cancel"
+
+#: fonds_pod-legacy/ui/pages/settings-page.slint:84
+#, fuzzy
+msgctxt "SettingsPage"
+msgid "btn_apply"
+msgstr "Apply"
+
+# Common UI messages
+#. Translation properties for common UI messages using gettext
+#: ui/app-window.slint:27
+#, fuzzy
+msgid "language_applied"
+msgstr "Language Applied"
+
+#: ui/app-window.slint:28
+#, fuzzy
+msgid "code_exists"
+msgstr "Code Already Exists"
+
+#: ui/app-window.slint:29
+#, fuzzy
+msgid "create_failed"
+msgstr "Create Failed"
+
+#: ui/app-window.slint:30
+#, fuzzy
+msgid "tray_show_window"
+msgstr "Show Window"
+
+#: ui/app-window.slint:31
+#, fuzzy
+msgid "tray_quit"
+msgstr "Quit"
+
+#: ui/app-window.slint:32
+#, fuzzy
+msgid "delete_failed"
+msgstr "Delete Failed"
+
+#: ui/app-window.slint:33
+#, fuzzy
+msgid "cannot_delete"
+msgstr "Cannot Delete"
+
+#: ui/app-window.slint:34
+#, fuzzy
+msgid "activate_failed"
+msgstr "Activate Failed"
+
+#: ui/app-window.slint:35
+#, fuzzy
+msgid "deactivate_failed"
+msgstr "Deactivate Failed"
+
+#: ui/app-window.slint:36
+#, fuzzy
+msgid "export_failed"
+msgstr "Export Failed"
+
+#: ui/app-window.slint:37
+#, fuzzy
+msgid "import_failed"
+msgstr "Import Failed"
+
+#: ui/app-window.slint:38
+#, fuzzy
+msgid "no_archive_selected"
+msgstr "No Archive Selected"
+
+#: ui/app-window.slint:39
+#, fuzzy
+msgid "import_success"
+msgstr "Import Success"
+
+#: ui/app-window.slint:40
+#, fuzzy
+msgid "export_success"
+msgstr "Export Success"
+
+#: ui/app-window.slint:41
+#, fuzzy
+msgid "read_file_failed"
+msgstr "Create Failed"
+
+#: ui/pages/schema-page.slint:25
+#, fuzzy
+msgid "placeholder_code"
+msgstr "Enter classification code"
+
+#: ui/pages/schema-page.slint:26
+#, fuzzy
+msgid "placeholder_name"
+msgstr "Enter classification name"
+
+#: ui/pages/fond-classification-page.slint:31
+#, fuzzy
+msgid "placeholder_child_code"
+msgstr "Enter child classification code"
+
+#: ui/pages/fond-classification-page.slint:32
+#, fuzzy
+msgid "placeholder_child_name"
+msgstr "Enter child classification name"
+
+# ============================================================================
+# Empty context translations (used with @tr("" => "key"))
+# ============================================================================
+# Navigation
+#: ui/app-window.slint:462
+#, fuzzy
+msgctxt "AppWindow"
+msgid "nav_home"
+msgstr "Home"
+
 # ============================================================================
 # FormDialog context translations
 # ============================================================================
-
+#: ui/components/dialogs.slint:205
 msgctxt "FormDialog"
 msgid "btn_browse"
 msgstr "Browse"
 
 # ============================================================================
-# ConfirmDialog context translations
+# Empty context translations (used with @tr("" => "key"))
 # ============================================================================
+# Navigation
+#: ui/layout/navigation.slint:23
+#, fuzzy
+msgid "nav_home"
+msgstr "Home"
 
-msgctxt "ConfirmDialog"
-msgid "dialog_confirm_title"
-msgstr "Confirm"
+#: ui/layout/navigation.slint:29
+#, fuzzy
+msgid "nav_fonds"
+msgstr "Fonds Management"
 
-# ============================================================================
-# CrudList context translations
-# ============================================================================
+#: ui/layout/navigation.slint:35
+#, fuzzy
+msgid "nav_schema"
+msgstr "Schema Management"
 
-msgctxt "CrudList"
-msgid "menu_rename"
-msgstr "Rename"
+#: ui/layout/navigation.slint:41
+#, fuzzy
+msgid "nav_classification"
+msgstr "Classification Management"
 
-msgctxt "CrudList"
-msgid "menu_delete"
-msgstr "Delete"
+#: ui/layout/navigation.slint:47
+#, fuzzy
+msgid "nav_settings"
+msgstr "Settings"
 
-msgctxt "CrudList"
-msgid "menu_activate"
-msgstr "Activate"
+#: ui/layout/navigation.slint:53
+#, fuzzy
+msgid "nav_about"
+msgstr "About"
 
-msgctxt "CrudList"
-msgid "menu_deactivate"
-msgstr "Deactivate"
+# About page
+#: ui/pages/about-page.slint:23
+#, fuzzy
+msgid "about_title"
+msgstr "FondsPod Archive Management System"
 
-msgctxt "CrudList"
-msgid "empty_list"
-msgstr "Empty List"
+#: ui/pages/about-page.slint:35
+#, fuzzy
+msgid "check_update"
+msgstr "Check Update"
 
+#: ui/pages/about-page.slint:52
+#, fuzzy
+msgid "about_description"
+msgstr ""
+"FondsPod is a modern archive management system built with Rust and Slint. It "
+"provides comprehensive archive classification, schema management, and fonds "
+"management features to help you efficiently organize and manage archival "
+"materials."
+
+#: ui/pages/about-page.slint:59
+#, fuzzy
+msgid "about_version"
+msgstr "Version:"
+
+#: ui/pages/about-page.slint:65
+#, fuzzy
+msgid "about_author"
+msgstr "Author:"
+
+#: ui/pages/about-page.slint:71
+#, fuzzy
+msgid "about_license"
+msgstr "License:"
+
+#: ui/pages/about-page.slint:77
+#, fuzzy
+msgid "about_website"
+msgstr "Website:"
+
+#: ui/pages/fond-classification-page.slint:73
+#, fuzzy
+msgid "label_top_classifications"
+msgstr "Top Classifications"
+
+#: ui/pages/fond-classification-page.slint:83
+#, fuzzy
+msgid "tooltip_export"
+msgstr "Export Classifications"
+
+#: ui/pages/fond-classification-page.slint:84
+#, fuzzy
+msgid "tooltip_import"
+msgstr "Import Classifications"
+
+#: ui/pages/fond-classification-page.slint:120
+#, fuzzy
+msgid "label_child_classifications"
+msgstr "Child Classifications"
+
+#: ui/pages/fond-classification-page.slint:161
+#, fuzzy
+msgid "dialog_add_classification"
+msgstr "Add Classification"
+
+#: ui/pages/fond-page.slint:9
+msgctxt "FondPage"
+msgid "fond_page_title"
+msgstr ""
+
+#: ui/pages/home-page.slint:168
+#, fuzzy
+msgctxt "HomePage"
+msgid "label_series"
+msgstr "Series"
+
+#: ui/pages/home-page.slint:208
+#, fuzzy
+msgctxt "HomePage"
+msgid "label_files"
+msgstr "Files"
+
+#: ui/pages/home-page.slint:218 ui/pages/home-page.slint:241
+#: ui/pages/home-page.slint:268 ui/pages/home-page.slint:299
+#, fuzzy
+msgctxt "HomePage"
+msgid "label_name"
+msgstr "Name"
+
+#: ui/pages/home-page.slint:218 ui/pages/home-page.slint:241
+#, fuzzy
+msgctxt "HomePage"
+msgid "placeholder_file_name"
+msgstr "Enter file name"
+
+#: ui/pages/home-page.slint:254
+#, fuzzy
+msgctxt "HomePage"
+msgid "label_items"
+msgstr "Items"
+
+#: ui/pages/home-page.slint:268 ui/pages/home-page.slint:299
+#, fuzzy
+msgctxt "HomePage"
+msgid "placeholder_item_name"
+msgstr "Enter item name"
+
+#: ui/pages/home-page.slint:269
+#, fuzzy
+msgctxt "HomePage"
+msgid "label_path"
+msgstr "Path"
+
+#: ui/pages/home-page.slint:269
+#, fuzzy
+msgctxt "HomePage"
+msgid "placeholder_item_path"
+msgstr "Select item path"
+
+#: ui/pages/home-page.slint:315
+#, fuzzy
+msgctxt "HomePage"
+msgid "dialog_add_file_title"
+msgstr "Add File"
+
+#: ui/pages/home-page.slint:340
+#, fuzzy
+msgctxt "HomePage"
+msgid "dialog_add_item_title"
+msgstr "Add Item"
+
+#: ui/pages/home-page.slint:365
+#, fuzzy
+msgctxt "HomePage"
+msgid "dialog_rename_file_title"
+msgstr "Rename File"
+
+#: ui/pages/home-page.slint:386
+#, fuzzy
+msgctxt "HomePage"
+msgid "dialog_rename_item_title"
+msgstr "Rename Item"
+
+#: ui/pages/schema-page.slint:107
+#, fuzzy
+msgid "dialog_add_schema"
+msgstr "Add Item"
+
+#: ui/pages/schema-page.slint:128
+#, fuzzy
+msgid "dialog_add_schema_item"
+msgstr "Add Item"
+
+# Settings page
+#: ui/pages/settings-page.slint:52
+#, fuzzy
+msgid "label_language"
+msgstr "Language"
+
+#: ui/pages/settings-page.slint:71
+#, fuzzy
+msgid "label_archive_libraries"
+msgstr "Archive Libraries"
+
+#: ui/pages/settings-page.slint:93
+#, fuzzy
+msgid "label_name"
+msgstr "Name"
+
+#: ui/pages/settings-page.slint:80
+#, fuzzy
+msgid "label_path"
+msgstr "Path"
+
+#: ui/pages/settings-page.slint:112
+#, fuzzy
+msgid "btn_cancel"
+msgstr "Cancel"
+
+#: ui/pages/settings-page.slint:120
+#, fuzzy
+msgid "btn_apply"
+msgstr "Apply"
+
+#: ui/pages/settings-page.slint:135
+#, fuzzy
+msgid "dialog_add_archive_title"
+msgstr "Add Archive Library"
+
+#: ui/pages/settings-page.slint:161
+#, fuzzy
+msgid "dialog_rename_archive_title"
+msgstr "Rename Archive Library"
+
+# Home page
+#~ msgctxt ""
+#~ msgid "home_welcome"
+#~ msgstr "Welcome to FondsPod"
+
+#~ msgctxt ""
+#~ msgid "home_description"
+#~ msgstr ""
+#~ "Your modern archive management system. Choose from the navigation on the "
+#~ "left to start managing your archival materials."
+
+#~ msgctxt ""
+#~ msgid "placeholder_file_path"
+#~ msgstr "Select file path"

@@ -55,6 +55,10 @@ pub struct HomeViewModel {
     pub show_add_item_dialog: bool,
     pub new_item_name: String,
     pub new_item_path: String,
+    pub show_rename_file_dialog: bool,
+    pub rename_file_index: i32,
+    pub show_rename_item_dialog: bool,
+    pub rename_item_index: i32,
     
     settings_service: Rc<SettingsService>,
     db_connection: Option<Rc<RefCell<SqliteConnection>>>,
@@ -85,6 +89,10 @@ impl Default for HomeViewModel {
             show_add_item_dialog: false,
             new_item_name: String::new(),
             new_item_path: String::new(),
+            show_rename_file_dialog: false,
+            rename_file_index: -1,
+            show_rename_item_dialog: false,
+            rename_item_index: -1,
             settings_service: Rc::new(SettingsService::new()),
             db_connection: None,
             current_db_path: None,
@@ -117,6 +125,10 @@ impl HomeViewModel {
             show_add_item_dialog: false,
             new_item_name: String::new(),
             new_item_path: String::new(),
+            show_rename_file_dialog: false,
+            rename_file_index: -1,
+            show_rename_item_dialog: false,
+            rename_item_index: -1,
             settings_service,
             db_connection: None,
             current_db_path: None,
@@ -137,9 +149,17 @@ impl HomeViewModel {
 
     /// Browse file or folder and return selected path
     pub fn browse_file_or_folder(&self) -> Option<String> {
+        // Get the current file's path as default directory
+        let default_dir = if self.selected_file >= 0 && (self.selected_file as usize) < self.files_list.len() {
+            self.files_list[self.selected_file as usize].path.clone()
+                .unwrap_or_else(|| self.last_opened_library.clone())
+        } else {
+            self.last_opened_library.clone()
+        };
+
         // Use pick_file() which on many systems allows selecting folders too
         if let Some(path) = rfd::FileDialog::new()
-            .set_directory("/")
+            .set_directory(&default_dir)
             .pick_file() {
             Some(path.to_string_lossy().to_string())
         } else {
@@ -495,10 +515,12 @@ impl HomeViewModel {
                     .collect::<Vec<_>>()
                     .join("-");
                 
-                let series_no = combo.iter()
+                let series_no_part = combo.iter()
                     .map(|item| item.item_no.as_str())
                     .collect::<Vec<_>>()
                     .join("-");
+                
+                let series_no = format!("{}-{}", fond_no, series_no_part);
                 
                 let series = Series {
                     id: 0,
@@ -576,6 +598,14 @@ impl HomeViewModel {
         // Generate series based on the schemas
         self.generate_series(fond_id)?;
         
+        // Create fond directory
+        let fond_dir = std::path::Path::new(&self.last_opened_library).join(&fond_no);
+        if let Err(e) = std::fs::create_dir_all(&fond_dir) {
+            log::error!("Failed to create fond directory {:?}: {}", fond_dir, e);
+        } else {
+            log::info!("Created fond directory: {:?}", fond_dir);
+        }
+        
         // Select the newly created fond
         self.selected_fonds_index = self.fonds_list.len() as i32 - 1;
 
@@ -590,19 +620,44 @@ impl HomeViewModel {
         
         let series_id = self.series_list[self.selected_series_index as usize].id;
         
+        // Auto-generate path if not provided
+        let file_path = match path {
+            Some(p) => Some(p),
+            None => {
+                // Generate path as [fond_directory]/[file_no]
+                if self.selected_fonds_index >= 0 && (self.selected_fonds_index as usize) < self.fonds_list.len() {
+                    let fond = &self.fonds_list[self.selected_fonds_index as usize];
+                    let fond_dir = std::path::Path::new(&self.last_opened_library).join(&fond.fond_no);
+                    let file_dir = fond_dir.join(file_no);
+                    
+                    // Create the directory
+                    if let Err(e) = std::fs::create_dir_all(&file_dir) {
+                        log::error!("Failed to create file directory {:?}: {}", file_dir, e);
+                        return Err(format!("Failed to create file directory: {}", e).into());
+                    } else {
+                        log::info!("Created file directory: {:?}", file_dir);
+                    }
+                    
+                    Some(file_dir.to_string_lossy().to_string())
+                } else {
+                    return Err("No fond selected".into());
+                }
+            }
+        };
+        
         if let Some(mut repo) = self.get_files_repo() {
             let file = File {
                 id: 0,
                 series_id,
                 name: name.to_string(),
                 file_no: file_no.to_string(),
-                path: path.clone(),
+                path: file_path.clone(),
                 created_by: String::new(),
                 created_machine: String::new(),
                 created_at: chrono::Utc::now().naive_utc(),
             };
             repo.create(file)?;
-            log::info!("Created file: {} - {} (path: {:?})", file_no, name, path);
+            log::info!("Created file: {} - {} (path: {:?})", file_no, name, file_path);
         }
 
         self.load_files(series_id)?;
@@ -614,38 +669,22 @@ impl HomeViewModel {
         if self.selected_series_index < 0 || self.selected_series_index >= self.series_list.len() as i32 {
             return Err("No series selected".into());
         }
-        
+
         let series = &self.series_list[self.selected_series_index as usize];
-        let fond_no = self.get_fond_no_for_series(series.fond_id)?;
-        
-        let prefix = format!("{}-{}", fond_no, series.series_no);
+
         if let Some(mut repo) = self.sequences_repo.as_mut() {
-            repo.get_next_number(&prefix, Some(2))
+            let seq_num = repo.get_next_number(&series.series_no, Some(2))?;
+            Ok(format!("{}-{}", series.series_no, seq_num))
         } else {
             Err("No database connection".into())
         }
     }
     
-    /// Generate next item number
-    fn generate_next_item_no(&self) -> Result<String, Box<dyn Error>> {
-        // Simple implementation: find the highest existing item number and increment
-        let mut max_num = 0;
-        for item in &self.items_list {
-            if item.item_no.starts_with('I') {
-                if let Ok(num) = item.item_no[1..].parse::<i32>() {
-                    if num > max_num {
-                        max_num = num;
-                    }
-                }
-            }
-        }
-        Ok(format!("I{:03}", max_num + 1))
-    }
-    
     /// Generate next fond number
     fn generate_next_fond_no(&mut self, classification_code: &str) -> Result<String, Box<dyn Error>> {
-        if let Some(repo) = self.sequences_repo.as_mut() {
-            repo.get_next_number(classification_code, Some(2))
+        if let Some(mut repo) = self.sequences_repo.as_mut() {
+            let seq_num = repo.get_next_number(classification_code, Some(2))?;
+            Ok(format!("{}{}", classification_code, seq_num))
         } else {
             Err("No database connection".into())
         }
@@ -656,8 +695,9 @@ impl HomeViewModel {
         }
         
         let file_id = self.files_list[self.selected_file as usize].id;
+        let file_no = self.files_list[self.selected_file as usize].file_no.clone();
         // Generate item_no
-        let item_no = self.generate_next_item_no()?;
+        let item_no = self.generate_next_item_no(&file_no)?;
         
         if let Some(mut repo) = self.get_items_repo() {
             let item = Item {
@@ -678,6 +718,16 @@ impl HomeViewModel {
         Ok(())
     }
 
+    /// Generate next item number
+    fn generate_next_item_no(&mut self, file_no: &str) -> Result<String, Box<dyn Error>> {
+        if let Some(mut repo) = self.sequences_repo.as_mut() {
+            let seq_num = repo.get_next_number(file_no, Some(3))?;
+            Ok(format!("{}-{}", file_no, seq_num))
+        } else {
+            Err("No database connection".into())
+        }
+    }
+    
     /// Delete the selected file
     pub fn delete_file(&mut self) -> Result<(), Box<dyn Error>> {
         if self.files_list.is_empty() || self.selected_file < 0 {
@@ -696,6 +746,27 @@ impl HomeViewModel {
         Ok(())
     }
 
+    /// Rename the selected file
+    pub fn rename_file(&mut self, index: i32, new_name: &str) -> Result<(), Box<dyn Error>> {
+        if self.files_list.is_empty() || index < 0 || (index as usize) >= self.files_list.len() {
+            return Err("Invalid file index".into());
+        }
+        
+        let file_id = self.files_list[index as usize].id;
+        let series_id = self.files_list[index as usize].series_id;
+        
+        if let Some(mut repo) = self.get_files_repo() {
+            if let Some(mut file) = repo.find_by_id(file_id)? {
+                file.name = new_name.to_string();
+                repo.update(&file)?;
+                log::info!("Renamed file with id {} to '{}'", file_id, new_name);
+            }
+        }
+
+        self.load_files(series_id)?;
+        Ok(())
+    }
+
     /// Delete the selected item
     pub fn delete_item(&mut self) -> Result<(), Box<dyn Error>> {
         if self.items_list.is_empty() || self.selected_item < 0 {
@@ -708,6 +779,27 @@ impl HomeViewModel {
         if let Some(mut repo) = self.get_items_repo() {
             repo.delete(item_id)?;
             log::info!("Deleted item with id {}", item_id);
+        }
+
+        self.load_items(file_id)?;
+        Ok(())
+    }
+
+    /// Rename the selected item
+    pub fn rename_item(&mut self, index: i32, new_name: &str) -> Result<(), Box<dyn Error>> {
+        if self.items_list.is_empty() || index < 0 || (index as usize) >= self.items_list.len() {
+            return Err("Invalid item index".into());
+        }
+        
+        let item_id = self.items_list[index as usize].id;
+        let file_id = self.items_list[index as usize].file_id;
+        
+        if let Some(mut repo) = self.get_items_repo() {
+            if let Some(mut item) = repo.find_by_id(item_id)? {
+                item.name = new_name.to_string();
+                repo.update(&item)?;
+                log::info!("Renamed item with id {} to '{}'", item_id, new_name);
+            }
         }
 
         self.load_items(file_id)?;
@@ -840,7 +932,7 @@ impl HomeViewModel {
             .map(|s| CrudListItem {
                 id: s.id,
                 title: s.name.clone().into(),
-                subtitle: format!("S{:05}", s.id).into(),
+                subtitle: s.series_no.clone().into(),
                 active: true,
             })
             .collect();
@@ -854,7 +946,7 @@ impl HomeViewModel {
             .map(|f| CrudListItem {
                 id: f.id,
                 title: f.name.clone().into(),
-                subtitle: format!("F{:05}", f.id).into(),
+                subtitle: f.file_no.clone().into(),
                 active: true,
             })
             .collect();
@@ -867,7 +959,7 @@ impl HomeViewModel {
             .map(|i| CrudListItem {
                 id: i.id,
                 title: i.name.clone().into(),
-                subtitle: format!("I{:05}", i.id).into(),
+                subtitle: i.item_no.clone().into(),
                 active: true,
             })
             .collect();
@@ -919,6 +1011,34 @@ impl HomeViewModel {
         ];
         let item_fields_model = ModelRc::new(VecModel::from(add_item_fields));
         ui_handle.set_add_item_fields(item_fields_model);
+
+        // Set rename dialog states
+        ui_handle.set_show_rename_file_dialog(self.show_rename_file_dialog);
+        ui_handle.set_show_rename_item_dialog(self.show_rename_item_dialog);
+
+        // Initialize rename file dialog fields
+        let rename_file_fields = vec![
+            DialogField {
+                label: "label_name".into(),
+                field_type: DialogFieldType::Text,
+                value: "".into(),
+                placeholder: "placeholder_file_name".into(),
+            },
+        ];
+        let rename_file_fields_model = ModelRc::new(VecModel::from(rename_file_fields));
+        ui_handle.set_rename_file_fields(rename_file_fields_model);
+
+        // Initialize rename item dialog fields
+        let rename_item_fields = vec![
+            DialogField {
+                label: "label_name".into(),
+                field_type: DialogFieldType::Text,
+                value: "".into(),
+                placeholder: "placeholder_item_name".into(),
+            },
+        ];
+        let rename_item_fields_model = ModelRc::new(VecModel::from(rename_item_fields));
+        ui_handle.set_rename_item_fields(rename_item_fields_model);
 
         // Set classification and schema options for add fonds dialog - these are no longer used in UI
         // as the dialog is now independent
@@ -1261,6 +1381,25 @@ impl HomeViewModel {
             }
         });
 
+        // Rename file callback
+        ui_handle.on_rename_file({
+            let vm = Rc::clone(&vm);
+            let ui_weak = ui_weak.clone();
+            move |index, new_name| {
+                if let Ok(mut vm) = vm.try_borrow_mut() {
+                    if let Err(e) = vm.rename_file(index, &new_name) {
+                        log::error!("Failed to rename file: {}", e);
+                        if let Some(ui) = ui_weak.upgrade() {
+                            ui.invoke_show_toast(format!("重命名案卷失败: {}", e).into());
+                        }
+                    } else if let Some(ui) = ui_weak.upgrade() {
+                        vm.init_ui(&ui);
+                        ui.invoke_show_toast("案卷已重命名".into());
+                    }
+                }
+            }
+        });
+
         // Add item callback
         ui_handle.on_add_item({
             let vm = Rc::clone(&vm);
@@ -1344,6 +1483,25 @@ impl HomeViewModel {
             }
         });
 
+        // Rename item callback
+        ui_handle.on_rename_item({
+            let vm = Rc::clone(&vm);
+            let ui_weak = ui_weak.clone();
+            move |index, new_name| {
+                if let Ok(mut vm) = vm.try_borrow_mut() {
+                    if let Err(e) = vm.rename_item(index, &new_name) {
+                        log::error!("Failed to rename item: {}", e);
+                        if let Some(ui) = ui_weak.upgrade() {
+                            ui.invoke_show_toast(format!("重命名文件失败: {}", e).into());
+                        }
+                    } else if let Some(ui) = ui_weak.upgrade() {
+                        vm.init_ui(&ui);
+                        ui.invoke_show_toast("文件已重命名".into());
+                    }
+                }
+            }
+        });
+
         // Confirm add file callback
         ui_handle.on_confirm_add_file({
             let vm = Rc::clone(&vm);
@@ -1367,13 +1525,7 @@ impl HomeViewModel {
                     }
                 };
                 
-                let file_path = if fields.row_count() >= 2 {
-                    fields.row_data(1).unwrap().value.to_string()
-                } else {
-                    String::new()
-                };
-                
-                log::info!("Adding file: name='{}', file_no='{}', path='{}'", file_name, file_no, file_path);
+                log::info!("Adding file: name='{}', file_no='{}'", file_name, file_no);
                 
                 // Validate input
                 if file_name.trim().is_empty() {
@@ -1383,15 +1535,9 @@ impl HomeViewModel {
                     return;
                 }
                 
-                let path = if file_path.trim().is_empty() {
-                    None
-                } else {
-                    Some(file_path)
-                };
-                
                 if let Ok(mut vm) = vm.try_borrow_mut() {
-                    // Add file
-                    if let Err(e) = vm.add_file(&file_name, &file_no, path) {
+                    // Add file with auto-generated path
+                    if let Err(e) = vm.add_file(&file_name, &file_no, None) {
                         log::error!("Failed to add file: {}", e);
                         if let Some(ui) = ui_weak.upgrade() {
                             ui.invoke_show_toast(format!("添加案卷失败: {}", e).into());
@@ -1518,6 +1664,122 @@ impl HomeViewModel {
                     vm.show_add_item_dialog = false;
                     vm.new_item_name.clear();
                     vm.new_item_path.clear();
+                }
+            }
+        });
+
+        // Confirm rename file callback
+        ui_handle.on_confirm_rename_file({
+            let vm = Rc::clone(&vm);
+            let ui_weak = ui_weak.clone();
+            move |fields| {
+                let new_name = if fields.row_count() >= 1 {
+                    fields.row_data(0).unwrap().value.to_string()
+                } else {
+                    String::new()
+                };
+
+                // Validate input
+                if new_name.trim().is_empty() {
+                    if let Some(ui) = ui_weak.upgrade() {
+                        ui.invoke_show_toast("文件名不能为空".into());
+                    }
+                    return;
+                }
+
+                if let Ok(mut vm) = vm.try_borrow_mut() {
+                    let index = vm.rename_file_index;
+                    if let Err(e) = vm.rename_file(index, &new_name) {
+                        log::error!("Failed to rename file: {}", e);
+                        if let Some(ui) = ui_weak.upgrade() {
+                            ui.invoke_show_toast(format!("重命名案卷失败: {}", e).into());
+                        }
+                    } else if let Some(ui) = ui_weak.upgrade() {
+                        vm.init_ui(&ui);
+                        ui.invoke_show_toast("案卷已重命名".into());
+                    }
+
+                    vm.show_rename_file_dialog = false;
+                    vm.rename_file_index = -1;
+                }
+            }
+        });
+
+        // Cancel rename file callback
+        ui_handle.on_cancel_rename_file({
+            let vm = Rc::clone(&vm);
+            move || {
+                if let Ok(mut vm) = vm.try_borrow_mut() {
+                    vm.show_rename_file_dialog = false;
+                    vm.rename_file_index = -1;
+                }
+            }
+        });
+
+        // Confirm rename item callback
+        ui_handle.on_confirm_rename_item({
+            let vm = Rc::clone(&vm);
+            let ui_weak = ui_weak.clone();
+            move |fields| {
+                let new_name = if fields.row_count() >= 1 {
+                    fields.row_data(0).unwrap().value.to_string()
+                } else {
+                    String::new()
+                };
+
+                // Validate input
+                if new_name.trim().is_empty() {
+                    if let Some(ui) = ui_weak.upgrade() {
+                        ui.invoke_show_toast("文件名不能为空".into());
+                    }
+                    return;
+                }
+
+                if let Ok(mut vm) = vm.try_borrow_mut() {
+                    let index = vm.rename_item_index;
+                    if let Err(e) = vm.rename_item(index, &new_name) {
+                        log::error!("Failed to rename item: {}", e);
+                        if let Some(ui) = ui_weak.upgrade() {
+                            ui.invoke_show_toast(format!("重命名文件失败: {}", e).into());
+                        }
+                    } else if let Some(ui) = ui_weak.upgrade() {
+                        vm.init_ui(&ui);
+                        ui.invoke_show_toast("文件已重命名".into());
+                    }
+
+                    vm.show_rename_item_dialog = false;
+                    vm.rename_item_index = -1;
+                }
+            }
+        });
+
+        // Cancel rename item callback
+        ui_handle.on_cancel_rename_item({
+            let vm = Rc::clone(&vm);
+            move || {
+                if let Ok(mut vm) = vm.try_borrow_mut() {
+                    vm.show_rename_item_dialog = false;
+                    vm.rename_item_index = -1;
+                }
+            }
+        });
+
+        // Set rename file index callback
+        ui_handle.on_set_rename_file_index({
+            let vm = Rc::clone(&vm);
+            move |index| {
+                if let Ok(mut vm) = vm.try_borrow_mut() {
+                    vm.rename_file_index = index;
+                }
+            }
+        });
+
+        // Set rename item index callback
+        ui_handle.on_set_rename_item_index({
+            let vm = Rc::clone(&vm);
+            move |index| {
+                if let Ok(mut vm) = vm.try_borrow_mut() {
+                    vm.rename_item_index = index;
                 }
             }
         });
@@ -1669,6 +1931,10 @@ impl Clone for HomeViewModel {
             show_add_item_dialog: self.show_add_item_dialog,
             new_item_name: self.new_item_name.clone(),
             new_item_path: self.new_item_path.clone(),
+            show_rename_file_dialog: self.show_rename_file_dialog,
+            rename_file_index: self.rename_file_index,
+            show_rename_item_dialog: self.show_rename_item_dialog,
+            rename_item_index: self.rename_item_index,
             settings_service: Rc::clone(&self.settings_service),
             db_connection: self.db_connection.as_ref().map(Rc::clone),
             current_db_path: self.current_db_path.clone(),
