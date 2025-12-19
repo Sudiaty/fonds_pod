@@ -20,6 +20,7 @@ use std::cell::RefCell;
 use std::error::Error;
 use std::rc::Rc;
 use std::path::PathBuf;
+use std::collections::HashSet;
 use diesel::SqliteConnection;
 use open;
 
@@ -499,17 +500,20 @@ impl HomeViewModel {
 
         log::info!("Generated {} series combinations for fond {}", series_combinations.len(), fond_no);
 
-        // Delete existing series for this fond and recreate them
+        // Create new series from combinations, skipping those that already exist
         if let Some(mut series_repo) = self.get_series_repo() {
-            // First delete existing series
+            // Get existing series for this fond
             let existing_series = series_repo.find_all()?;
-            for series in existing_series.iter().filter(|s| s.fond_id == fond_id) {
-                series_repo.delete(series.id)?;
-            }
-            log::debug!("Deleted existing series for fond {}", fond_no);
+            let existing_series_nos: HashSet<String> = existing_series.iter()
+                .filter(|s| s.fond_id == fond_id)
+                .map(|s| s.series_no.clone())
+                .collect();
+            
+            let mut created_count = 0;
+            let mut skipped_count = 0;
 
-            // Create new series from combinations
-            for (index, combo) in series_combinations.iter().enumerate() {
+            // Create new series from combinations, skipping those with duplicate series_no
+            for (_index, combo) in series_combinations.iter().enumerate() {
                 let name = combo.iter()
                     .map(|item| item.item_name.as_str())
                     .collect::<Vec<_>>()
@@ -522,19 +526,27 @@ impl HomeViewModel {
                 
                 let series_no = format!("{}-{}", fond_no, series_no_part);
                 
+                // Skip if series with same series_no already exists
+                if existing_series_nos.contains(&series_no) {
+                    log::debug!("Series with series_no '{}' already exists, skipping creation", series_no);
+                    skipped_count += 1;
+                    continue;
+                }
+                
                 let series = Series {
                     id: 0,
                     fond_id,
-                    series_no,
+                    series_no: series_no.clone(),
                     name,
                     created_by: String::new(),
                     created_machine: String::new(),
                     created_at: chrono::Utc::now().naive_utc(),
                 };
                 series_repo.create(series)?;
+                created_count += 1;
             }
             
-            log::info!("Generated and created {} series for fond {}", series_combinations.len(), fond_no);
+            log::info!("Generated and created {} new series, skipped {} existing series for fond {}", created_count, skipped_count, fond_no);
         }
 
         // Reload series
