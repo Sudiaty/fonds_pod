@@ -150,6 +150,7 @@ impl App {
         // Setup about page callbacks
         AboutViewModel::setup_callbacks(Rc::clone(&self.about_vm), ui_handle);
         // Initialize ViewModel UIs
+        // 初始化设置页但不覆盖 selected_archive（settings_vm.init_ui 已移除该动作）
         self.settings_vm.borrow().init_ui(ui_handle);
 
         // Setup ViewModel callbacks
@@ -199,6 +200,51 @@ impl App {
 
         let schema_item_items = self.schema_item_vm.borrow().get_items();
         ui_handle.set_detail_list_items(schema_item_items);
+
+        // 强制将 HomeViewModel 的选择写回 UI（即时一次 + 延迟一次）
+        {
+            let selected_index = self.home_vm.borrow().selected_archive_index;
+            let last_lib = self.home_vm.borrow().last_opened_library.clone();
+            log::debug!("App: Forcing selected_archive to {} and last_opened_library to {} (immediate)", selected_index, last_lib);
+            ui_handle.set_selected_archive(selected_index);
+            ui_handle.set_last_opened_library(last_lib.clone().into());
+        }
+
+        // 延迟500ms再写一次，避免后续UI初始化覆盖
+        {
+            let ui_weak = ui_handle.as_weak();
+            let home_vm = Rc::clone(&self.home_vm);
+            Timer::single_shot(std::time::Duration::from_millis(500), move || {
+                if let Some(ui) = ui_weak.upgrade() {
+                    let desired = home_vm.borrow().selected_archive_index;
+                    let desired_lib = home_vm.borrow().last_opened_library.clone();
+                    let current = ui.get_selected_archive();
+                    if current != desired {
+                        log::warn!("App: Re-applying selected_archive: {} -> {} (delayed)", current, desired);
+                        ui.set_selected_archive(desired);
+                    }
+                    // 始终同步 last_opened_library
+                    ui.set_last_opened_library(desired_lib.into());
+                }
+            });
+        }
+            // 在下一帧（0ms）再写回一次，确保 Slint 完成初次布局后最终与 HomeViewModel 保持一致
+            {
+                let ui_weak = ui_handle.as_weak();
+                let home_vm = Rc::clone(&self.home_vm);
+                Timer::single_shot(std::time::Duration::from_millis(0), move || {
+                    if let Some(ui) = ui_weak.upgrade() {
+                        let desired = home_vm.borrow().selected_archive_index;
+                        let desired_lib = home_vm.borrow().last_opened_library.clone();
+                        let current = ui.get_selected_archive();
+                        if current != desired {
+                            log::info!("App: Applying next-frame selected_archive: {} -> {}", current, desired);
+                            ui.set_selected_archive(desired);
+                        }
+                        ui.set_last_opened_library(desired_lib.into());
+                    }
+                });
+            }
 
         // Setup common callbacks
         ui_handle.on_page_changed({
